@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "CEDev",
+            "includePath": [
+                "C:\\CEdev\\include",
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "C:\\CEdev\\bin\\ez80-clang.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "windows-clang-x86"
+        }
+    ],
+    "version": 4
+}

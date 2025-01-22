@@ -1,0 +1,215 @@
+#define ProgramName Str0
+#define ExecutingProgram Str1
+#define NumLines |LTUR(1)
+#define CurrentLine theta
+#define LineText Str9
+#define Command Str3
+#define Arguments Str2
+#define SpaceLocation |LTUR(2)
+#define PenStatus D
+#define PenColor C
+#define TurtleAngle E
+#define TurtleX A
+#define TurtleY B
+#define OldTurtleX |LTUR(3)
+#define OldTurtleY |LTUR(4)
+#define ParsedArgument |LTUR(5)
+#define DrawTheLine |LTUR(6)
+#define Labels |LLBL
+#define Stacks [D]
+#define StackPointers |LSP
+#define ArgList |LARGS
+#define StackVariable Z
+#define StackNumber |LTUR(5)
+:DCS
+"333333336333333333333336663333333333333666333333333333336333333333333355555333333336355F55553633333355555555533333335F5555F5533333335555555553333333555555F55333333355F55555533333335555F55F533333335555555553333336355F5555363333333355555333333333333363333333
+If 80>det([[20:Then
+Disp "Get Doors CSE to run this:","http://dcs.cemetech.net
+Return
+End
+Degree
+// Check if running from existing program
+SetUpEditor ʟTUR
+If 1≠dim(ʟTUR:Then
+Disp "Run which program: 
+Input ExecutingProgram
+End
+// Setup vars
+DelVar Stacks
+"If an error occured here, check that [D] isn't ar\chived.
+SetUpEditor Labels
+DelVar ʟTURDelVar LabelsDelVar StackPointersDelVar ArgList
+6→dim(ʟTUR
+50→dim(Labels
+80→TurtleX
+60→TurtleY
+0→TurtleAngle
+{3,99→dim(Stacks
+{1,1,1→StackPointers
+// Create temp program
+"θθTURTMP→ProgramName
+DeleteVar(
+"θθTURTMP→ProgramName
+CreateVar(
+⁻1→θ
+While θ=⁻1
+ExecutingProgram→ProgramName
+"If an error occured here, delete ʟTUR, or make sure Str1 has a valid turtle program
+0:ReadLine(
+// Program not found
+If Str9="..P:NT:FN
+Then
+Disp "Could not find: prgm"+ProgramName
+⁻1→θ
+Else
+// Check for header
+1:ReadLine(
+If LineText≠"TURTLE
+Then
+Disp "Program is missing header…
+Disp "prgm"+ProgramName
+⁻1→θ
+End
+End
+If θ=⁻1:Then
+Disp "Run which program: 
+Input ExecutingProgram
+End
+End
+θ→NumLines
+1→PenStatus
+255→PenColor
+// Setup screen
+SetHalfResolution(
+SetSpeed15MHz(
+SetLCDBuffer(not(GetLCDBuffer(
+SetupColorMode(4,0,0
+For(CurrentLine,4,NumLines
+// By default, don't draw a line
+0→DrawTheLine
+//FillRectangle(0,0,120,8,0
+//DrawStringValueA(0,0,255,G
+// Read the line
+CurrentLine
+ReadLine(
+// 'LineText' now has the line to read, so parse the Command
+inString(LineText," →SpaceLocation
+sub(LineText,1,SpaceLocation-1→Command
+sub(LineText,SpaceLocation+1,length(LineText)-SpaceLocation→Arguments
+// Commands
+If Command="PEN
+expr(Arguments→PenStatus
+If Command="COLOR
+expr(Arguments→PenColor
+If Command="CLEAR
+SetupColorMode(4,expr(Arguments
+If Command="FORWARD
+Then
+expr(Arguments→ParsedArgument
+TurtleX→OldTurtleX
+TurtleY→OldTurtleY
+TurtleX+ParsedArgument*cos(TurtleAngle)→TurtleX
+TurtleY+ParsedArgument*sin(TurtleAngle)→TurtleY
+PenStatus→DrawTheLine
+End
+If Command="RIGHT
+TurtleAngle+expr(Arguments→TurtleAngle
+If Command="LEFT
+TurtleAngle-expr(Arguments→TurtleAngle
+If Command="LABEL
+Then
+expr(Arguments→ParsedArgument
+CurrentLine→Labels(ParsedArgument
+End
+If Command="GOTO
+Then
+expr(Arguments→ParsedArgument
+Labels(ParsedArgument→CurrentLine
+If CurrentLine=0:1→CurrentLine
+End
+If Command="EVAL
+Then
+"θθTURTMP→ProgramName
+Arguments→LineText
+1:InsertLine(
+prgmθθTURTMP
+1:DeleteLine(
+ExecutingProgram→ProgramName
+End
+If Command="MOVE
+Then
+expr(Arguments→ArgList
+TurtleX→OldTurtleX
+TurtleY→OldTurtleY
+ArgList(1→TurtleX
+ArgList(2→TurtleY
+PenStatus→DrawTheLine
+End
+If Command="ANGLE
+expr(Arguments→TurtleAngle
+If Command="IF
+Then
+If not(expr(Arguments:CurrentLine+1→CurrentLine
+End
+If Command="PUSH
+Then
+expr(Arguments→ArgList
+ArgList(1→StackNumber
+ArgList(2→Stacks(StackNumber,StackPointers(StackNumber
+1+StackPointers(StackNumber→StackPointers(StackNumber
+End
+If Command="POP
+Then
+expr(Arguments→StackNumber
+StackPointers(StackNumber)-1→StackPointers(StackNumber
+Stacks(StackNumber,StackPointers(StackNumber→StackVariable
+End
+If Command="PEEK
+Then
+expr(Arguments→StackNumber
+Stacks(StackNumber,StackPointers(StackNumber)-1→StackVariable
+End
+If Command="PUSHVEC
+Then
+expr(Arguments→StackNumber
+A→Stacks(StackNumber,StackPointers(StackNumber
+B→Stacks(StackNumber,StackPointers(StackNumber)+1
+E→Stacks(StackNumber,StackPointers(StackNumber)+2
+3+StackPointers(StackNumber→StackPointers(StackNumber
+End
+If Command="PO\PVEC" or Command="POPVEC
+Then
+expr(Arguments→StackNumber
+Stacks(StackNumber,StackPointers(StackNumber)-1→E
+Stacks(StackNumber,StackPointers(StackNumber)-2→B
+Stacks(StackNumber,StackPointers(StackNumber)-3→A
+StackPointers(StackNumber)-3→StackPointers(StackNumber
+End
+If Command="PEEKVEC
+Then
+expr(Arguments→StackNumber
+Stacks(StackNumber,StackPointers(StackNumber)-1→E
+Stacks(StackNumber,StackPointers(StackNumber)-2→B
+Stacks(StackNumber,StackPointers(StackNumber)-3→A
+End
+If PenStatus=1 and Command="CIRCLE
+Then
+expr(Arguments→ArgList
+If ArgList(2:Then
+DrawFilledCircle(TurtleX,TurtleY,ArgList(1),PenColor
+Else
+DrawCircle(TurtleX,TurtleY,ArgList(1),PenColor
+End
+End
+// End commands
+If DrawTheLine:DrawLine(OldTurtleX,OldTurtleY,TurtleX,TurtleY,PenColor,0
+If getKey=45:NumLines→CurrentLine
+// End For
+End
+FillRectangle(0,0,32,8,0
+"DONE
+DrawString(0,0,255,0
+Repeat getKey:End
+DelVar ʟTURDelVar LabelsDelVar StacksDelVar StackPointersDelVar ArgListDelVar ProgramNameDelVar ExecutingProgramDelVar LineTextDelVar Arguments
+"θθTURTMP→ProgramName
+DeleteVar(

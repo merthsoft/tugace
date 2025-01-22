@@ -1,0 +1,10 @@
+TURTLE
+"Draws some circles, by Shaun McFall
+"CIRCLE→Str1:{1→ʟTUR:prgmTURTLE:Return
+LABEL 1
+PEN 1
+COLOR randInt(0,255
+CIRCLE {randInt(3,8),randInt(0,1
+RIGHT randInt(⁻180,180
+FORWARD randInt(10,30
+GOTO 1

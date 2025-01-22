@@ -1,0 +1,26 @@
+#include <graphx.h>
+
+#include "static.h"
+
+real_t STATIC_REAL_0;
+real_t STATIC_REAL_1;
+real_t STATIC_REAL_255;
+real_t STATIC_REAL_360;
+real_t STATIC_REAL_GFX_LCD_WIDTH;
+real_t STATIC_REAL_GFX_LCD_HEIGHT;
+real_t STATIC_REAL_GFX_LCD_WIDTH_HALF;
+real_t STATIC_REAL_GFX_LCD_HEIGHT_HALF;
+
+void Static_Initialize(void)
+{
+    STATIC_REAL_0 = os_Int24ToReal(0);
+    STATIC_REAL_1 = os_Int24ToReal(1);
+    STATIC_REAL_255 = os_Int24ToReal(255);
+    STATIC_REAL_360 = os_Int24ToReal(360);
+
+    STATIC_REAL_GFX_LCD_WIDTH = os_Int24ToReal(GFX_LCD_WIDTH);
+    STATIC_REAL_GFX_LCD_HEIGHT = os_Int24ToReal(GFX_LCD_HEIGHT);
+
+    STATIC_REAL_GFX_LCD_WIDTH_HALF = os_Int24ToReal(GFX_LCD_WIDTH/2);
+    STATIC_REAL_GFX_LCD_HEIGHT_HALF = os_Int24ToReal(GFX_LCD_HEIGHT/2);
+}

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "turtle.h": "c",
+        "static.h": "c"
+    }
+}
