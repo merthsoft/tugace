@@ -10,17 +10,32 @@
 
 #define angle_to_rads(a) (a * 0.017453292519943295f)
 
-void fwrap(real_t* x, const real_t* min, const real_t* max) {
+void rmod_inplace(real_t* x, const real_t* y)
+{
+    if (os_RealToFloat(y) == 0)
+    {
+        *x = STATIC_REAL_0;
+    }
+
+    real_t result = os_RealDiv(x, y);
+    *x = os_RealInt(&result);
+}
+
+void fwrap(real_t* x, const real_t* min, const real_t* max) 
+{
     return;
-    if (os_RealCompare(x, min) >= 0 && os_RealCompare(x, max) <= 0)
+    
+    if (os_RealCompare(x, min) >= 0 && os_RealCompare(x, max) < 0)
         return;
     
-    real_t diff = os_RealSub(max, min);
-    if (os_RealCompare(&diff, &STATIC_REAL_0) < 0)
-        diff = os_RealNeg(&diff);
-    real_t mod = os_RealMod(x, &diff);
+    dbg_printf("\nDoing it with %.2f %.2f %.2f", os_RealToFloat(x), os_RealToFloat(min), os_RealToFloat(max));
+    real_t val = max >= min ? os_RealSub(max, min) : os_RealSub(min, max);
+    dbg_printf(" val %.2f", os_RealToFloat(&val));
+    rmod_inplace(x, &val);
+    dbg_printf(" x %.2f", os_RealToFloat(&val));
     
-    *x = os_RealAdd(x >= 0 ? min : max, &mod);
+    *x = os_RealAdd(x >= 0 ? min : max, &val);
+    dbg_printf(" x %.2f\n", os_RealToFloat(x));
 }
 
 void move(Turtle* t, const real_t* newX, const real_t* newY)
@@ -31,37 +46,38 @@ void move(Turtle* t, const real_t* newX, const real_t* newY)
     t->x = *newX;
     t->y = *newY;
 
-    // if (toInt(t->wrap))
-    // {
-    //     fwrap(&t->x, 0, &STATIC_REAL_GFX_LCD_WIDTH);
-    //     fwrap(&t->y, 0, &STATIC_REAL_GFX_LCD_HEIGHT);
+    #if 0
+    if (toInt(t->wrap))
+    {
+        fwrap(&t->x, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
+        fwrap(&t->y, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
 
-    //     if (toInt(t->pen))
-    //     {
-    //         if (os_RealCompare(&t->x, newX) < 0)
-    //         {
-    //             fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
-    //             t->oldX = os_RealSub(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
-    //         }
-    //         else if (os_RealCompare(&t->x, newX) > 0)
-    //         {
-    //             fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
-    //             t->oldX = os_RealAdd(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
-    //         }
+        if (toInt(t->pen))
+        {
+            if (os_RealCompare(&t->x, newX) < 0)
+            {
+                fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
+                t->oldX = os_RealSub(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
+            }
+            else if (os_RealCompare(&t->x, newX) > 0)
+            {
+                fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
+                t->oldX = os_RealAdd(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
+            }
 
-    //         if (os_RealCompare(&t->y, newY) < 0)
-    //         {
-    //             fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
-    //             t->oldY = os_RealSub(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
-    //         }
-    //         else if (os_RealCompare(&t->y, newY) > 0)
-    //         {
-    //             fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
-    //             t->oldY = os_RealAdd(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
-    //         }
-
-    //     }
-    // }
+            if (os_RealCompare(&t->y, newY) < 0)
+            {
+                fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
+                t->oldY = os_RealSub(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
+            }
+            else if (os_RealCompare(&t->y, newY) > 0)
+            {
+                fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
+                t->oldY = os_RealAdd(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
+            }
+        }
+    }
+    #endif
 }
 
 void Turtle_Initialize(Turtle *t)
@@ -73,6 +89,8 @@ void Turtle_Initialize(Turtle *t)
 
     t->color = STATIC_REAL_255;
     t->pen = STATIC_REAL_1;
+
+    t->wrap = STATIC_REAL_1;
 }
 
 void Turtle_Forward(Turtle *t, const real_t* amount)
@@ -154,14 +172,16 @@ void Turtle_Draw(Turtle* t)
         gfx_SetColor(color);
         gfx_SetPixel(x, y);
 
-        //if (os_RealCompare(&t->pen, &STATIC_REAL_0) > 0)
+        if (os_RealCompare(&t->pen, &STATIC_REAL_0) > 0)
         {
             uint24_t oldX = toInt(t->oldX);
             uint24_t oldY = toInt(t->oldY);
             
-            //if (oldX != x && oldY != y) {
+            if (oldX != x && oldY != y) {
                 gfx_Line(oldX, oldY, x, y);
-            //}
+                t->oldX = t->x;
+                t->oldY = t->y;
+            }
         }
     }
 }

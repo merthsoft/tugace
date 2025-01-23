@@ -23,6 +23,7 @@
 
 #define NewLineToken    OS_TOK_NEWLINE
 #define SpaceToken      OS_TOK_SPACE
+#define CommentToken    OS_TOK_DOUBLE_QUOTE
 
 size_t stream(const uint8_t* data, const size_t dataLength, const uint8_t delim, size_t* index)
 {
@@ -69,18 +70,25 @@ static inline uint32_t hash(const uint8_t* arr, size_t length)
 #define clear_key_buffer() while(kb_AnyKey())
 
 #ifdef DEBUG
-void debug_print_tokens(void* buffer, size_t length)
+void debug_print_tokens(void* buffer, size_t length, size_t* stringLength)
 {
     void** ptr = &buffer;
     uint8_t tokenLength;
+    size_t tokenStringLength;
     uint8_t i = 0;
+    if (stringLength)
+        *stringLength = 0;
     while(i < length)
     {
-        dbg_printf("%s", ti_GetTokenString(ptr, &tokenLength, NULL));
+        dbg_printf("%s", ti_GetTokenString(ptr, &tokenLength, &tokenStringLength));
         i += tokenLength;
+        if (stringLength)
+            *stringLength += tokenStringLength;
     }
 }
 #endif
+
+#define null_coalesce(this, orThat) (this ? this : orThat)
 
 int main(void)
 {
@@ -120,7 +128,7 @@ int main(void)
     
     #ifdef DEBUG
     dbg_printf("prgm%s - ", filename);
-    debug_print_tokens(comment, commentLength);
+    debug_print_tokens(comment, commentLength, NULL);
     dbg_printf("\n");
     dbg_printf("Program size: %d PC: %d\n", programSize, programCounter);
     #endif
@@ -133,10 +141,21 @@ int main(void)
     
     uint8_t currentTurtleIndex = 0;
     bool exit = false;
+    bool running = true;
+    bool showFps = true;
     while (!exit)
     {
+        if (!running)
+            goto end_eval;
         Turtle* currentTurtle = &turtles[currentTurtleIndex];
 
+        if (program[programCounter] == CommentToken)
+        {
+            dbg_printf("Skipping comment.");
+            goto end_eval;
+        }
+
+        size_t startPc = programCounter;
         uint8_t* command = &program[programCounter];
         size_t commandLength = stream(program, programSize, SpaceToken, &programCounter) - 1;
         
@@ -146,21 +165,30 @@ int main(void)
         size_t paramsLength = stream(program, programSize, NewLineToken, &programCounter) - 1;
         
         #ifdef DEBUG
-        dbg_printf("Command: ");
-        debug_print_tokens(command, commandLength);
-        dbg_printf(" (%d)", commandLength);
+        size_t outputTokenStringLength;
+        dbg_printf("%.4d: 0x%.8lx ", startPc, commandHash);
+        debug_print_tokens(command, commandLength, &outputTokenStringLength);
         
-        dbg_printf("\tParams: ");
-        debug_print_tokens(params, paramsLength);
-        dbg_printf(" (%d)", paramsLength);
+        while (outputTokenStringLength < 10)
+        {
+            dbg_printf(" ");
+            outputTokenStringLength++;
+        }
 
-        dbg_printf("\tHash: 0x%lx PC: %d", commandHash, programCounter);
+        debug_print_tokens(params, paramsLength, &outputTokenStringLength);
+        
+        while (outputTokenStringLength < 30)
+        {
+            dbg_printf(" ");
+            outputTokenStringLength++;
+        }
         #endif
         
-        real_t* param1 = NULL;
-        real_t* param2 = NULL;
         char param1Var[4]; 
         char param2Var[4];
+            
+        real_t* param1 = NULL;
+        real_t* param2 = NULL;
 
         int24_t param1Int;
 
@@ -168,7 +196,7 @@ int main(void)
         {
             if (os_Eval(params, paramsLength)) 
             {
-                dbg_printf("\tFailed to eval \"%.*s\" length: %d \n", paramsLength, params, paramsLength);
+                dbg_printf("\n\tSYNTAX ERROR: Failed to eval \"%.*s\" length: %d \n", paramsLength, params, paramsLength);
                 goto end_eval;
             }
 
@@ -184,7 +212,7 @@ int main(void)
             param2Var[1] = 0;
             param2Var[2] = 0;
             param2Var[3] = 0;
-            
+
             if (ans) 
             {
                 list_t* ansList;
@@ -216,10 +244,14 @@ int main(void)
                             param2 = &cplx_ansList->items[1].real;
                         break;
                     case OS_TYPE_EQU:
-                        break;
+                        dbg_printf("\n\tSYNTAX ERROR: Equations not yet supported.");
+                        goto end_eval;
+                    default:
+                        dbg_printf("\n\tSYNTAX ERROR: Unsupported ans type: %d.", type);
+                        goto end_eval;
                 }
             } else {
-                dbg_printf("\tFailed to resolve ans.\n");
+                dbg_printf("\n\tUNKNOWN ERROR: Failed to resolve ans.");
                 goto end_eval;
             }
         }
@@ -229,112 +261,124 @@ int main(void)
         if (param1)
             dbg_printf("Param1: %f", os_RealToFloat(param1));
         else
-            dbg_printf("Param1: NULL");
+            dbg_printf("Param1: NULL\t");
         dbg_printf("\t");
         if (param2)
             dbg_printf("Param2: %f", os_RealToFloat(param2));
         else
-            dbg_printf("Param2: NULL");
-        dbg_printf("\n");
+            dbg_printf("Param2: NULL\t");
+        dbg_printf("\t");
         #endif
 
         int errNo;
         switch (commandHash)
         {
             case HASH_COLOR:
-                Turtle_SetColor(currentTurtle, param1);
+                Turtle_SetColor(currentTurtle, null_coalesce(param1, &STATIC_REAL_0));
                 break;
             case HASH_PEN:
-                Turtle_SetPen(currentTurtle, param1);
+                Turtle_SetPen(currentTurtle, null_coalesce(param1, &STATIC_REAL_0));
                 break;
             case HASH_FORWARD:
-                Turtle_Forward(currentTurtle, param1);
+                Turtle_Forward(currentTurtle, null_coalesce(param1, &STATIC_REAL_1));
                 break;
             case HASH_LEFT:
-                Turtle_Left(currentTurtle, param1);
+                Turtle_Left(currentTurtle, null_coalesce(param1, &STATIC_REAL_1));
                 break;
             case HASH_RIGHT:
-                Turtle_Right(currentTurtle, param1);
+                Turtle_Right(currentTurtle, null_coalesce(param1, &STATIC_REAL_1));
                 break;
             case HASH_MOVE:
-                Turtle_Goto(currentTurtle, param1, param2 ? param2 : &STATIC_REAL_0);
+                Turtle_Goto(currentTurtle, null_coalesce(param1, &STATIC_REAL_0), null_coalesce(param2, &STATIC_REAL_0));
                 break;
             case HASH_ANGLE:
-                Turtle_SetAngle(currentTurtle, param1);
+                Turtle_SetAngle(currentTurtle, null_coalesce(param1, &STATIC_REAL_0));
                 break;
             case HASH_CIRCLE:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_CLEAR:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_LABEL:
+                if (param1 == NULL)
+                {
+                    dbg_printf("\n\tSYNTAX ERROR: No label.");
+                    break;
+                }
                 param1Int = os_RealToInt24(param1);
                 if (param1Int >= 0 && param1Int < NumLabels)
                     labels[param1Int] = programCounter;
                 break;
             case HASH_GOTO:
+                if (param1 == NULL)
+                {
+                    dbg_printf("\n\tSYNTAX ERROR: No label.");
+                    break;
+                }
                 param1Int = os_RealToInt24(param1);
                 if (param1Int >= 0 && param1Int < NumLabels && labels[param1Int] >= programStart && labels[param1Int] < programSize)
                     programCounter = labels[param1Int];
                 break;
             case HASH_EVAL:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_PUSH:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_POP:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_PEEK:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_PUSHVEC:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_POPVEC:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_PEEKVEC:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_IF:
-                dbg_printf("\tUnimplemented.\n");
+                dbg_printf(" Unimplemented.");
                 break;
             case HASH_ZERO:
                 errNo = os_SetRealVar(param1Var, &STATIC_REAL_0);
                 if (errNo)
                 {
-                    dbg_printf("\tGot error trying to zero out %c: %d\n", param1Var[0], errNo);    
+                    dbg_printf("\n\tSYNTAX ERROR: Got error trying to zero out %c: %d", param1Var[0], errNo);    
                 }
                 break;
             case HASH_INC:
+                if (param1 == NULL)
+                {
+                    dbg_printf("\n\tSYNTAX ERROR: No parameter to set.");
+                    break;
+                }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo)
                 {
-                    param2 = &STATIC_REAL_1;
-                    if (param2Var[0])
-                    {
-                        errNo = os_GetRealVar(param2Var, param2);
-                        if (errNo)
-                        {
-                            dbg_printf("\tGot error trying to read %c: %d\n", param2Var[0], errNo);    
-                            param2 = &STATIC_REAL_1;
-                        }
-                    }
+                    if (!param2)
+                        param2 = &STATIC_REAL_1;
                     *param1 = os_RealAdd(param1, param2);
                     os_SetRealVar(param1Var, param1);
-                } 
+                }
                 else {
-                    dbg_printf("\tGot error trying to read %c: %d\n", param1Var[0], errNo);    
+                    dbg_printf("\n\tSYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
                 }
                 break;
             default:
-                dbg_printf("\tUnknown hash encountered\n");
+                dbg_printf("\n\tSYNTAX ERROR: Unknown hash encountered");
                 break;
         }
 end_eval:
+        #ifdef DEBUG
+        if (running)
+            dbg_printf("\n");
+        #endif
+
         if (programCounter >= programSize - 1)
         {
             exit = true;
@@ -342,6 +386,12 @@ end_eval:
 
         kb_Scan();
         exit |= kb_IsDown(kb_KeyDel) | kb_IsDown(kb_KeyClear) | kb_IsDown(kb_KeyMode);
+        
+        if (kb_IsDown(kb_KeyEnter))
+        {
+            running = !running;
+            clear_key_buffer();
+        }
 
         framecount++;
         if (clock() - time >= CLOCKS_PER_SEC)
@@ -359,10 +409,22 @@ end_eval:
             Turtle_Draw(&turtles[i]);
         }
 
-        gfx_SetColor(0);
-        gfx_FillRectangle(0, 0, 84, 10);
-        sprintf(buffer, "FPS: %.2f", fps);
-        gfx_PrintStringXY(buffer, 2, 2);
+        if (running)
+        {
+            if (showFps) 
+            {
+                gfx_SetColor(0);
+                gfx_FillRectangle(0, 0, 84, 12);
+                sprintf(buffer, "FPS: %.2f", fps);
+                gfx_PrintStringXY(buffer, 2, 2);
+            }
+        }
+        else
+        {
+            gfx_SetColor(0);
+            gfx_FillRectangle(0, 0, 84, 12);
+            gfx_PrintStringXY("Paused", 2, 2);
+        }
         
         gfx_SwapDraw();
     }
@@ -371,8 +433,8 @@ end_eval:
     gfx_SetTextFGColor(124);
     gfx_SetTextBGColor(0);
     gfx_SetColor(0);
-    gfx_FillRectangle(0, 0, 84, 10);
-    gfx_PrintStringXY("Done", 1, 1);
+    gfx_FillRectangle(0, 0, 84, 12);
+    gfx_PrintStringXY("Done", 2, 2);
     gfx_SwapDraw();
 
     clear_key_buffer();
