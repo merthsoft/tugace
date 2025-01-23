@@ -69,12 +69,15 @@ static inline uint32_t hash(const uint8_t* arr, size_t length)
 #define clear_key_buffer() while(kb_AnyKey())
 
 #ifdef DEBUG
-void debug_print_tokens(void* buffer, size_t lenth)
+void debug_print_tokens(void* buffer, size_t length)
 {
     void** ptr = &buffer;
-    for (uint8_t i = 0; i < lenth; i++)
+    uint8_t tokenLength;
+    uint8_t i = 0;
+    while(i < length)
     {
-        dbg_printf("%s", ti_GetTokenString(ptr, NULL, NULL));
+        dbg_printf("%s", ti_GetTokenString(ptr, &tokenLength, NULL));
+        i += tokenLength;
     }
 }
 #endif
@@ -106,8 +109,7 @@ int main(void)
     ti_Read(program, programSize, 1, programHandle);
     
     srand(rtc_Time());
-    bool exit = false;
-
+    
     size_t programCounter = 0;
     // Header
     stream(program, programSize, NewLineToken, &programCounter);
@@ -130,6 +132,7 @@ int main(void)
     gfx_SetTextFGColor(124);
     
     uint8_t currentTurtleIndex = 0;
+    bool exit = false;
     while (!exit)
     {
         Turtle* currentTurtle = &turtles[currentTurtleIndex];
