@@ -2,13 +2,13 @@
 # Makefile Options
 # ----------------------------
 
-NAME = TURTLE
+NAME = TURTINT
 ICON = icon.png
 DESCRIPTION = "CE Turtles"
 COMPRESSED = YES
 ARCHIVED = NO
 
-CFLAGS = -Wall -Wextra -Oz
+CFLAGS = -Wall -Wextra -Ofast
 CXXFLAGS = -Wall -Wextra -Oz
 
 PREFER_OS_LIBC=NO

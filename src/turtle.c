@@ -31,37 +31,37 @@ void move(Turtle* t, const real_t* newX, const real_t* newY)
     t->x = *newX;
     t->y = *newY;
 
-    if (toInt(t->wrap))
-    {
-        fwrap(&t->x, 0, &STATIC_REAL_GFX_LCD_WIDTH);
-        fwrap(&t->y, 0, &STATIC_REAL_GFX_LCD_HEIGHT);
+    // if (toInt(t->wrap))
+    // {
+    //     fwrap(&t->x, 0, &STATIC_REAL_GFX_LCD_WIDTH);
+    //     fwrap(&t->y, 0, &STATIC_REAL_GFX_LCD_HEIGHT);
 
-        if (toInt(t->pen))
-        {
-            if (os_RealCompare(&t->x, newX) < 0)
-            {
-                fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
-                t->oldX = os_RealSub(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
-            }
-            else if (os_RealCompare(&t->x, newX) > 0)
-            {
-                fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
-                t->oldX = os_RealAdd(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
-            }
+    //     if (toInt(t->pen))
+    //     {
+    //         if (os_RealCompare(&t->x, newX) < 0)
+    //         {
+    //             fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
+    //             t->oldX = os_RealSub(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
+    //         }
+    //         else if (os_RealCompare(&t->x, newX) > 0)
+    //         {
+    //             fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
+    //             t->oldX = os_RealAdd(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
+    //         }
 
-            if (os_RealCompare(&t->y, newY) < 0)
-            {
-                fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
-                t->oldY = os_RealSub(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
-            }
-            else if (os_RealCompare(&t->y, newY) > 0)
-            {
-                fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
-                t->oldY = os_RealAdd(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
-            }
+    //         if (os_RealCompare(&t->y, newY) < 0)
+    //         {
+    //             fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
+    //             t->oldY = os_RealSub(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
+    //         }
+    //         else if (os_RealCompare(&t->y, newY) > 0)
+    //         {
+    //             fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
+    //             t->oldY = os_RealAdd(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
+    //         }
 
-        }
-    }
+    //     }
+    // }
 }
 
 void Turtle_Initialize(Turtle *t)
@@ -159,13 +159,9 @@ void Turtle_Draw(Turtle* t)
             uint24_t oldX = toInt(t->oldX);
             uint24_t oldY = toInt(t->oldY);
             
-            dbg_printf("\t%d, %d  %d, %d\n", x, y, oldX, oldY);
             //if (oldX != x && oldY != y) {
-                gfx_SetColor(toInt(t->color));
                 gfx_Line(oldX, oldY, x, y);
             //}
         }
-
-        t->oldX = t->x;
     }
 }
