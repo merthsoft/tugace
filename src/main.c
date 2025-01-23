@@ -1,12 +1,15 @@
-#include <sys/util.h>
+#include <fileioc.h>
+#include <keypadc.h>
 #include <graphx.h>
 #include <math.h>
 #include <string.h>
-#include <sys/rtc.h>
 #include <stdlib.h>
-#include <fileioc.h>
-#include <keypadc.h>
 #include <time.h>
+
+#include <sys/util.h>
+#include <sys/rtc.h>
+
+#include <ti/tokens.h>
 
 #include <debug.h>
 
@@ -14,15 +17,12 @@
 #include "palette.h"
 #include "static.h"
 
-#define NumTurtles 10
-#define NumStacks 3
-#define NumLabels 100
-#define NewLineToken 0x3F
-#define SpaceToken 0x29
+#define NumTurtles  10
+#define NumStacks   3
+#define NumLabels   100
 
-extern real_t STATIC_REAL_360;
-extern real_t STATIC_REAL_GFX_LCD_WIDTH;
-extern real_t STATIC_REAL_GFX_LCD_HEIGHT;
+#define NewLineToken    OS_TOK_NEWLINE
+#define SpaceToken      OS_TOK_SPACE
 
 size_t stream(const uint8_t* data, const size_t dataLength, const uint8_t delim, size_t* index)
 {
