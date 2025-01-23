@@ -52,8 +52,8 @@ size_t stream(const uint8_t* data, const size_t dataLength, const uint8_t delim,
     return *index - start + 1;
 }
 
-// http://www.cse.yorku.ca/~oz/\nhash.html
-static inline uint32_t hash(const uint8_t* arr, size_t length)
+// http://www.cse.yorku.ca/~oz/hash.html
+static inline uint24_t hash(const uint8_t* arr, size_t length)
 {
     uint32_t hash = 5381;
     uint8_t c;
@@ -166,7 +166,7 @@ int main(void)
         
         #ifdef DEBUG
         size_t outputTokenStringLength;
-        dbg_printf("%.4d: 0x%.8lX ", startPc, commandHash);
+        dbg_printf("%.4d: 0x%.6lX ", startPc, commandHash);
         debug_print_tokens(command, commandLength, &outputTokenStringLength);
         
         while (outputTokenStringLength < 10)
@@ -196,7 +196,7 @@ int main(void)
         {
             if (os_Eval(params, paramsLength)) 
             {
-                dbg_printf("\n\tSYNTAX ERROR: Failed to eval \"%.*s\" length: %d \n", paramsLength, params, paramsLength);
+                dbg_printf("SYNTAX ERROR: Failed to eval \"%.*s\" length: %d \n", paramsLength, params, paramsLength);
                 goto end_eval;
             }
 
@@ -244,14 +244,14 @@ int main(void)
                             param2 = &cplx_ansList->items[1].real;
                         break;
                     case OS_TYPE_EQU:
-                        dbg_printf("\n\tSYNTAX ERROR: Equations not yet supported.");
+                        dbg_printf("SYNTAX ERROR: Equations not yet supported.");
                         goto end_eval;
                     default:
-                        dbg_printf("\n\tSYNTAX ERROR: Unsupported ans type: %d.", type);
+                        dbg_printf("SYNTAX ERROR: Unsupported ans type: %d.", type);
                         goto end_eval;
                 }
             } else {
-                dbg_printf("\n\tUNKNOWN ERROR: Failed to resolve ans.");
+                dbg_printf("UNKNOWN ERROR: Failed to resolve ans.");
                 goto end_eval;
             }
         }
@@ -303,7 +303,7 @@ int main(void)
             case HASH_LABEL:
                 if (param1 == NULL)
                 {
-                    dbg_printf("\n\tSYNTAX ERROR: No label.");
+                    dbg_printf("SYNTAX ERROR: No label.");
                     break;
                 }
                 param1Int = os_RealToInt24(param1);
@@ -313,7 +313,7 @@ int main(void)
             case HASH_GOTO:
                 if (param1 == NULL)
                 {
-                    dbg_printf("\n\tSYNTAX ERROR: No label.");
+                    dbg_printf("SYNTAX ERROR: No label.");
                     break;
                 }
                 param1Int = os_RealToInt24(param1);
@@ -348,13 +348,13 @@ int main(void)
                 errNo = os_SetRealVar(param1Var, &STATIC_REAL_0);
                 if (errNo)
                 {
-                    dbg_printf("\n\tSYNTAX ERROR: Got error trying to zero out %c: %d", param1Var[0], errNo);    
+                    dbg_printf("SYNTAX ERROR: Got error trying to zero out %c: %d", param1Var[0], errNo);    
                 }
                 break;
             case HASH_INC:
                 if (param1 == NULL)
                 {
-                    dbg_printf("\n\tSYNTAX ERROR: No parameter to set.");
+                    dbg_printf("SYNTAX ERROR: No parameter to set.");
                     break;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
@@ -366,11 +366,11 @@ int main(void)
                     os_SetRealVar(param1Var, param1);
                 }
                 else {
-                    dbg_printf("\n\tSYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
+                    dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
                 }
                 break;
             default:
-                dbg_printf("\n\tSYNTAX ERROR: Unknown hash encountered");
+                dbg_printf("SYNTAX ERROR: Unknown hash encountered");
                 break;
         }
 end_eval:

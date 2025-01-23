@@ -14,28 +14,28 @@ extern real_t STATIC_REAL_GFX_LCD_HEIGHT;
 extern real_t STATIC_REAL_GFX_LCD_WIDTH_HALF;
 extern real_t STATIC_REAL_GFX_LCD_HEIGHT_HALF;
 
-#define HASH_COLOR    0xCE809A4
-#define HASH_PEN      0xB881068
-#define HASH_FORWARD  0xCE70717A
-#define HASH_LEFT     0x7C87EB30
-#define HASH_RIGHT    0xDF418C3
-#define HASH_MOVE     0x7C88A41C
-#define HASH_ANGLE    0xCC3368C
-#define HASH_CIRCLE   0xA97FC1D7
-#define HASH_CLEAR    0xCE644EC
-#define HASH_LABEL    0xD830D05
-#define HASH_GOTO     0x7C85599E
-#define HASH_EVAL     0x7C845C2D
-#define HASH_PUSH     0x7C8A6265
-#define HASH_POP      0xB8811B4
-#define HASH_PEEK     0x7C8A1C8A
-#define HASH_PUSHVEC  0xDE3FFB43
-#define HASH_POPVEC   0xC83E9C32
-#define HASH_PEEKVEC  0xB7F1BF48
+#define HASH_COLOR    0xE809A4
+#define HASH_PEN      0x881068
+#define HASH_FORWARD  0x70717A
+#define HASH_LEFT     0x87EB30
+#define HASH_RIGHT    0xF418C3
+#define HASH_MOVE     0x88A41C
+#define HASH_ANGLE    0xC3368C
+#define HASH_CIRCLE   0x7FC1D7
+#define HASH_CLEAR    0xE644EC
+#define HASH_LABEL    0x830D05
+#define HASH_GOTO     0x85599E
+#define HASH_EVAL     0x845C2D
+#define HASH_PUSH     0x8A6265
+#define HASH_POP      0x8811B4
+#define HASH_PEEK     0x8A1C8A
+#define HASH_PUSHVEC  0x3FFB43
+#define HASH_POPVEC   0x3E9C32
+#define HASH_PEEKVEC  0xF1BF48
 #define HASH_IF       0x5973F4
-#define HASH_TURTLE   0xD200E2E5
-#define HASH_INC      0xb87f3bf
-#define HASH_ZERO     0x7c8f9a05
+#define HASH_TURTLE   0x00E2E5
+#define HASH_INC      0x87f3bf
+#define HASH_ZERO     0x8f9a05
 
 void Static_Initialize(void);
 
