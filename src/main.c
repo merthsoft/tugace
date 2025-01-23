@@ -166,7 +166,7 @@ int main(void)
         
         #ifdef DEBUG
         size_t outputTokenStringLength;
-        dbg_printf("%.4d: 0x%.8lx ", startPc, commandHash);
+        dbg_printf("%.4d: 0x%.8lX ", startPc, commandHash);
         debug_print_tokens(command, commandLength, &outputTokenStringLength);
         
         while (outputTokenStringLength < 10)
