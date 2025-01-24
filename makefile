@@ -2,9 +2,9 @@
 # Makefile Options
 # ----------------------------
 
-NAME = TURTINT
+NAME = TUGA
 ICON = icon.png
-DESCRIPTION = "CE Turtles"
+DESCRIPTION = "TUGA Interpreter"
 COMPRESSED = YES
 ARCHIVED = NO
 
