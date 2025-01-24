@@ -1,1 +1,1 @@
-Turtle CE
+TUGA Interpreter
