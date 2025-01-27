@@ -10,149 +10,131 @@
 
 #define angle_to_rads(a) (a * 0.017453292519943295f)
 
-void rmod_inplace(real_t* x, const real_t* y)
-{
-    if (os_RealToFloat(y) == 0)
-    {
-        *x = STATIC_REAL_0;
-    }
+size_t Turtle_LineBufferIndex;
+float Turtle_LineBuffer[MaxLineBuffer];
 
-    real_t result = os_RealDiv(x, y);
-    *x = os_RealInt(&result);
+static inline void pushLineBuffer(float color, float oldX, float oldY, float newX, float newY) {
+    Turtle_LineBuffer[Turtle_LineBufferIndex++] = color;
+    Turtle_LineBuffer[Turtle_LineBufferIndex++] = oldX;
+    Turtle_LineBuffer[Turtle_LineBufferIndex++] = oldY;
+    Turtle_LineBuffer[Turtle_LineBufferIndex++] = newX;
+    Turtle_LineBuffer[Turtle_LineBufferIndex++] = newY;
 }
 
-void fwrap(real_t* x, const real_t* min, const real_t* max) 
-{
-    return;
-    
-    if (os_RealCompare(x, min) >= 0 && os_RealCompare(x, max) < 0)
-        return;
-    
-    dbg_printf("\nDoing it with %.2f %.2f %.2f", os_RealToFloat(x), os_RealToFloat(min), os_RealToFloat(max));
-    real_t val = max >= min ? os_RealSub(max, min) : os_RealSub(min, max);
-    dbg_printf(" val %.2f", os_RealToFloat(&val));
-    rmod_inplace(x, &val);
-    dbg_printf(" x %.2f", os_RealToFloat(&val));
-    
-    *x = os_RealAdd(x >= 0 ? min : max, &val);
-    dbg_printf(" x %.2f\n", os_RealToFloat(x));
+float fwrap(float x, float min, float max) {
+    return min > max
+            ? (x >= 0 ? max : min) + fmodf(x, min - max)
+            : (x >= 0 ? min : max) + fmodf(x, max - min);
 }
 
-void move(Turtle* t, const real_t* newX, const real_t* newY)
+void move(Turtle* t, const float* x, const float* y)
 {
-    t->oldX = t->x;
-    t->oldY = t->y;
+    float newX = *x;
+    float newY = *y; 
+    float oldX = t->x;
+    float oldY = t->y;
+    if (t->pen)
+        pushLineBuffer(t->color, oldX, oldY, newX, newY);
 
-    t->x = *newX;
-    t->y = *newY;
+    t->x = newX;
+    t->y = newY;
 
-    #if 0
-    if (toInt(t->wrap))
+    if (t->wrap)
     {
-        fwrap(&t->x, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
-        fwrap(&t->y, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
+        t->x = fwrap(t->x, 0, GFX_LCD_WIDTH);
+        t->y = fwrap(t->x, 0, GFX_LCD_HEIGHT);
 
-        if (toInt(t->pen))
+        if (t->pen)
         {
-            if (os_RealCompare(&t->x, newX) < 0)
-            {
-                fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
-                t->oldX = os_RealSub(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
-            }
-            else if (os_RealCompare(&t->x, newX) > 0)
-            {
-                fwrap(&t->oldX, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_WIDTH);
-                t->oldX = os_RealAdd(&t->oldX, &STATIC_REAL_GFX_LCD_WIDTH);
-            }
+            if (t->x < newX)
+                oldX = fwrap(oldX, 0, GFX_LCD_WIDTH) - GFX_LCD_WIDTH;
+            else if (t->x > newX)
+                oldX = fwrap(oldX, 0, GFX_LCD_WIDTH) + GFX_LCD_WIDTH;
+            
+            if (t->y < newY)
+                oldY = fwrap(oldY, 0, GFX_LCD_HEIGHT) - GFX_LCD_HEIGHT;
+            else if (t->y > newY)
+                oldY = fwrap(oldY, 0, GFX_LCD_HEIGHT) + GFX_LCD_HEIGHT;
 
-            if (os_RealCompare(&t->y, newY) < 0)
-            {
-                fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
-                t->oldY = os_RealSub(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
-            }
-            else if (os_RealCompare(&t->y, newY) > 0)
-            {
-                fwrap(&t->oldY, &STATIC_REAL_0, &STATIC_REAL_GFX_LCD_HEIGHT);
-                t->oldY = os_RealAdd(&t->oldY, &STATIC_REAL_GFX_LCD_HEIGHT);
-            }
+            pushLineBuffer(t->color, oldX, oldY, newX, newY);
         }
     }
-    #endif
+}
+
+void Turtle_StartEngine()
+{
+    Turtle_LineBufferIndex = 0;
+    memset(Turtle_LineBuffer, 0, MaxLineBuffer * sizeof(float));
 }
 
 void Turtle_Initialize(Turtle *t)
 {
     t->initialized = true;
 
-    t->x = t->oldX = STATIC_REAL_GFX_LCD_WIDTH_HALF;
-    t->y = t->oldY = STATIC_REAL_GFX_LCD_HEIGHT_HALF;
+    t->x = GFX_LCD_WIDTH / 2;
+    t->y = GFX_LCD_HEIGHT / 2;
 
-    t->color = STATIC_REAL_255;
-    t->pen = STATIC_REAL_1;
-
-    t->wrap = STATIC_REAL_1;
+    t->color = 255;
+    t->pen = 1;
+    t->wrap = 1;
 }
 
-void Turtle_Forward(Turtle *t, const real_t* amount)
+void Turtle_Forward(Turtle *t, const float* amount)
 {
-    real_t degs = os_RealDegToRad(&t->angle);
-    real_t deltaX = os_RealSinRad(&degs);
-    real_t deltaY = os_RealCosRad(&degs);
-    
-    deltaX = os_RealMul(amount, &deltaX);
-    deltaY = os_RealMul(amount, &deltaY);
+    int angle = (int)t->angle;
+    float newX = t->x + *amount * sinf(angle);
+    float newY = t->y + *amount * -sinf(angle);
 
-    deltaX = os_RealAdd(&deltaX, &t->x);
-    deltaY = os_RealAdd(&deltaY, &t->y);
-    move(t, &deltaX, &deltaY);
+    move(t, &newX, &newY);
 }
 
 void clip_angle(Turtle* t)
 {
-    fwrap(&t->angle, &STATIC_REAL_0, &STATIC_REAL_360);
+    t->angle = fwrap(t->angle, 0, 360);
 }
 
-void Turtle_Right(Turtle* t, const real_t* angle)
+void Turtle_Right(Turtle* t, float* angle)
 {
-    t->angle = os_RealSub(&t->angle, angle);
+    t->angle -= *angle;
     clip_angle(t);
 }
 
-void Turtle_Left(Turtle* t, const real_t* angle)
+void Turtle_Left(Turtle* t, float* angle)
 {
-    t->angle = os_RealAdd(&t->angle, angle);
+    t->angle += *angle;
     clip_angle(t);
 }
 
-void Turtle_SetAngle(Turtle* t, const real_t* angle)
+void Turtle_SetAngle(Turtle* t, float* angle)
 {
     t->angle = *angle;
     clip_angle(t);
 }
 
-void Turtle_Goto(Turtle* t, const real_t* x, const real_t* y)
+void Turtle_Goto(Turtle* t, const float* x, const float* y)
 {
     move(t, x, y);
 }
 
-void Turtle_Teleport(Turtle* t, const real_t* x, const real_t* y)
+void Turtle_Teleport(Turtle* t, const float* x, const float* y)
 {
-     move(t, x, y);
-     t->oldX = t->x;
-     t->oldY = t->y;
+    float pen = t->pen;
+    t->pen = 0;
+    move(t, x, y);
+    t->pen = pen;
 }
 
-void Turtle_SetPen(Turtle* t, const real_t* pen)
+void Turtle_SetPen(Turtle* t, const float* pen)
 {
     t->pen = *pen;
 }
 
-void Turtle_SetColor(Turtle* t, const real_t* color)
+void Turtle_SetColor(Turtle* t, const float* color)
 {
     t->color = *color;
 }
 
-void Turtle_SetWrap(Turtle *t, const real_t *wrap)
+void Turtle_SetWrap(Turtle *t, const float* wrap)
 {
     t->wrap = *wrap;
 }
@@ -162,26 +144,25 @@ void Turtle_Draw(Turtle* t)
     if (!t->initialized)
         return;
 
-    uint24_t x = toInt(t->x);
-    uint24_t y = toInt(t->y);
-    uint24_t color = toInt(t->color);
+    for (size_t i = 0; i < Turtle_LineBufferIndex; i++)
+    {
+        gfx_SetColor(Turtle_LineBuffer[i++]);
+        gfx_Line(
+            Turtle_LineBuffer[i++], 
+            Turtle_LineBuffer[i++], 
+            Turtle_LineBuffer[i++], 
+            Turtle_LineBuffer[i++]);
+    }
+    Turtle_LineBufferIndex = 0;
+
+    uint24_t x = (uint24_t)t->x;
+    uint24_t y = (uint24_t)t->y;
+    uint8_t color = (uint8_t)fmodf(t->color, 256.0f);
 
     if (x >= 0 && x < GFX_LCD_WIDTH
         && y >= 0 && y < GFX_LCD_HEIGHT)
     {
         gfx_SetColor(color);
         gfx_SetPixel(x, y);
-
-        if (os_RealCompare(&t->pen, &STATIC_REAL_0) > 0)
-        {
-            uint24_t oldX = toInt(t->oldX);
-            uint24_t oldY = toInt(t->oldY);
-            
-            if (oldX != x && oldY != y) {
-                gfx_Line(oldX, oldY, x, y);
-                t->oldX = t->x;
-                t->oldY = t->y;
-            }
-        }
     }
 }

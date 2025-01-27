@@ -8,32 +8,34 @@
 extern "C" {
 #endif
 
-#define toInt(var_real_t) os_RealToInt24(&var_real_t)
+#define NumTurtles      10
+#define MaxLineBuffer   NumTurtles*2*5
+
+extern size_t Turtle_LineBufferIndex;
+extern float Turtle_LineBuffer[MaxLineBuffer];
 
 typedef struct Turtle {
     bool initialized;
-
-    real_t x;
-    real_t y;
-    real_t angle;
-    real_t color;
-    real_t pen;
-    real_t wrap;
-
-    real_t oldX;
-    real_t oldY;
+    
+    float x;
+    float y;
+    float angle;
+    float color;
+    float pen;
+    float wrap;
 } Turtle;
 
+void Turtle_StartEngine();
 void Turtle_Initialize(Turtle* t);
-void Turtle_Forward(Turtle* t, const real_t* amount);
-void Turtle_Right(Turtle* t, const real_t* angle);
-void Turtle_Left(Turtle* t, const real_t* angle);
-void Turtle_SetAngle(Turtle* t, const real_t* angle);
-void Turtle_Goto(Turtle* t, const real_t* x, const real_t* y);
-void Turtle_Teleport(Turtle* t, const real_t* x, const real_t* y);
-void Turtle_SetPen(Turtle* t, const real_t* pen);
-void Turtle_SetColor(Turtle* t, const real_t* color);
-void Turtle_SetWrap(Turtle* t, const real_t* wrap);
+void Turtle_Forward(Turtle* t, const float* amount);
+void Turtle_Right(Turtle* t, const float* angle);
+void Turtle_Left(Turtle* t, const float* angle);
+void Turtle_SetAngle(Turtle* t, const float* angle);
+void Turtle_Goto(Turtle* t, const float* x, const float* y);
+void Turtle_Teleport(Turtle* t, const float* x, const float* y);
+void Turtle_SetPen(Turtle* t, const float* pen);
+void Turtle_SetColor(Turtle* t, const float* color);
+void Turtle_SetWrap(Turtle* t, const float* wrap);
 void Turtle_Draw(Turtle* t);
 
 #ifdef __cplusplus

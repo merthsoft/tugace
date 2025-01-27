@@ -34,8 +34,9 @@ extern real_t STATIC_REAL_GFX_LCD_HEIGHT_HALF;
 #define HASH_PEEKVEC  0xF1BF48
 #define HASH_IF       0x5973F4
 #define HASH_TURTLE   0x00E2E5
-#define HASH_INC      0x87f3bf
-#define HASH_ZERO     0x8f9a05
+#define HASH_INC      0x87F3bF
+#define HASH_DEC      0x000001
+#define HASH_ZERO     0x8F9A05
 
 void Static_Initialize(void);
 

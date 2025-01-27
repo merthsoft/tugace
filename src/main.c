@@ -2,6 +2,7 @@
 #include <keypadc.h>
 #include <graphx.h>
 #include <math.h>
+#include <real.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -17,7 +18,6 @@
 #include "palette.h"
 #include "static.h"
 
-#define NumTurtles  10
 #define NumStacks   3
 #define NumLabels   100
 
@@ -96,6 +96,7 @@ int main(void)
 
     Turtle turtles[NumTurtles];
     uint8_t labels[NumLabels];
+    Turtle_StartEngine();
 
     const char* filename = "SPIRAL2";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
@@ -184,13 +185,14 @@ int main(void)
         }
         #endif
         
-        char param1Var[4]; 
-        char param2Var[4];
-            
+        
         real_t* param1 = NULL;
         real_t* param2 = NULL;
-
+        float param1Val;
+        float param2Val;
         int24_t param1Int;
+        char param1Var[4];
+        list_t* ansList;
 
         if (paramsLength > 0) 
         {
@@ -207,15 +209,15 @@ int main(void)
             param1Var[1] = 0;
             param1Var[2] = 0;
             param1Var[3] = 0;
-
-            param2Var[0] = 0;
-            param2Var[1] = 0;
-            param2Var[2] = 0;
-            param2Var[3] = 0;
+            param1Val = 0;
+            param2Val = 0;
+            param1 = NULL;
+            param2 = NULL;
+            ansList = NULL;
 
             if (ans) 
             {
-                list_t* ansList;
+                
                 cplx_list_t* cplx_ansList;
                 switch (type)
                 {
@@ -227,7 +229,6 @@ int main(void)
                         break;
                     case OS_TYPE_REAL_LIST:
                         param1Var[0] = (char)*(params + 1);
-                        param2Var[0] = (char)*(params + 3);
                         ansList = (list_t*)ans;
                         if (ansList->dim >= 1)
                             param1 = &ansList->items[0];
@@ -236,7 +237,6 @@ int main(void)
                         break;
                     case OS_TYPE_CPLX_LIST:
                         param1Var[0] = (char)*(params + 1);
-                        param2Var[0] = (char)*(params + 3);
                         cplx_ansList = (cplx_list_t*)ans;
                         if (cplx_ansList->dim >= 1)
                             param1 = &cplx_ansList->items[0].real;
@@ -254,6 +254,13 @@ int main(void)
                 dbg_printf("UNKNOWN ERROR: Failed to resolve ans.");
                 goto end_eval;
             }
+        }
+
+        if (param1 != NULL)
+        {
+            param1Val = os_RealToFloat(param1);
+            if (param2 != NULL)
+                param2Val= os_RealToFloat(param2);
         }
 
         #ifdef DEBUG
@@ -274,25 +281,25 @@ int main(void)
         switch (commandHash)
         {
             case HASH_COLOR:
-                Turtle_SetColor(currentTurtle, null_coalesce(param1, &STATIC_REAL_0));
+                Turtle_SetColor(currentTurtle, &param1Val);
                 break;
             case HASH_PEN:
-                Turtle_SetPen(currentTurtle, null_coalesce(param1, &STATIC_REAL_0));
+                Turtle_SetPen(currentTurtle, &param1Val);
                 break;
             case HASH_FORWARD:
-                Turtle_Forward(currentTurtle, null_coalesce(param1, &STATIC_REAL_1));
+                Turtle_Forward(currentTurtle, &param1Val);
                 break;
             case HASH_LEFT:
-                Turtle_Left(currentTurtle, null_coalesce(param1, &STATIC_REAL_1));
+                Turtle_Left(currentTurtle, &param1Val);
                 break;
             case HASH_RIGHT:
-                Turtle_Right(currentTurtle, null_coalesce(param1, &STATIC_REAL_1));
+                Turtle_Right(currentTurtle, &param1Val);
                 break;
             case HASH_MOVE:
-                Turtle_Goto(currentTurtle, null_coalesce(param1, &STATIC_REAL_0), null_coalesce(param2, &STATIC_REAL_0));
+                Turtle_Goto(currentTurtle, &param1Val, &param2Val);
                 break;
             case HASH_ANGLE:
-                Turtle_SetAngle(currentTurtle, null_coalesce(param1, &STATIC_REAL_0));
+                Turtle_SetAngle(currentTurtle, &param1Val);
                 break;
             case HASH_CIRCLE:
                 dbg_printf(" Unimplemented.");
@@ -306,7 +313,7 @@ int main(void)
                     dbg_printf("SYNTAX ERROR: No label.");
                     break;
                 }
-                param1Int = os_RealToInt24(param1);
+                param1Int = (uint24_t)param1Val;
                 if (param1Int >= 0 && param1Int < NumLabels)
                     labels[param1Int] = programCounter;
                 break;
@@ -316,7 +323,7 @@ int main(void)
                     dbg_printf("SYNTAX ERROR: No label.");
                     break;
                 }
-                param1Int = os_RealToInt24(param1);
+                param1Int = (uint24_t)param1Val;
                 if (param1Int >= 0 && param1Int < NumLabels && labels[param1Int] >= programStart && labels[param1Int] < programSize)
                     programCounter = labels[param1Int];
                 break;
@@ -363,6 +370,24 @@ int main(void)
                     if (!param2)
                         param2 = &STATIC_REAL_1;
                     *param1 = os_RealAdd(param1, param2);
+                    os_SetRealVar(param1Var, param1);
+                }
+                else {
+                    dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
+                }
+                break;
+            case HASH_DEC:
+                if (param1 == NULL)
+                {
+                    dbg_printf("SYNTAX ERROR: No parameter to set.");
+                    break;
+                }
+                errNo = os_GetRealVar(param1Var, param1);
+                if (!errNo)
+                {
+                    if (!param2)
+                        param2 = &STATIC_REAL_1;
+                    *param1 = os_RealSub(param1, param2);
                     os_SetRealVar(param1Var, param1);
                 }
                 else {
