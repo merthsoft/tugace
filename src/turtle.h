@@ -2,14 +2,14 @@
 #define _TURTLE_H_
 
 #include <stdint.h>
-#include <ti/real.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define NumTurtles      10
-#define MaxLineBuffer   NumTurtles*2*5
+#define NumTurtles              10
+#define LineBufferElementSize   5
+#define MaxLineBuffer           NumTurtles*2*LineBufferElementSize
 
 extern size_t Turtle_LineBufferIndex;
 extern float Turtle_LineBuffer[MaxLineBuffer];

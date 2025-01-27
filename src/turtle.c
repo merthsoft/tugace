@@ -93,19 +93,19 @@ void clip_angle(Turtle* t)
     t->angle = fwrap(t->angle, 0, 360);
 }
 
-void Turtle_Right(Turtle* t, float* angle)
+void Turtle_Right(Turtle* t, const float* angle)
 {
     t->angle -= *angle;
     clip_angle(t);
 }
 
-void Turtle_Left(Turtle* t, float* angle)
+void Turtle_Left(Turtle* t, const  float* angle)
 {
     t->angle += *angle;
     clip_angle(t);
 }
 
-void Turtle_SetAngle(Turtle* t, float* angle)
+void Turtle_SetAngle(Turtle* t, const  float* angle)
 {
     t->angle = *angle;
     clip_angle(t);
@@ -144,14 +144,14 @@ void Turtle_Draw(Turtle* t)
     if (!t->initialized)
         return;
 
-    for (size_t i = 0; i < Turtle_LineBufferIndex; i++)
+    for (size_t i = 0; i < Turtle_LineBufferIndex; i += LineBufferElementSize)
     {
-        gfx_SetColor(Turtle_LineBuffer[i++]);
+        gfx_SetColor(Turtle_LineBuffer[i]);
         gfx_Line(
-            Turtle_LineBuffer[i++], 
-            Turtle_LineBuffer[i++], 
-            Turtle_LineBuffer[i++], 
-            Turtle_LineBuffer[i++]);
+            Turtle_LineBuffer[i + 1],
+            Turtle_LineBuffer[i + 2],
+            Turtle_LineBuffer[i + 3],
+            Turtle_LineBuffer[i + 4]);
     }
     Turtle_LineBufferIndex = 0;
 

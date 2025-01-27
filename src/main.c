@@ -2,7 +2,6 @@
 #include <keypadc.h>
 #include <graphx.h>
 #include <math.h>
-#include <real.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -10,6 +9,7 @@
 #include <sys/util.h>
 #include <sys/rtc.h>
 
+#include <ti/real.h>
 #include <ti/tokens.h>
 
 #include <debug.h>
