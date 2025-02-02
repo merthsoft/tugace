@@ -63,7 +63,7 @@ void Turtle_Initialize(Turtle *t)
     t->y = GFX_LCD_HEIGHT / 2;
 
     t->color = 255;
-    t->pen = 1;
+    t->pen = 0;
     t->wrap = 1;
 }
 
@@ -76,7 +76,7 @@ void Turtle_Forward(Turtle *t, const float* amount)
     move(t, &newX, &newY);
 }
 
-void clip_angle(Turtle* t)
+static inline void clip_angle(Turtle* t)
 {
     t->angle = fwrap(t->angle, 0, 360);
 }
@@ -129,7 +129,7 @@ void Turtle_SetWrap(Turtle *t, const float* wrap)
 
 void Turtle_Draw(Turtle* t)
 {
-    if (!t->initialized)
+    if (!t->initialized || !t->pen)
         return;
 
     uint24_t x = (uint24_t)t->x;

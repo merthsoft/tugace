@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-#define NumTurtles              10
-
+#define NumTurtles      10
+#define NumDataFields   6
 typedef struct Turtle {
     bool initialized;
     

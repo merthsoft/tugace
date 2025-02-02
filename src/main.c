@@ -91,6 +91,18 @@ void debug_print_tokens(void* buffer, size_t length, size_t* stringLength)
 
 #define null_coalesce(this, orThat) (this ? this : orThat)
 
+static inline void pushTurtle(float* stack, uint8_t* stackPointer, Turtle* turtle)
+{
+    memcpy(&stack[*stackPointer], &turtle->x, sizeof(float)*NumDataFields);
+    *stackPointer = *stackPointer + NumDataFields;
+}
+
+static inline void popTurtle(float* stack, uint8_t* stackPointer, Turtle* turtle)
+{
+    *stackPointer = *stackPointer - NumDataFields;
+    memcpy(&turtle->x, &stack[*stackPointer], sizeof(float)*NumDataFields);
+}
+
 static inline void push(float* stack, uint8_t* stackPointer, float* value)
 {
     stack[*stackPointer] = *value;
@@ -114,7 +126,7 @@ int main(void)
     clear_key_buffer();
     dbg_ClearConsole();
 
-    const char* filename = "SPIRAL2";
+    const char* filename = "TREE";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0)
     {
@@ -392,13 +404,36 @@ int main(void)
                 retListPointer = 1;
                 break;
             case HASH_PUSHVEC:
-                dbg_printf(" *");
+                param1Int = (uint24_t)param1Val;
+                if (param1Int > NumStacks)
+                {
+                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    break;
+                }
+                if (stackPointers[param1Int] + 6 >= MaxStackDepth)
+                {
+                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", param1Int, stackPointers[param1Int]);
+                    break;
+                }
+                pushTurtle(stacks[param1Int], &stackPointers[param1Int], currentTurtle);
                 break;
             case HASH_POPVEC:
-                dbg_printf(" *");
-                break;
             case HASH_PEEKVEC:
-                dbg_printf(" *");
+            param1Int = (uint24_t)param1Val;
+                if (param1Int > NumStacks)
+                {
+                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    break;
+                }
+                if (commandHash == HASH_POPVEC && stackPointers[param1Int] == NumDataFields-1)
+                {
+                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", param1Int);
+                    break;
+                }
+                popTurtle(stacks[param1Int], &stackPointers[param1Int], currentTurtle);
+                if (commandHash == HASH_PEEKVEC) {
+                    stackPointers[param1Int] += NumDataFields;
+                }
                 break;
             case HASH_IF:
                 if (param1 == NULL)
@@ -453,6 +488,28 @@ int main(void)
                     dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
                 }
                 break;
+            case HASH_STO:
+                if (param1 == NULL)
+                {
+                    dbg_printf("SYNTAX ERROR: No parameter to set.");
+                    break;
+                }
+                errNo = os_GetRealVar(param1Var, param1);
+                if (!errNo)
+                {
+                    if (!param2)
+                    {
+                        dbg_printf("SYNTAX ERROR: No value to set.");
+                        break;
+                    }
+                    *param1 = os_RealCopy(param2);
+                    os_SetRealVar(param1Var, param1);
+                }
+                else {
+                    dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
+                }
+                break;
+            
             default:
                 dbg_printf("SYNTAX ERROR: Unknown hash encountered");
                 break;
