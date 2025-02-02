@@ -170,7 +170,7 @@ int main(void)
     uint8_t currentTurtleIndex = 0;
     bool exit = false;
     bool running = true;
-    bool showFps = false;
+    bool showFps = true;
     bool skipFlag = false;
 
     while (!exit)
@@ -344,7 +344,8 @@ int main(void)
                 dbg_printf(" *");
                 break;
             case HASH_CLEAR:
-                dbg_printf(" *");
+                param1Int = (uint24_t)param1Val;
+                gfx_FillScreen(param1Int % 256);
                 break;
             case HASH_LABEL:
                 if (param1 == NULL)
@@ -509,7 +510,6 @@ int main(void)
                     dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
                 }
                 break;
-            
             default:
                 dbg_printf("SYNTAX ERROR: Unknown hash encountered");
                 break;
@@ -526,6 +526,10 @@ int main(void)
         }
 
 end_eval:
+        #ifdef DEBUG
+        if (running)
+            dbg_printf("\n");
+        #endif
         if (programCounter >= programSize - 1)
         {
             exit = true;
@@ -540,18 +544,6 @@ end_eval:
             clear_key_buffer();
         }
 
-        framecount++;
-        if (clock() - time >= CLOCKS_PER_SEC)
-        {
-            fps = (fps + framecount) / 2.0f;
-            framecount = 0;
-            time = clock();
-        }
-        #ifdef DEBUG
-        if (running)
-            dbg_printf("\tFPS: %.2f\n", fps);
-        #endif
-
         //gfx_BlitScreen();
 
         for (int i = 0; i < NumTurtles; i++) {
@@ -560,11 +552,25 @@ end_eval:
             Turtle_Draw(&turtles[i]);
         }
 
+        framecount++;
+        if (clock() - time >= CLOCKS_PER_SEC)
+        {
+            fps = fps == 0 ? framecount : (fps + framecount) / 2.0f;
+            framecount = 0;
+            time = clock();
+        }
+
         if (!running)
         {
+            gfx_BlitScreen();
             gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
             gfx_PrintStringXY("Paused", 2, 2);
+            do {
+                kb_Scan();
+            } while (!kb_IsDown(kb_KeyEnter));
+            gfx_SwapDraw();
+            gfx_SetDrawScreen();
         }
         else if (showFps) 
         {
