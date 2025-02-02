@@ -69,6 +69,7 @@ I added ':' as a shorthand for label. Proposed other shorthands are:
 | > | POPVEC |
 | = | PEEKVEC |
 | , | ANGLE |
+| ^2 | SPEED |
 
 ### Non symbolic
 | Symbol | Command |
