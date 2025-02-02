@@ -45,6 +45,7 @@ Merthsoft Creations
 | STACK [num] | Operates which stack commands operate on |
 | TEXT [str] | Writes [str] to the screen at turtle position |
 | STOP | Ends the program |
+| SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 
 ## Additional shorthands
 I added ':' as a shorthand for label. Proposed other shorthands are:
@@ -54,9 +55,9 @@ I added ':' as a shorthand for label. Proposed other shorthands are:
 | - | - |
 | + | INC |
 | - | DEC |
-| ( | PUSH |
-| ) | POP |
-| (-) | PEEK |
+| { | PUSH |
+| } | POP |
+| small E | PEEK |
 | -> | STO |
 | . | GOTO |
 | * | GOSUB |
@@ -67,7 +68,7 @@ I added ':' as a shorthand for label. Proposed other shorthands are:
 | < | PUSHVEC |
 | > | POPVEC |
 | = | PEEKVEC |
-| angle symbol | ANGLE |
+| , | ANGLE |
 
 ### Non symbolic
 | Symbol | Command |
