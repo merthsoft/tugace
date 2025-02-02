@@ -10,39 +10,33 @@
 
 #define angle_to_rads(a) (a * 0.017453292519943295f)
 
-size_t Turtle_LineBufferIndex;
-float Turtle_LineBuffer[MaxLineBuffer];
-
-static inline void pushLineBuffer(float color, float oldX, float oldY, float newX, float newY) {
-    Turtle_LineBuffer[Turtle_LineBufferIndex++] = color;
-    Turtle_LineBuffer[Turtle_LineBufferIndex++] = oldX;
-    Turtle_LineBuffer[Turtle_LineBufferIndex++] = oldY;
-    Turtle_LineBuffer[Turtle_LineBufferIndex++] = newX;
-    Turtle_LineBuffer[Turtle_LineBufferIndex++] = newY;
-}
-
 float fwrap(float x, float min, float max) {
-    return min > max
-            ? (x >= 0 ? max : min) + fmodf(x, min - max)
-            : (x >= 0 ? min : max) + fmodf(x, max - min);
+    if (min > max)
+        return fwrap(x, max, min);
+    return (x >= 0 ? min : max) + fmodf(x, max - min);
 }
 
-void move(Turtle* t, const float* x, const float* y)
+void move(Turtle* t, const float* newXptr, const float* newYptr)
 {
-    float newX = *x;
-    float newY = *y; 
+    float newX = *newXptr;
+    float newY = *newYptr;
+
     float oldX = t->x;
     float oldY = t->y;
-    if (t->pen)
-        pushLineBuffer(t->color, oldX, oldY, newX, newY);
 
     t->x = newX;
     t->y = newY;
 
+    if (t->pen)
+    {
+        gfx_SetColor(t->color);
+        gfx_Line(oldX, oldY, newX, newY);
+    }
+
     if (t->wrap)
     {
-        t->x = fwrap(t->x, 0, GFX_LCD_WIDTH);
-        t->y = fwrap(t->x, 0, GFX_LCD_HEIGHT);
+        t->x = fwrap(newX, 0, GFX_LCD_WIDTH);
+        t->y = fwrap(newY, 0, GFX_LCD_HEIGHT);
 
         if (t->pen)
         {
@@ -56,15 +50,9 @@ void move(Turtle* t, const float* x, const float* y)
             else if (t->y > newY)
                 oldY = fwrap(oldY, 0, GFX_LCD_HEIGHT) + GFX_LCD_HEIGHT;
 
-            pushLineBuffer(t->color, oldX, oldY, newX, newY);
+            gfx_Line(oldX, oldY, t->x, t->y);
         }
     }
-}
-
-void Turtle_StartEngine()
-{
-    Turtle_LineBufferIndex = 0;
-    memset(Turtle_LineBuffer, 0, MaxLineBuffer * sizeof(float));
 }
 
 void Turtle_Initialize(Turtle *t)
@@ -81,10 +69,10 @@ void Turtle_Initialize(Turtle *t)
 
 void Turtle_Forward(Turtle *t, const float* amount)
 {
-    int angle = (int)t->angle;
-    float newX = t->x + *amount * sinf(angle);
-    float newY = t->y + *amount * -sinf(angle);
-
+    float rads = angle_to_rads(t->angle);
+    float newX = t->x + *amount * sinf(rads);
+    float newY = t->y - *amount * cosf(rads);
+    
     move(t, &newX, &newY);
 }
 
@@ -144,20 +132,9 @@ void Turtle_Draw(Turtle* t)
     if (!t->initialized)
         return;
 
-    for (size_t i = 0; i < Turtle_LineBufferIndex; i += LineBufferElementSize)
-    {
-        gfx_SetColor(Turtle_LineBuffer[i]);
-        gfx_Line(
-            Turtle_LineBuffer[i + 1],
-            Turtle_LineBuffer[i + 2],
-            Turtle_LineBuffer[i + 3],
-            Turtle_LineBuffer[i + 4]);
-    }
-    Turtle_LineBufferIndex = 0;
-
     uint24_t x = (uint24_t)t->x;
     uint24_t y = (uint24_t)t->y;
-    uint8_t color = (uint8_t)fmodf(t->color, 256.0f);
+    uint8_t color = (uint8_t)fwrap(t->color, 0, 256.0f);
 
     if (x >= 0 && x < GFX_LCD_WIDTH
         && y >= 0 && y < GFX_LCD_HEIGHT)

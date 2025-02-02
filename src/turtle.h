@@ -8,11 +8,6 @@ extern "C" {
 #endif
 
 #define NumTurtles              10
-#define LineBufferElementSize   5
-#define MaxLineBuffer           NumTurtles*2*LineBufferElementSize
-
-extern size_t Turtle_LineBufferIndex;
-extern float Turtle_LineBuffer[MaxLineBuffer];
 
 typedef struct Turtle {
     bool initialized;
@@ -25,7 +20,6 @@ typedef struct Turtle {
     float wrap;
 } Turtle;
 
-void Turtle_StartEngine();
 void Turtle_Initialize(Turtle* t);
 void Turtle_Forward(Turtle* t, const float* amount);
 void Turtle_Right(Turtle* t, const float* angle);

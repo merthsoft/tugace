@@ -18,8 +18,9 @@
 #include "palette.h"
 #include "static.h"
 
-#define NumStacks   3
-#define NumLabels   100
+#define NumStacks   NumTurtles
+#define MaxStackDepth   100
+#define NumLabels       100
 
 #define NewLineToken    OS_TOK_NEWLINE
 #define SpaceToken      OS_TOK_SPACE
@@ -90,13 +91,28 @@ void debug_print_tokens(void* buffer, size_t length, size_t* stringLength)
 
 #define null_coalesce(this, orThat) (this ? this : orThat)
 
+static inline void push(float* stack, uint8_t* stackPointer, float* value)
+{
+    stack[*stackPointer] = *value;
+    *stackPointer = *stackPointer + 1;
+}
+
+static inline float pop(float* stack, uint8_t* stackPointer)
+{
+    *stackPointer = *stackPointer - 1;
+    float ret = stack[*stackPointer];
+    return ret;
+}
+
+Turtle turtles[NumTurtles];
+uint8_t labels[NumLabels];
+uint8_t stackPointers[NumStacks];
+float stacks[NumStacks][MaxStackDepth];
+
 int main(void)
 {
     clear_key_buffer();
-
-    Turtle turtles[NumTurtles];
-    uint8_t labels[NumLabels];
-    Turtle_StartEngine();
+    dbg_ClearConsole();
 
     const char* filename = "SPIRAL2";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
@@ -106,11 +122,11 @@ int main(void)
     }
 
     gfx_Begin();
+    gfx_SetDrawScreen();
     gfx_FillScreen(0);
-    gfx_SetDrawBuffer();
+    //gfx_SetDrawBuffer();
 
     Static_Initialize();
-    memset(turtles, 0, NumTurtles * sizeof(Turtle));
     Turtle_Initialize(turtles);
 
     size_t programSize = ti_GetSize(programHandle);
@@ -138,24 +154,19 @@ int main(void)
     uint24_t framecount = 0;
     float fps = 0.0f;
     char buffer[11] = "FPS: XX.XX";
-    gfx_SetTextFGColor(124);
     
     uint8_t currentTurtleIndex = 0;
     bool exit = false;
     bool running = true;
-    bool showFps = true;
+    bool showFps = false;
+    bool skipFlag = false;
+
     while (!exit)
     {
         if (!running)
             goto end_eval;
+
         Turtle* currentTurtle = &turtles[currentTurtleIndex];
-
-        if (program[programCounter] == CommentToken)
-        {
-            dbg_printf("Skipping comment.");
-            goto end_eval;
-        }
-
         size_t startPc = programCounter;
         uint8_t* command = &program[programCounter];
         size_t commandLength = stream(program, programSize, SpaceToken, &programCounter) - 1;
@@ -184,7 +195,20 @@ int main(void)
             outputTokenStringLength++;
         }
         #endif
-        
+
+
+        if (program[programCounter] == CommentToken)
+        {
+            dbg_printf("Skipping comment.");
+            goto end_eval;
+        }
+
+        if (skipFlag)
+        {
+            dbg_printf("Skipping because skipFlag is set.");
+            skipFlag = false;
+            goto end_eval;
+        }
         
         real_t* param1 = NULL;
         real_t* param2 = NULL;
@@ -192,7 +216,14 @@ int main(void)
         float param2Val;
         int24_t param1Int;
         char param1Var[4];
+        
+        uint8_t type;
+        void* ans;
         list_t* ansList;
+        cplx_list_t* cplx_ansList;
+        
+        float retList[MaxStackDepth];
+        uint8_t retListPointer = 0;
 
         if (paramsLength > 0) 
         {
@@ -202,8 +233,7 @@ int main(void)
                 goto end_eval;
             }
 
-            uint8_t type;
-            void* ans = os_GetAnsData(&type);
+            ans = os_GetAnsData(&type);
 
             param1Var[0] = params[0];
             param1Var[1] = 0;
@@ -213,12 +243,10 @@ int main(void)
             param2Val = 0;
             param1 = NULL;
             param2 = NULL;
-            ansList = NULL;
+            retListPointer = 0;
 
             if (ans) 
             {
-                
-                cplx_list_t* cplx_ansList;
                 switch (type)
                 {
                     case OS_TYPE_REAL:
@@ -254,17 +282,16 @@ int main(void)
                 dbg_printf("UNKNOWN ERROR: Failed to resolve ans.");
                 goto end_eval;
             }
-        }
-
-        if (param1 != NULL)
-        {
-            param1Val = os_RealToFloat(param1);
-            if (param2 != NULL)
+            
+            if (param1 != NULL)
+            {
+                param1Val = os_RealToFloat(param1);
+                if (param2 != NULL)
                 param2Val= os_RealToFloat(param2);
+            }
         }
 
         #ifdef DEBUG
-        dbg_printf("\t");
         if (param1)
             dbg_printf("Param1: %f", os_RealToFloat(param1));
         else
@@ -302,10 +329,10 @@ int main(void)
                 Turtle_SetAngle(currentTurtle, &param1Val);
                 break;
             case HASH_CIRCLE:
-                dbg_printf(" Unimplemented.");
+                dbg_printf(" *");
                 break;
             case HASH_CLEAR:
-                dbg_printf(" Unimplemented.");
+                dbg_printf(" *");
                 break;
             case HASH_LABEL:
                 if (param1 == NULL)
@@ -328,28 +355,60 @@ int main(void)
                     programCounter = labels[param1Int];
                 break;
             case HASH_EVAL:
-                dbg_printf(" Unimplemented.");
+                dbg_printf(" *");
                 break;
             case HASH_PUSH:
-                dbg_printf(" Unimplemented.");
+                param1Int = (uint24_t)param1Val;
+                if (param1Int > NumStacks)
+                {
+                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    break;
+                }
+                if (stackPointers[param1Int] >= MaxStackDepth)
+                {
+                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", param1Int, stackPointers[param1Int]);
+                    break;
+                }
+                push(stacks[param1Int], &stackPointers[param1Int], &param2Val);
                 break;
             case HASH_POP:
-                dbg_printf(" Unimplemented.");
-                break;
             case HASH_PEEK:
-                dbg_printf(" Unimplemented.");
+                param1Int = (uint24_t)param1Val;
+                if (param1Int > NumStacks)
+                {
+                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    break;
+                }
+                if (commandHash == HASH_POP && stackPointers[param1Int] == 0)
+                {
+                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", param1Int);
+                    break;
+                }
+                float eval = pop(stacks[param1Int], &stackPointers[param1Int]);
+                if (commandHash == HASH_PEEK) {
+                    stackPointers[param1Int]++;
+                }
+                retList[0] = eval;
+                retListPointer = 1;
                 break;
             case HASH_PUSHVEC:
-                dbg_printf(" Unimplemented.");
+                dbg_printf(" *");
                 break;
             case HASH_POPVEC:
-                dbg_printf(" Unimplemented.");
+                dbg_printf(" *");
                 break;
             case HASH_PEEKVEC:
-                dbg_printf(" Unimplemented.");
+                dbg_printf(" *");
                 break;
             case HASH_IF:
-                dbg_printf(" Unimplemented.");
+                if (param1 == NULL)
+                {
+                    dbg_printf("SYNTAX ERROR: No predicate.");
+                    break;
+                }
+                if (!param1Val) {
+                    skipFlag = true;
+                }
                 break;
             case HASH_ZERO:
                 errNo = os_SetRealVar(param1Var, &STATIC_REAL_0);
@@ -398,12 +457,18 @@ int main(void)
                 dbg_printf("SYNTAX ERROR: Unknown hash encountered");
                 break;
         }
-end_eval:
-        #ifdef DEBUG
-        if (running)
-            dbg_printf("\n");
-        #endif
 
+        if (retListPointer == 0)
+            goto end_eval;
+
+        if (retListPointer == 1)
+        {
+            real_t ans = os_FloatToReal(retList[0]);
+            dbg_printf(" setting ans to %.2f ", retList[0]);
+            os_SetRealVar(OS_VAR_ANS, &ans);
+        }
+
+end_eval:
         if (programCounter >= programSize - 1)
         {
             exit = true;
@@ -425,8 +490,12 @@ end_eval:
             framecount = 0;
             time = clock();
         }
+        #ifdef DEBUG
+        if (running)
+            dbg_printf("\tFPS: %.2f\n", fps);
+        #endif
 
-        gfx_BlitScreen();
+        //gfx_BlitScreen();
 
         for (int i = 0; i < NumTurtles; i++) {
             if (!turtles[i].initialized)
@@ -434,24 +503,21 @@ end_eval:
             Turtle_Draw(&turtles[i]);
         }
 
-        if (running)
+        if (!running)
         {
-            if (showFps) 
-            {
-                gfx_SetColor(0);
-                gfx_FillRectangle(0, 0, 84, 12);
-                sprintf(buffer, "FPS: %.2f", fps);
-                gfx_PrintStringXY(buffer, 2, 2);
-            }
-        }
-        else
-        {
-            gfx_SetColor(0);
-            gfx_FillRectangle(0, 0, 84, 12);
+            gfx_SetTextBGColor(0);
+            gfx_SetTextFGColor(124);
             gfx_PrintStringXY("Paused", 2, 2);
         }
+        else if (showFps) 
+        {
+            gfx_SetTextBGColor(0);
+            gfx_SetTextFGColor(124);
+            sprintf(buffer, "FPS: %.2f", fps);
+            gfx_PrintStringXY(buffer, 2, 2);
+        }
         
-        gfx_SwapDraw();
+        //gfx_SwapDraw();
     }
 
     gfx_BlitScreen();
