@@ -13,7 +13,7 @@
 float fwrap(float x, float min, float max) {
     if (min > max)
         return fwrap(x, max, min);
-    return (x >= 0 ? min : max) + fmodf(x, max - min);
+    return (x >= 0 ? min : max) + fmod(x, max - min);
 }
 
 void move(Turtle* t, const float* newXptr, const float* newYptr)

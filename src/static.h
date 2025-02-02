@@ -14,6 +14,35 @@ extern real_t STATIC_REAL_GFX_LCD_HEIGHT;
 extern real_t STATIC_REAL_GFX_LCD_WIDTH_HALF;
 extern real_t STATIC_REAL_GFX_LCD_HEIGHT_HALF;
 
+typedef uint8_t labelIndex;
+typedef uint8_t stackkIndex;
+typedef uint8_t turtleIndex;
+
+#define NumTurtles      10
+#define NumDataFields   6
+#define NumStacks       NumTurtles
+#define MaxStackDepth   100
+#define NumLabels       100
+
+#define NewLineToken    OS_TOK_NEWLINE
+#define SpaceToken      OS_TOK_SPACE
+#define CommentToken    OS_TOK_DOUBLE_QUOTE
+
+#define LabelToken      OS_TOK_COLON
+
+#if 0
+#define GotoToken       OS_TOK_GOTO
+#define GosubToken      OS_TOK_MULTIPLY
+#define RetToken        OS_TOK_DIVIDE
+
+#define PushToken       OS_TOK_ADD
+#define PopToken        OS_TOK_SUB
+
+#define ForwardToken    OS_TOK_POWER
+#define LeftToken       OS_TOK_LESS_THAN
+#define ForwardToken    OS_TOK_GREATER_THAN
+#endif
+
 #define HASH_COLOR    0xE809A4
 #define HASH_PEN      0x881068
 #define HASH_FORWARD  0x70717A
@@ -38,6 +67,9 @@ extern real_t STATIC_REAL_GFX_LCD_HEIGHT_HALF;
 #define HASH_DEC      0x87DD51
 #define HASH_ZERO     0x8F9A05
 #define HASH_STO      0x881F1B
+#define HASH_GOSUB    0x308A25
+#define HASH_RET      0x000002
+#define HASH_STACK    0x000003
 
 void Static_Initialize(void);
 

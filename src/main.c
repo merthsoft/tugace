@@ -18,15 +18,26 @@
 #include "palette.h"
 #include "static.h"
 
-#define NumStacks   NumTurtles
-#define MaxStackDepth   100
-#define NumLabels       100
+#ifdef DEBUG
+void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
+{
+    void** ptr = (void**)(&buffer);
+    uint8_t tokenLength;
+    size_t tokenStringLength;
+    uint8_t i = 0;
+    if (stringLength)
+        *stringLength = 0;
+    while(i < length)
+    {
+        dbg_printf("%s", ti_GetTokenString(ptr, &tokenLength, &tokenStringLength));
+        i += tokenLength;
+        if (stringLength)
+            *stringLength += tokenStringLength;
+    }
+}
+#endif
 
-#define NewLineToken    OS_TOK_NEWLINE
-#define SpaceToken      OS_TOK_SPACE
-#define CommentToken    OS_TOK_DOUBLE_QUOTE
-
-size_t stream(const uint8_t* data, const size_t dataLength, const uint8_t delim, size_t* index)
+size_t streamToNewline(const uint8_t* data, const size_t dataLength, const uint8_t delim, size_t* index)
 {
     size_t start = *index;
 
@@ -43,7 +54,7 @@ size_t stream(const uint8_t* data, const size_t dataLength, const uint8_t delim,
     do {
         char c = data[*index];
         *index = *index + 1;
-        if (c == delim)
+        if (c == delim || c == NewLineToken)
         {
             return *index - start; 
         }
@@ -51,6 +62,74 @@ size_t stream(const uint8_t* data, const size_t dataLength, const uint8_t delim,
     
     *index = dataLength;
     return *index - start + 1;
+}
+
+size_t labelSeek(const uint8_t* data, size_t dataLength, size_t dataStart, labelIndex label)
+{
+    if (dataLength == 0)
+    {
+        return 0;
+    }
+    
+    size_t index = dataStart;
+    while (index < dataLength) {
+        do {
+            char c = data[index];
+            if (c == LabelToken)
+            {
+                break;
+            }
+            if (strncmp((const char*)data, "LABEL ", 6) == 0) {
+                break;
+            }
+            streamToNewline(data, dataLength, NewLineToken, &index);
+        } while (index < dataLength);
+        
+        if (index >= dataLength)
+        {
+            return 0;
+        }
+
+        index++;
+        const uint8_t* params = &data[index];
+        size_t paramsLength = streamToNewline(data, dataLength, NewLineToken, &index);
+
+        if (paramsLength == 0)
+        {
+            continue;
+            return 0;
+        }
+        
+        if (os_Eval(params, paramsLength)) 
+        {
+            continue;
+        }
+
+        uint8_t type;
+        void* ans = os_GetAnsData(&type);
+        if (!ans)
+        {
+            continue;
+        }
+        real_t* realParam;
+        uint24_t param;
+        switch (type)
+        {
+            case OS_TYPE_REAL:
+                realParam = ans;
+                break;
+            case OS_TYPE_CPLX:
+                realParam = ans;
+                break;
+            default:
+                continue;
+        }
+        param = os_RealToInt24(realParam);
+        if (param == label)
+            return index;
+    }
+
+    return 0;
 }
 
 // http://www.cse.yorku.ca/~oz/hash.html
@@ -69,25 +148,6 @@ static inline uint24_t hash(const uint8_t* arr, size_t length)
 }
 
 #define clear_key_buffer() while(kb_AnyKey())
-
-#ifdef DEBUG
-void debug_print_tokens(void* buffer, size_t length, size_t* stringLength)
-{
-    void** ptr = &buffer;
-    uint8_t tokenLength;
-    size_t tokenStringLength;
-    uint8_t i = 0;
-    if (stringLength)
-        *stringLength = 0;
-    while(i < length)
-    {
-        dbg_printf("%s", ti_GetTokenString(ptr, &tokenLength, &tokenStringLength));
-        i += tokenLength;
-        if (stringLength)
-            *stringLength += tokenStringLength;
-    }
-}
-#endif
 
 #define null_coalesce(this, orThat) (this ? this : orThat)
 
@@ -117,7 +177,7 @@ static inline float pop(float* stack, uint8_t* stackPointer)
 }
 
 Turtle turtles[NumTurtles];
-uint8_t labels[NumLabels];
+size_t labels[NumLabels];
 uint8_t stackPointers[NumStacks];
 float stacks[NumStacks][MaxStackDepth];
 
@@ -149,10 +209,10 @@ int main(void)
     
     size_t programCounter = 0;
     // Header
-    stream(program, programSize, NewLineToken, &programCounter);
+    streamToNewline(program, programSize, NewLineToken, &programCounter);
     // Comment
     uint8_t* comment = &program[programCounter];
-    size_t commentLength = stream(program, programSize, NewLineToken, &programCounter) - 1;
+    size_t commentLength = streamToNewline(program, programSize, NewLineToken, &programCounter) - 1;
     size_t programStart = programCounter;
     
     #ifdef DEBUG
@@ -167,9 +227,11 @@ int main(void)
     float fps = 0.0f;
     char buffer[11] = "FPS: XX.XX";
     
-    uint8_t currentTurtleIndex = 0;
+    turtleIndex currentTurtleIndex = 0;
+    stackkIndex currentStackIndex = 0;
+
     bool exit = false;
-    bool running = true;
+    bool running = false;
     bool showFps = true;
     bool skipFlag = false;
 
@@ -180,14 +242,36 @@ int main(void)
 
         Turtle* currentTurtle = &turtles[currentTurtleIndex];
         size_t startPc = programCounter;
+
+        
         uint8_t* command = &program[programCounter];
-        size_t commandLength = stream(program, programSize, SpaceToken, &programCounter) - 1;
+        size_t commandLength = 0;
+        uint32_t commandHash = 0;
+        uint8_t* params;
+        size_t paramsLength = 0;
+
+        char shortHand = program[programCounter];
+        switch (shortHand)
+        {
+            case CommentToken:
+                dbg_printf("Skipping comment.");
+                goto end_eval;
+            case LabelToken:
+                commandHash = HASH_LABEL;
+                commandLength = 1;
+                programCounter++;
+                break;
+            default:
+                commandLength = streamToNewline(program, programSize, SpaceToken, &programCounter) - 1;
+                commandHash = hash(command, commandLength);
+                break;
+        }
         
-        uint32_t commandHash = hash(command, commandLength);
-        
-        uint8_t* params = &program[programCounter];
-        size_t paramsLength = stream(program, programSize, NewLineToken, &programCounter) - 1;
-        
+        if (program[programCounter-1] != NewLineToken) {
+            params = &program[programCounter];
+            paramsLength = streamToNewline(program, programSize, NewLineToken, &programCounter) - 1;
+        }
+
         #ifdef DEBUG
         size_t outputTokenStringLength;
         dbg_printf("%.4d: 0x%.6lX ", startPc, commandHash);
@@ -208,13 +292,6 @@ int main(void)
         }
         #endif
 
-
-        if (program[programCounter] == CommentToken)
-        {
-            dbg_printf("Skipping comment.");
-            goto end_eval;
-        }
-
         if (skipFlag)
         {
             dbg_printf("Skipping because skipFlag is set.");
@@ -227,6 +304,7 @@ int main(void)
         float param1Val;
         float param2Val;
         int24_t param1Int;
+        float eval;
         char param1Var[4];
         
         uint8_t type;
@@ -357,6 +435,7 @@ int main(void)
                 if (param1Int >= 0 && param1Int < NumLabels)
                     labels[param1Int] = programCounter;
                 break;
+            case HASH_GOSUB:
             case HASH_GOTO:
                 if (param1 == NULL)
                 {
@@ -364,78 +443,85 @@ int main(void)
                     break;
                 }
                 param1Int = (uint24_t)param1Val;
-                if (param1Int >= 0 && param1Int < NumLabels && labels[param1Int] >= programStart && labels[param1Int] < programSize)
-                    programCounter = labels[param1Int];
+                if (param1Int >= NumLabels)
+                {
+                    dbg_printf("SYNTAX ERROR: Invalid label: %d.", param1Int);
+                    break;
+                }
+                size_t labelIndex = labels[param1Int];
+                if (labelIndex <= programStart || labelIndex >= programSize)
+                {
+                    labelIndex = labelSeek(program, programSize, programStart, param1Int);
+                    if (labelIndex <= programStart || labelIndex >= programSize)
+                    {
+                        dbg_printf("SYNTAX ERROR: Invalid label: %d - %d.", param1Int, labelIndex);
+                        break;
+                    }
+                    labels[param1Int] = labelIndex;
+                }
+                if (commandHash == HASH_GOSUB)
+                {
+                    float pc = (float)programCounter;
+                    push(stacks[currentStackIndex], &stackPointers[currentStackIndex], &pc);
+                }
+                dbg_printf(" found %d at %d ", param1Int, labelIndex);
+                programCounter = labelIndex;
+                dbg_printf(" jumping to %d ", programCounter);
                 break;
             case HASH_EVAL:
                 dbg_printf(" *");
                 break;
             case HASH_PUSH:
-                param1Int = (uint24_t)param1Val;
-                if (param1Int > NumStacks)
+                if (stackPointers[currentStackIndex] >= MaxStackDepth)
                 {
-                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, stackPointers[currentStackIndex]);
                     break;
                 }
-                if (stackPointers[param1Int] >= MaxStackDepth)
+                push(stacks[currentStackIndex], &stackPointers[currentStackIndex], &param1Val);
+                break;
+            case HASH_RET:
+                if (stackPointers[currentStackIndex] == 0)
                 {
-                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", param1Int, stackPointers[param1Int]);
+                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
-                push(stacks[param1Int], &stackPointers[param1Int], &param2Val);
+                eval = pop(stacks[currentStackIndex], &stackPointers[currentStackIndex]);
+                programCounter = (size_t)eval;
                 break;
             case HASH_POP:
             case HASH_PEEK:
-                param1Int = (uint24_t)param1Val;
-                if (param1Int > NumStacks)
+                if (commandHash == HASH_POP && stackPointers[currentStackIndex] == 0)
                 {
-                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
-                if (commandHash == HASH_POP && stackPointers[param1Int] == 0)
-                {
-                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", param1Int);
-                    break;
-                }
-                float eval = pop(stacks[param1Int], &stackPointers[param1Int]);
+                eval = pop(stacks[currentStackIndex], &stackPointers[currentStackIndex]);
                 if (commandHash == HASH_PEEK) {
-                    stackPointers[param1Int]++;
+                    stackPointers[currentStackIndex]++;
                 }
                 retList[0] = eval;
                 retListPointer = 1;
                 break;
             case HASH_PUSHVEC:
-                param1Int = (uint24_t)param1Val;
-                if (param1Int > NumStacks)
+                if (stackPointers[currentStackIndex] + 6 >= MaxStackDepth)
                 {
-                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, stackPointers[currentStackIndex]);
                     break;
                 }
-                if (stackPointers[param1Int] + 6 >= MaxStackDepth)
-                {
-                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", param1Int, stackPointers[param1Int]);
-                    break;
-                }
-                pushTurtle(stacks[param1Int], &stackPointers[param1Int], currentTurtle);
+                pushTurtle(stacks[currentStackIndex], &stackPointers[currentStackIndex], currentTurtle);
                 break;
             case HASH_POPVEC:
             case HASH_PEEKVEC:
-            param1Int = (uint24_t)param1Val;
-                if (param1Int > NumStacks)
+                if (commandHash == HASH_POPVEC && stackPointers[currentStackIndex] == NumDataFields-1)
                 {
-                    dbg_printf("SYNTAX ERROR: Invalid stack number %d.", param1Int);
+                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
-                if (commandHash == HASH_POPVEC && stackPointers[param1Int] == NumDataFields-1)
-                {
-                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", param1Int);
-                    break;
-                }
-                popTurtle(stacks[param1Int], &stackPointers[param1Int], currentTurtle);
+                popTurtle(stacks[currentStackIndex], &stackPointers[currentStackIndex], currentTurtle);
                 if (commandHash == HASH_PEEKVEC) {
-                    stackPointers[param1Int] += NumDataFields;
+                    stackPointers[currentStackIndex] += NumDataFields;
                 }
-                break;
+                break;                
             case HASH_IF:
                 if (param1 == NULL)
                 {
@@ -509,6 +595,9 @@ int main(void)
                 else {
                     dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
                 }
+                break;
+            case HASH_TURTLE:
+                dbg_printf(" *");
                 break;
             default:
                 dbg_printf("SYNTAX ERROR: Unknown hash encountered");

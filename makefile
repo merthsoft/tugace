@@ -8,7 +8,7 @@ DESCRIPTION = "TUGA Interpreter"
 COMPRESSED = YES
 ARCHIVED = YES
 
-CFLAGS = -Wall -Wextra -Oz
+CFLAGS = -Wall -Wextra -O3
 CXXFLAGS = -Wall -Wextra -Oz
 
 PREFER_OS_CRT = NO

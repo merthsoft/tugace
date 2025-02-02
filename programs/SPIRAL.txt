@@ -1,6 +1,6 @@
-prgmTURTLE:Return
-"Draws a s\piral
-CLEAR 255
+TURT:Return
+"DRAWS A SPIRAL
+CLEAR 0
 PEN 1
 ZERO F
 LABEL 1
