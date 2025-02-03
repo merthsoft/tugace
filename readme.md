@@ -70,15 +70,12 @@ I added ':' as a shorthand for label. Proposed other shorthands are:
 | = | PEEKVEC |
 | , | ANGLE |
 | ^2 | SPEED |
-
-### Non symbolic
-| Symbol | Command |
-| - | - |
 | T | TURTLE |
 | P | PEN |
 | W | WRAP |
 | C | COLOR |
 | M | MOVE |
+| 0 | ZERO |
 | S | STACK |
 | X | TEXT |
 | E | ELLIPSE |
