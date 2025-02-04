@@ -21,11 +21,12 @@ typedef uint8_t TurtleIndex;
 typedef uint8_t StackPointer;
 typedef size_t  ProgramCounter;
 
-#define NumTurtles      10
-#define NumDataFields   6
-#define NumStacks       NumTurtles
-#define MaxStackDepth   100
-#define NumLabels       100
+#define NumTurtles       10
+#define NumDataFields    6
+#define NumStacks        NumTurtles
+#define MaxStackDepth    100
+#define NumLabels        100
+#define SystemStackDepth 255
 
 #define NewLineToken    OS_TOK_NEWLINE
 #define LineDelimToken  OS_TOK_COLON
@@ -73,8 +74,11 @@ typedef size_t  ProgramCounter;
 #define HASH_ZERO     0x8F9A05
 #define HASH_STO      0x881F1B
 #define HASH_GOSUB    0x308A25
-#define HASH_RET      0x000002
-#define HASH_STACK    0x000003
+#define HASH_RET      0x8818F0
+#define HASH_STACK    0x0C1F3B
+#define HASH_FADEOUT  0xC13ECD
+#define HASH_FADEIN   0xE6D28C
+#define HASH_PALETTE  0x187774
 
 void Static_Initialize(void);
 

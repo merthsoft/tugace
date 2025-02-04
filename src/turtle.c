@@ -61,7 +61,7 @@ void Turtle_Initialize(Turtle *t)
 
     t->x = GFX_LCD_WIDTH / 2;
     t->y = GFX_LCD_HEIGHT / 2;
-
+    t->angle = 0;
     t->color = 255;
     t->pen = 0;
     t->wrap = 1;

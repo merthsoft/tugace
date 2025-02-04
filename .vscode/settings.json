@@ -2,6 +2,8 @@
     "files.associations": {
         "turtle.h": "c",
         "static.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "palette.h": "c",
+        "stdlib.h": "c"
     }
 }

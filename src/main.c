@@ -179,29 +179,30 @@ static inline float pop(float* stack, StackPointer* stackPointer)
 
 Turtle turtles[NumTurtles];
 ProgramCounter labels[NumLabels];
-float systemStack[MaxStackDepth*NumStacks];
+StackPointer systemStackPointer;
+float systemStack[SystemStackDepth];
 StackPointer stackPointers[NumStacks];
 float stacks[NumStacks][MaxStackDepth];
 
+uint16_t palette[256];
+
 int main(void)
 {
-    clear_key_buffer();
-    dbg_ClearConsole();
-
-    const char* filename = "TREE2";
+    const char* filename = "TREEFRAC";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0)
     {
         return 1;
     }
 
+    clear_key_buffer();
+    dbg_ClearConsole();
+
     gfx_Begin();
     gfx_SetDrawScreen();
-    gfx_FillScreen(0);
     //gfx_SetDrawBuffer();
 
     Static_Initialize();
-    Turtle_Initialize(turtles);
 
     size_t programSize = ti_GetSize(programHandle);
     ProgramToken* program = malloc(programSize * sizeof(void*));
@@ -227,22 +228,30 @@ int main(void)
     clock_t time = clock();
     uint24_t framecount = 0;
     float fps = 0.0f;
-    char buffer[11] = "FPS: XX.XX";
-    
+    char buffer[14] = "FPS: XXX     ";
+
+program_start:
+    memset(stackPointers, 0, sizeof(StackPointer)*NumStacks);
+    systemStackPointer = 0;
+    Turtle_Initialize(turtles);
+    palette_default(palette);
+    programCounter = programStart;
+
     TurtleIndex currentTurtleIndex = 0;
     StackIndex currentStackIndex = 0;
 
     bool exit = false;
     bool running = true;
-    bool showFps = true;
+    bool showFps = false;
     bool skipFlag = false;
 
+    dbg_printf("Starting program exection.\n");
     while (!exit)
     {
+        Turtle* currentTurtle = &turtles[currentTurtleIndex];
         if (!running)
             goto end_eval;
 
-        Turtle* currentTurtle = &turtles[currentTurtleIndex];
         ProgramCounter startPc = programCounter;
 
         ProgramToken* command = &program[programCounter];
@@ -470,8 +479,13 @@ int main(void)
                 }
                 if (commandHash == HASH_GOSUB)
                 {
+                    if (systemStackPointer >= SystemStackDepth)
+                    {
+                        dbg_printf("SYNTAX ERROR: Max stack depth violated for stack system stack.");
+                        break;
+                    }
                     float pc = (float)programCounter;
-                    push(systemStack, &stackPointers[currentStackIndex], &pc);
+                    push(systemStack, &systemStackPointer, &pc);
                 }
                 programCounter = labelIndex;
                 break;
@@ -487,12 +501,12 @@ int main(void)
                 push(stacks[currentStackIndex], &stackPointers[currentStackIndex], &param1Val);
                 break;
             case HASH_RET:
-                if (stackPointers[currentStackIndex] == 0)
+                if (systemStackPointer == 0)
                 {
-                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
+                    dbg_printf("SYNTAX ERROR: Negative stack depth for system stack.");
                     break;
                 }
-                eval = pop(systemStack, &stackPointers[currentStackIndex]);
+                eval = pop(systemStack, &systemStackPointer);
                 programCounter = (size_t)eval;
                 break;
             case HASH_POP:
@@ -520,7 +534,7 @@ int main(void)
             case HASH_POPVEC:
             case HASH_POP_VEC:
             case HASH_PEEKVEC:
-                if (commandHash == HASH_POPVEC && stackPointers[currentStackIndex] == NumDataFields-1)
+                if (commandHash == HASH_POPVEC && stackPointers[currentStackIndex] <= NumDataFields-1)
                 {
                     dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
@@ -605,10 +619,44 @@ int main(void)
                 }
                 break;
             case HASH_TURTLE:
-                dbg_printf(" *");
+                param1Int = (int24_t)param1Val;
+                if (param1Int < -1 || param1Int > NumTurtles)
+                {
+                    dbg_printf("SYNTAX ERROR: Invalid turtle number %d", param1Int);
+                    break;
+                }
+                currentTurtleIndex = param1Int;
+                break;
+            case HASH_STACK:
+                param1Int = (int24_t)param1Val;
+                if (param1Int < -1 || param1Int > NumStacks)
+                {
+                    dbg_printf("SYNTAX ERROR: Invalid stack number %d", param1Int);
+                    break;
+                }
+                currentStackIndex = param1Int;
+                break;
+            case HASH_FADEOUT:
+                param1Int = (int24_t)param1Val;
+                fade_out(palette, 0, 255, param1Int);
+                break;
+            case HASH_FADEIN:
+                param1Int = (int24_t)param1Val;
+                fade_in(palette, 0, 255, param1Int);
+                break;
+            case HASH_PALETTE:
+                param1Int = (int24_t)param1Val;
+                switch (param1Int) {
+                    case 0:
+                        palette_default(palette);
+                        break;
+                    default:
+                        dbg_printf("SYNTAX ERROR: Invalid palette %d", param1Int);
+                        break;
+                }
                 break;
             default:
-                dbg_printf("SYNTAX ERROR: Unknown hash encountered");
+                dbg_printf("SYNTAX ERROR: Unknown hash encountered 0x%.6lX", commandHash);
                 break;
         }
 
@@ -638,7 +686,6 @@ end_eval:
         if (kb_IsDown(kb_KeyEnter))
         {
             running = !running;
-            clear_key_buffer();
         }
 
         //gfx_BlitScreen();
@@ -663,35 +710,50 @@ end_eval:
             gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
             gfx_PrintStringXY("Paused", 2, 2);
+            clear_key_buffer();
             do {
                 kb_Scan();
-            } while (!kb_IsDown(kb_KeyEnter));
-            gfx_SwapDraw();
-            gfx_SetDrawScreen();
+                exit |= kb_IsDown(kb_KeyDel) | kb_IsDown(kb_KeyClear) | kb_IsDown(kb_KeyMode) | kb_IsDown(kb_KeyEnter);
+            } while (!exit);
+            if (kb_IsDown(kb_KeyEnter))
+            {
+                exit = false;
+                running = true;
+            }
+            clear_key_buffer();
+            gfx_BlitBuffer();
         }
         else if (showFps) 
         {
             gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
-            sprintf(buffer, "FPS: %.2f", fps);
+            sprintf(buffer, "FPS: %d   ", (uint8_t)fps);
             gfx_PrintStringXY(buffer, 2, 2);
         }
         
         //gfx_SwapDraw();
     }
 
+    dbg_printf("Done. PC: %d\n", programCounter);
     gfx_BlitScreen();
     gfx_SetTextFGColor(124);
     gfx_SetTextBGColor(0);
     gfx_SetColor(0);
     gfx_FillRectangle(0, 0, 84, 12);
     gfx_PrintStringXY("Done", 2, 2);
-    gfx_SwapDraw();
-
+    
     clear_key_buffer();
     do  {
         kb_Scan();
     } while (!(kb_IsDown(kb_KeyDel) | kb_IsDown(kb_KeyClear) | kb_IsDown(kb_KeyMode) | kb_IsDown(kb_KeyEnter)));
+
+    kb_Scan();
+    if (kb_IsDown(kb_KeyEnter))
+    {
+        clear_key_buffer();
+        gfx_BlitBuffer();
+        goto program_start;
+    }
 
     ti_Close(programHandle);
     gfx_End();
