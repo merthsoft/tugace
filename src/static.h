@@ -63,7 +63,8 @@ typedef size_t  ProgramCounter;
 #define HASH_POP      0x8811B4
 #define HASH_PEEK     0x8A1C8A
 #define HASH_PUSHVEC  0x3FFB43
-#define HASH_POPVEC   0x4858FC
+#define HASH_POPVEC   0x4858FC // This is with the [PV] token lol
+#define HASH_POP_VEC  0x3E9C32
 #define HASH_PEEKVEC  0xF1BF48
 #define HASH_IF       0x5973F4
 #define HASH_TURTLE   0x00E2E5

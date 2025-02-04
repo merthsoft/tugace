@@ -179,7 +179,7 @@ static inline float pop(float* stack, StackPointer* stackPointer)
 
 Turtle turtles[NumTurtles];
 ProgramCounter labels[NumLabels];
-StackPointer systemStack[MaxStackDepth*NumStacks];
+float systemStack[MaxStackDepth*NumStacks];
 StackPointer stackPointers[NumStacks];
 float stacks[NumStacks][MaxStackDepth];
 
@@ -283,7 +283,7 @@ int main(void)
 
         #ifdef DEBUG
         size_t outputTokenStringLength;
-        dbg_printf("%.4d: 0x%.6lX ", startPc, commandHash);
+        dbg_printf("%.4d: ", startPc);
         debug_print_tokens(command, commandLength, &outputTokenStringLength);
         
         while (outputTokenStringLength < 10)
@@ -391,16 +391,16 @@ int main(void)
         }
 
         #ifdef DEBUG
-        if (param1)
+        if (param1) 
+        {
             dbg_printf("Param1: %f", os_RealToFloat(param1));
-        else
-            dbg_printf("Param1: NULL\t");
-        dbg_printf("\t");
-        if (param2)
-            dbg_printf("Param2: %f", os_RealToFloat(param2));
-        else
-            dbg_printf("Param2: NULL\t");
-        dbg_printf("\t");
+            dbg_printf("\t");
+            if (param2) 
+            {
+                dbg_printf("Param2: %f", os_RealToFloat(param2));
+                dbg_printf("\t");
+            }
+        }
         #endif
 
         int errNo;
@@ -473,9 +473,7 @@ int main(void)
                     float pc = (float)programCounter;
                     push(systemStack, &stackPointers[currentStackIndex], &pc);
                 }
-                dbg_printf(" found %d at %d ", param1Int, labelIndex);
                 programCounter = labelIndex;
-                dbg_printf(" jumping to %d ", programCounter);
                 break;
             case HASH_EVAL:
                 dbg_printf(" *");
@@ -520,6 +518,7 @@ int main(void)
                 pushTurtle(stacks[currentStackIndex], &stackPointers[currentStackIndex], currentTurtle);
                 break;
             case HASH_POPVEC:
+            case HASH_POP_VEC:
             case HASH_PEEKVEC:
                 if (commandHash == HASH_POPVEC && stackPointers[currentStackIndex] == NumDataFields-1)
                 {

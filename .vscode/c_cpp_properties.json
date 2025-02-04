@@ -7,9 +7,7 @@
                 "${workspaceFolder}/**"
             ],
             "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
+                //"DEBUG"
             ],
             "compilerPath": "C:\\CEdev\\bin\\ez80-clang.exe",
             "cStandard": "gnu17",
