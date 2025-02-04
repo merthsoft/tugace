@@ -37,9 +37,9 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 }
 #endif
 
-size_t streamToNewline(const uint8_t* data, const size_t dataLength, const uint8_t delim, size_t* index)
+size_t streamToNewline(const ProgramToken* data, const size_t dataLength, ProgramToken additionalDelim, ProgramCounter* index)
 {
-    size_t start = *index;
+    const size_t start = *index;
 
     if (dataLength == 0)
     {
@@ -50,11 +50,11 @@ size_t streamToNewline(const uint8_t* data, const size_t dataLength, const uint8
     {
         return 0;
     }
-
+    const char* d = (char*)data;
     do {
-        char c = data[*index];
+        char c = d[*index];
         *index = *index + 1;
-        if (c == delim || c == NewLineToken)
+        if (c == NewLineToken || c == additionalDelim)
         {
             return *index - start; 
         }
@@ -64,22 +64,22 @@ size_t streamToNewline(const uint8_t* data, const size_t dataLength, const uint8
     return *index - start + 1;
 }
 
-size_t labelSeek(const uint8_t* data, size_t dataLength, size_t dataStart, labelIndex label)
+ProgramCounter labelSeek(const ProgramToken* data, size_t dataLength, ProgramCounter dataStart, LabelIndex label)
 {
     if (dataLength == 0)
     {
         return 0;
     }
-    
+    const char* d = (char*)data;
     size_t index = dataStart;
     while (index < dataLength) {
         do {
-            char c = data[index];
+            char c = d[index];
             if (c == LabelToken)
             {
                 break;
             }
-            if (strncmp((const char*)data, "LABEL ", 6) == 0) {
+            if (strncmp(&d[index], "LABEL ", 6) == 0) {
                 break;
             }
             streamToNewline(data, dataLength, NewLineToken, &index);
@@ -91,8 +91,8 @@ size_t labelSeek(const uint8_t* data, size_t dataLength, size_t dataStart, label
         }
 
         index++;
-        const uint8_t* params = &data[index];
-        size_t paramsLength = streamToNewline(data, dataLength, NewLineToken, &index);
+        const char* params = &d[index];
+        size_t paramsLength = streamToNewline(d, dataLength, NewLineToken, &index);
 
         if (paramsLength == 0)
         {
@@ -133,14 +133,15 @@ size_t labelSeek(const uint8_t* data, size_t dataLength, size_t dataStart, label
 }
 
 // http://www.cse.yorku.ca/~oz/hash.html
-static inline uint24_t hash(const uint8_t* arr, size_t length)
+static inline uint24_t hash(const ProgramToken* arr, size_t length)
 {
     uint32_t hash = 5381;
     uint8_t c;
+    const uint8_t* d = (uint8_t*)arr;
 
     while (length--)
     {
-        c = *arr++;
+        c = *d++;
         hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
     }
 
@@ -151,25 +152,25 @@ static inline uint24_t hash(const uint8_t* arr, size_t length)
 
 #define null_coalesce(this, orThat) (this ? this : orThat)
 
-static inline void pushTurtle(float* stack, uint8_t* stackPointer, Turtle* turtle)
+static inline void pushTurtle(float* stack, StackPointer* stackPointer, const Turtle* turtle)
 {
     memcpy(&stack[*stackPointer], &turtle->x, sizeof(float)*NumDataFields);
     *stackPointer = *stackPointer + NumDataFields;
 }
 
-static inline void popTurtle(float* stack, uint8_t* stackPointer, Turtle* turtle)
+static inline void popTurtle(float* stack, StackPointer* stackPointer, Turtle* turtle)
 {
     *stackPointer = *stackPointer - NumDataFields;
     memcpy(&turtle->x, &stack[*stackPointer], sizeof(float)*NumDataFields);
 }
 
-static inline void push(float* stack, uint8_t* stackPointer, float* value)
+static inline void push(float* stack, StackPointer* stackPointer, float* value)
 {
     stack[*stackPointer] = *value;
     *stackPointer = *stackPointer + 1;
 }
 
-static inline float pop(float* stack, uint8_t* stackPointer)
+static inline float pop(float* stack, StackPointer* stackPointer)
 {
     *stackPointer = *stackPointer - 1;
     float ret = stack[*stackPointer];
@@ -177,8 +178,9 @@ static inline float pop(float* stack, uint8_t* stackPointer)
 }
 
 Turtle turtles[NumTurtles];
-size_t labels[NumLabels];
-uint8_t stackPointers[NumStacks];
+ProgramCounter labels[NumLabels];
+StackPointer systemStack[MaxStackDepth*NumStacks];
+StackPointer stackPointers[NumStacks];
 float stacks[NumStacks][MaxStackDepth];
 
 int main(void)
@@ -186,7 +188,7 @@ int main(void)
     clear_key_buffer();
     dbg_ClearConsole();
 
-    const char* filename = "TREE";
+    const char* filename = "TREE2";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0)
     {
@@ -202,18 +204,18 @@ int main(void)
     Turtle_Initialize(turtles);
 
     size_t programSize = ti_GetSize(programHandle);
-    uint8_t* program = malloc(programSize * sizeof(void*));
+    ProgramToken* program = malloc(programSize * sizeof(void*));
     ti_Read(program, programSize, 1, programHandle);
     
     srand(rtc_Time());
     
-    size_t programCounter = 0;
+    ProgramCounter programCounter = 0;
     // Header
     streamToNewline(program, programSize, NewLineToken, &programCounter);
     // Comment
-    uint8_t* comment = &program[programCounter];
+    ProgramToken* comment = &program[programCounter];
     size_t commentLength = streamToNewline(program, programSize, NewLineToken, &programCounter) - 1;
-    size_t programStart = programCounter;
+    ProgramCounter programStart = programCounter;
     
     #ifdef DEBUG
     dbg_printf("prgm%s - ", filename);
@@ -227,11 +229,11 @@ int main(void)
     float fps = 0.0f;
     char buffer[11] = "FPS: XX.XX";
     
-    turtleIndex currentTurtleIndex = 0;
-    stackkIndex currentStackIndex = 0;
+    TurtleIndex currentTurtleIndex = 0;
+    StackIndex currentStackIndex = 0;
 
     bool exit = false;
-    bool running = false;
+    bool running = true;
     bool showFps = true;
     bool skipFlag = false;
 
@@ -241,13 +243,12 @@ int main(void)
             goto end_eval;
 
         Turtle* currentTurtle = &turtles[currentTurtleIndex];
-        size_t startPc = programCounter;
+        ProgramCounter startPc = programCounter;
 
-        
-        uint8_t* command = &program[programCounter];
+        ProgramToken* command = &program[programCounter];
         size_t commandLength = 0;
         uint32_t commandHash = 0;
-        uint8_t* params;
+        ProgramToken* params;
         size_t paramsLength = 0;
 
         char shortHand = program[programCounter];
@@ -257,7 +258,15 @@ int main(void)
                 dbg_printf("Skipping comment.");
                 goto end_eval;
             case LabelToken:
-                commandHash = HASH_LABEL;
+            case GotoToken:
+                switch (shortHand) {
+                    case LabelToken:
+                        commandHash = HASH_LABEL;
+                        break;
+                    case GotoToken:
+                        commandHash = HASH_GOTO;
+                        break;
+                }
                 commandLength = 1;
                 programCounter++;
                 break;
@@ -319,7 +328,7 @@ int main(void)
         {
             if (os_Eval(params, paramsLength)) 
             {
-                dbg_printf("SYNTAX ERROR: Failed to eval \"%.*s\" length: %d \n", paramsLength, params, paramsLength);
+                dbg_printf("SYNTAX ERROR: Failed to eval \"%.*s\" length: %d \n", paramsLength, (const char*)params, paramsLength);
                 goto end_eval;
             }
 
@@ -462,7 +471,7 @@ int main(void)
                 if (commandHash == HASH_GOSUB)
                 {
                     float pc = (float)programCounter;
-                    push(stacks[currentStackIndex], &stackPointers[currentStackIndex], &pc);
+                    push(systemStack, &stackPointers[currentStackIndex], &pc);
                 }
                 dbg_printf(" found %d at %d ", param1Int, labelIndex);
                 programCounter = labelIndex;
@@ -485,7 +494,7 @@ int main(void)
                     dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
-                eval = pop(stacks[currentStackIndex], &stackPointers[currentStackIndex]);
+                eval = pop(systemStack, &stackPointers[currentStackIndex]);
                 programCounter = (size_t)eval;
                 break;
             case HASH_POP:

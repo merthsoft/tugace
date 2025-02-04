@@ -14,9 +14,12 @@ extern real_t STATIC_REAL_GFX_LCD_HEIGHT;
 extern real_t STATIC_REAL_GFX_LCD_WIDTH_HALF;
 extern real_t STATIC_REAL_GFX_LCD_HEIGHT_HALF;
 
-typedef uint8_t labelIndex;
-typedef uint8_t stackkIndex;
-typedef uint8_t turtleIndex;
+typedef char    ProgramToken;
+typedef uint8_t LabelIndex;
+typedef uint8_t StackIndex;
+typedef uint8_t TurtleIndex;
+typedef uint8_t StackPointer;
+typedef size_t  ProgramCounter;
 
 #define NumTurtles      10
 #define NumDataFields   6
@@ -25,23 +28,24 @@ typedef uint8_t turtleIndex;
 #define NumLabels       100
 
 #define NewLineToken    OS_TOK_NEWLINE
+#define LineDelimToken  OS_TOK_COLON
 #define SpaceToken      OS_TOK_SPACE
 #define CommentToken    OS_TOK_DOUBLE_QUOTE
 
-#define LabelToken      OS_TOK_COLON
-
-#if 0
-#define GotoToken       OS_TOK_GOTO
+#define LabelToken      OS_TOK_COMMA
+#define GotoToken       OS_TOK_DECIMAL_POINT
 #define GosubToken      OS_TOK_MULTIPLY
 #define RetToken        OS_TOK_DIVIDE
 
-#define PushToken       OS_TOK_ADD
-#define PopToken        OS_TOK_SUB
+#define IncToken        OS_TOK_ADD
+#define DecToken        OS_TOK_SUB
 
 #define ForwardToken    OS_TOK_POWER
-#define LeftToken       OS_TOK_LESS_THAN
-#define ForwardToken    OS_TOK_GREATER_THAN
-#endif
+#define LeftToken       OS_TOK_LEFT_PAREN
+#define RightToken      OS_TOK_RIGHT_PAREN
+
+#define PushToken       OS_TOK_LEFT_BRACE
+#define PopToken        OS_TOK_RIGHT_BRACE
 
 #define HASH_COLOR    0xE809A4
 #define HASH_PEN      0x881068

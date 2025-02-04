@@ -48,8 +48,6 @@ Merthsoft Creations
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 
 ## Additional shorthands
-I added ':' as a shorthand for label. Proposed other shorthands are:
-
 ### Symbolic
 | Symbol | Command |
 | - | - |
@@ -59,6 +57,7 @@ I added ':' as a shorthand for label. Proposed other shorthands are:
 | } | POP |
 | small E | PEEK |
 | -> | STO |
+| , | LABEL |
 | . | GOTO |
 | * | GOSUB |
 | / | RET |
@@ -68,7 +67,7 @@ I added ':' as a shorthand for label. Proposed other shorthands are:
 | < | PUSHVEC |
 | > | POPVEC |
 | = | PEEKVEC |
-| , | ANGLE |
+| angle | ANGLE |
 | ^2 | SPEED |
 | T | TURTLE |
 | P | PEN |
