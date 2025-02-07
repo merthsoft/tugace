@@ -119,7 +119,7 @@ void Turtle_SetPen(Turtle* t, const float* pen)
 
 void Turtle_SetColor(Turtle* t, const float* color)
 {
-    t->color = *color;
+    t->color = fwrap(*color, 0, 256.0f);
 }
 
 void Turtle_SetWrap(Turtle *t, const float* wrap)
@@ -129,17 +129,13 @@ void Turtle_SetWrap(Turtle *t, const float* wrap)
 
 void Turtle_Draw(Turtle* t)
 {
-    if (!t->initialized || !t->pen)
-        return;
-
     uint24_t x = (uint24_t)t->x;
     uint24_t y = (uint24_t)t->y;
-    uint8_t color = (uint8_t)fwrap(t->color, 0, 256.0f);
-
+    
     if (x >= 0 && x < GFX_LCD_WIDTH
         && y >= 0 && y < GFX_LCD_HEIGHT)
     {
-        gfx_SetColor(color);
+        gfx_SetColor(t->color);
         gfx_SetPixel(x, y);
     }
 }

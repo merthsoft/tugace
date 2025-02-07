@@ -20,7 +20,7 @@ void fade_in(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step
         step = 1;
     for (int amount = 0; amount < 256; amount += step)
     {
-        for (int i = start; i < start + length; i++)
+        for (int i = start; i <= start + length; i++)
             gfx_palette[i] = gfx_Darken(base_palette[i], amount);
     }
 }
@@ -81,7 +81,15 @@ void palette_shift(uint16_t* palette)
 void palette_default(uint16_t* palette)
 {
     for (uint16_t i = 0; i <= 255; i++)
-        palette[i] = (i << 8) + i;
+    {       
+        uint16_t c = (i << 8) | i;
+        
+        uint8_t  r = (c >> 11) & 0b11111;
+        uint8_t  g = (c >>  6) & 0b11111;
+        uint8_t  b = (c >>  0) & 0b11111;
+
+        palette[i] = (r << 10) | (g << 5) | b;
+    }
 }
 
 void palette_rainbow(uint16_t* palette)

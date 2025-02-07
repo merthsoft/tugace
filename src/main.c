@@ -235,6 +235,8 @@ program_start:
     systemStackPointer = 0;
     Turtle_Initialize(turtles);
     palette_default(palette);
+    gfx_SetPalette(palette, 256, 0);
+    
     programCounter = programStart;
 
     TurtleIndex currentTurtleIndex = 0;
@@ -242,7 +244,7 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = false;
+    bool showFps = true;
     bool skipFlag = false;
 
     dbg_printf("Starting program exection.\n");
@@ -654,6 +656,10 @@ program_start:
                         dbg_printf("SYNTAX ERROR: Invalid palette %d", param1Int);
                         break;
                 }
+                gfx_SetPalette(palette, 256, 0);
+                break;
+            case HASH_FILL:
+                gfx_FloodFill(currentTurtle->x, currentTurtle->y, currentTurtle->color);
                 break;
             default:
                 dbg_printf("SYNTAX ERROR: Unknown hash encountered 0x%.6lX", commandHash);
@@ -691,9 +697,11 @@ end_eval:
         //gfx_BlitScreen();
 
         for (int i = 0; i < NumTurtles; i++) {
-            if (!turtles[i].initialized)
+            Turtle* t = &turtles[i];
+            if (!t->initialized)
                 continue;
-            Turtle_Draw(&turtles[i]);
+            
+            Turtle_Draw(t);
         }
 
         framecount++;
