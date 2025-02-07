@@ -234,7 +234,7 @@ program_start:
     memset(stackPointers, 0, sizeof(StackPointer)*NumStacks);
     systemStackPointer = 0;
     Turtle_Initialize(turtles);
-    palette_default(palette);
+    palette_default(palette);   
     gfx_SetPalette(palette, 256, 0);
     
     programCounter = programStart;
@@ -672,7 +672,7 @@ program_start:
         if (retListPointer == 1)
         {
             real_t ans = os_FloatToReal(retList[0]);
-            dbg_printf(" setting ans to %.2f ", retList[0]);
+            dbg_printf("Ans: %.2f", retList[0]);
             os_SetRealVar(OS_VAR_ANS, &ans);
         }
 
