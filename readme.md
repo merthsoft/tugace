@@ -5,8 +5,11 @@ Tuga is a turtle programming language designed around the TI-84+CE graphing calc
 
 TUGA is the accompanying interpreter. It uses the built-in program format as its container, and reuses the operating system variables and math evaluation. It aims to provide a turtle language that can be programmed on the calculator easily, and integrates with the OS as seamlessly as possible.
 
+# IN CONSTANT FLUX
+The only constant is change. But right now, especially, things can change very quickly. This document may be out of date with the code base, but I'll do my best.
+
 # Header
-There are two headers the are supported:
+There are two headers the are designed:
 
 ```
 TUGA:Return
@@ -14,14 +17,16 @@ TUGA:Return
 
 This header is the most basic. This marks the program as a TUGA program, and tells TI-BASIC not to execute anything.
 
-
 ```
 TUGA:"PROGRAM":prgmTUGA:Return
-"Description
+"Description of the program
+"Additional information
 ```
 
-`PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch.  The first line is a comment that can be optionally used by shells to display a description.
+`PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch. The first line is a comment that can be optionally used by shells to display a description. Subsequent comments will be skipped as well, and the interpreter will know "program start" occurs AFTER the initial comment block.
 
+## Current implementation
+As of right now, the code does not verify the header, and it takes for granted there will be a description comment. The description "comment" doesn't even need to be a strict comment (meaning it starts with `"`).
 # Commands
 Commands are typed in all caps and parameters are evaluated using the OS evaluation. Commands with `{` are expeting a list. Commands that don't accept lists can take a list, and only the first element will be used.
 
