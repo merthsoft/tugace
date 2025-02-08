@@ -76,19 +76,21 @@ Comments start with `"` and are skipped entirely.
 ## Coming up
 | Command | Description |
 | - | - |
-| STACK -1 | Select the system stack for stack commands |
 | CIRCLE [radius] | Draws a circle of radius [radius] centered around the turtle |
 | ELLIPSE {[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around the turtle |
-| EVAL [code] | Evaluates arbitrary BASIC code in [code] |
 | TEXT [str] | Writes [str] to the screen at turtle position |
+| STO [var] | Stores Ans to [var] |
+| EVAL [code] | Evaluates arbitrary BASIC code in [code] |
 | STOP | Ends the program |
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 | GETKEY | Gets the current key to Ans |
 | GETKEY [var] | Gets the current key to [var] |
 | ISDOWN [key] | Processes the next line if the key is down (BASIC key code) |
 | ISUP [key] | Processes the next line if the key is UP (BASIC key code) |
+| STACK -1 | Select the system stack for stack commands |
 | POP [num] | Pops a number of items off into a list in Ans |
 | PUSH [list] | Pushes a list onto the stack |
+| PUSHPC | Pushes PC of the command after this one onto the stack |
 | DRAWSCREEN | Draws to the screen |
 | DRAWBUFFER | Draws to the buffer |
 | SWAPDRAW   | Swaps the screen and buffer |
@@ -103,7 +105,6 @@ Comments start with `"` and are skipped entirely.
 | RESET | Reset the program |
 | JNZ {[val],[label] | Jumps to [label] is [val] isn't zero |
 | DJNZ {[var],[label] | Decrements [var] and jumps to [label] if the result is non-zero |
-| PUSHPC | Pushes PC of the command after this one onto the stack |
 | PROG [program] | Runs [program] as a TUGA program |
 
 ## Additional shorthands
