@@ -47,7 +47,6 @@ Comments start with `"` and are skipped entirely.
 | ANGLE [amt] | Sets angle to [amt] degrees |
 | CLEAR [color] | Clears the screen with [color] |
 | LABEL [number] | Declares label [number] |
-|      :[number] | Same as LABEL [number] |
 | GOTO [number] | Goes to label number [number] |
 | PUSH [val] | Pushes [val] onto the stack |
 | POP | Pops off the stack into Ans |
@@ -70,42 +69,89 @@ Comments start with `"` and are skipped entirely.
 | FILL | Does a flood fill at the turtle's location of the current color |
 | FADEOUT [step] | Fades out at a rate of [step] |
 | FADEIN [step] | Fades in at the rate of [step] |
-| PALETTE [num] | Sets the palette. Currently supports 0 for default |
 | INIT | Resets the current turtle to the initial conditions |
 
-## Coming up
+## Proposed
+
+### Misc.
 | Command | Description |
 | - | - |
-| CIRCLE [radius] | Draws a circle of radius [radius] centered around the turtle |
-| ELLIPSE {[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around the turtle |
-| TEXT [str] | Writes [str] to the screen at turtle position |
 | STO [var] | Stores Ans to [var] |
 | EVAL [code] | Evaluates arbitrary BASIC code in [code] |
-| STOP | Ends the program |
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
+
+### Flow control
+| Command | Description |
+| - | - |
+| STOP | Ends the program |
+| RESET | Reset the program |
+| JNZ {[val],[label] | Jumps to [label] is [val] isn't zero |
+| DJNZ {[var],[label] | Decrements [var] and jumps to [label] if the result is non-zero |
+| PROG [program] | Runs [program] as a TUGA program |
+
+### Input
+| Command | Description |
+| - | - |
 | GETKEY | Gets the current key to Ans |
 | GETKEY [var] | Gets the current key to [var] |
 | ISDOWN [key] | Processes the next line if the key is down (BASIC key code) |
 | ISUP [key] | Processes the next line if the key is UP (BASIC key code) |
+
+### Stack
+| Command | Description |
+| - | - |
 | STACK -1 | Select the system stack for stack commands |
 | POP [num] | Pops a number of items off into a list in Ans |
 | PUSH [list] | Pushes a list onto the stack |
 | PUSHPC | Pushes PC of the command after this one onto the stack |
+
+### Drawing commands
+| Command | Description |
+| - | - |
+| CIRCLE [radius] | Draws a circle of radius [radius] centered around the turtle |
+| ELLIPSE {[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around the turtle |
+| ELLIPSE {[x],[y],[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around (x, 1) |
+| LINE {[x1],[y1],[x2],[y2] | Draws a line from (x1, y1) to (x2, y2) |
+| RECT {[x1],[y1],[w],[h] | Draws a rectangle at (x1, y1) that's w by h |
+| FPS [val] | Turns off the FPS counter if [val] is 0 |
+| TEXT [str] | Writes [str] to the screen at turtle position |
+
+There're no text or string mechanisms right now. `TEXT` will require that.
+
+### Screen commands
+| Command | Description |
+| - | - |
 | DRAWSCREEN | Draws to the screen |
 | DRAWBUFFER | Draws to the buffer |
 | SWAPDRAW   | Swaps the screen and buffer |
 | BLITSCREEN | Blits the screen to the buffer |
 | BLITBUFFER | Blits the buffer to the screen |
+
+### Sprites?
+| Command | Description |
+| - | - |
+| DEFSPRITE {[num],[width],[height],[data...]} | Defines a sprite in the sprite dictionary |
 | SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
-| DEFSPRITE {[num],[width],[height],[data...]} | Defines a sprite in the sprite dictionary
-| FPS [val] | Turns off the FPS counter if [val] is 0 |
-| PALETTE [list] | Sets the palette to the list |
+| SPRITE {[num],[x],[y] | Draws sprite [num] at [x],[y] |
+
+### Palettes
+| Command | Description |
+| - | - |
+| PALETTE {[num],[param1],[param2] | Sets the palette. Currently supports 0 for default |
+| DEFPAL [list] | Sets the palette to [list] |
 | PALSHIFT [amount] | Shifts the palette by [amount] |
 | PALSHIFT {[start], [amount], [length] | Shifts the palette starting at [start] ending at [start] + [length] by [amount], [amount] and [length] are optional and default to 1 and the full palette length |
-| RESET | Reset the program |
-| JNZ {[val],[label] | Jumps to [label] is [val] isn't zero |
-| DJNZ {[var],[label] | Decrements [var] and jumps to [label] if the result is non-zero |
-| PROG [program] | Runs [program] as a TUGA program |
+
+#### Built-in palettes are:
+| Number | Palette |
+| - | - |
+| 0 | Default, takes direction |
+| 1 | Rainbow, takes direction |
+| 2 | Monochromatic HSV saturation-spectrum, takes two additional params, color and direction |
+| 3 | Monochromatic HSV value-spectrum, takes two additional params, color and direction |
+| 4 | Grayscale, takes direction |
+| 5 | Random, takes direction |
+| 6 | Spectrum, takes direction and hue skip |
 
 ## Additional shorthands
 ### Symbolic
@@ -122,6 +168,8 @@ Comments start with `"` and are skipped entirely.
 | * | GOSUB |
 | / | RET |
 | ^ | FORWARD |
+| pi | MOVE |
+| e | pen |
 | ( | LEFT |
 | ) | RIGHT |
 | [ | PUSHVEC |
@@ -133,15 +181,12 @@ Comments start with `"` and are skipped entirely.
 | imaginary i | INIT |
 | angle | ANGLE |
 | ^2 | SPEED |
-| T | TURTLE |
-| P | PEN |
+| X | TURTLE |
 | W | WRAP |
 | C | COLOR |
 | M | MOVE |
 | 0 | ZERO |
-| S | STACK |
-| X | TEXT |
-| E | ELLIPSE |
+| theta | STACK |
 
 ### OS
 Some additional conveniences from programming commands, space built in to token:
