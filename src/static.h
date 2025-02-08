@@ -3,18 +3,10 @@
 
 #include <ti/real.h>
 
-extern real_t STATIC_REAL_0;
-extern real_t STATIC_REAL_1;
-extern real_t STATIC_REAL_255;
-extern real_t STATIC_REAL_360;
+extern real_t StaticReal_0;
+extern real_t StaticReal_1;
 
-extern real_t STATIC_REAL_GFX_LCD_WIDTH;
-extern real_t STATIC_REAL_GFX_LCD_HEIGHT;
-
-extern real_t STATIC_REAL_GFX_LCD_WIDTH_HALF;
-extern real_t STATIC_REAL_GFX_LCD_HEIGHT_HALF;
-
-typedef char    ProgramToken;
+typedef uint8_t ProgramToken;
 typedef uint8_t LabelIndex;
 typedef uint8_t StackIndex;
 typedef uint8_t TurtleIndex;
@@ -29,12 +21,17 @@ typedef size_t  ProgramCounter;
 #define SystemStackDepth 255
 
 #define NewLineToken    OS_TOK_NEWLINE
-#define LineDelimToken  OS_TOK_COLON
 #define SpaceToken      OS_TOK_SPACE
 #define CommentToken    OS_TOK_DOUBLE_QUOTE
 
-#define LabelToken      OS_TOK_COMMA
+#define LabelToken      OS_TOK_COLON
 #define GotoToken       OS_TOK_DECIMAL_POINT
+#define LabelTokenOS    OS_TOK_LBL
+#define GotoTokenOS     OS_TOK_GOTO
+
+#define IfTokenOS       OS_TOK_IF
+#define IfToken         OS_TOK_QUESTION
+
 #define GosubToken      OS_TOK_MULTIPLY
 #define RetToken        OS_TOK_DIVIDE
 
@@ -48,48 +45,59 @@ typedef size_t  ProgramCounter;
 #define PushToken       OS_TOK_LEFT_BRACE
 #define PopToken        OS_TOK_RIGHT_BRACE
 
-#define HASH_COLOR      0xE809A4
-#define HASH_PEN        0x881068
-#define HASH_FORWARD    0x70717A
-#define HASH_LEFT       0x87EB30
-#define HASH_RIGHT      0xF418C3
-#define HASH_MOVE       0x88A41C
-#define HASH_ANGLE      0xC3368C
-#define HASH_CIRCLE     0x7FC1D7
-#define HASH_CLEAR      0xE644EC
-#define HASH_LABEL      0x830D05
-#define HASH_GOTO       0x85599E
-#define HASH_EVAL       0x845C2D
-#define HASH_PUSH       0x8A6265
-#define HASH_POP        0x8811B4
-#define HASH_PEEK       0x8A1C8A
-#define HASH_PUSHVEC    0x3FFB43
-#define HASH_POPVEC     0x4858FC // This is with the [PV] token lol
-#define HASH_POP_VEC    0x3E9C32
-#define HASH_PEEKVEC    0xF1BF48
-#define HASH_IF         0x5973F4
-#define HASH_TURTLE     0x00E2E5
-#define HASH_INC        0x87F3bF
-#define HASH_DEC        0x87DD51
-#define HASH_ZERO       0x8F9A05
-#define HASH_STO        0x881F1B
-#define HASH_GOSUB      0x308A25
-#define HASH_RET        0x8818F0
-#define HASH_STACK      0x0C1F3B
-#define HASH_FADEOUT    0xC13ECD
-#define HASH_FADEIN     0xE6D28C
-#define HASH_PALETTE    0x187774
+#define Hash_COLOR      0xE809A4
+#define Hash_PEN        0x881068
+#define Hash_FORWARD    0x70717A
+#define Hash_LEFT       0x87EB30
+#define Hash_LEFT_OS    0x5989A6
+#define Hash_RIGHT      0xF418C3
+#define Hash_MOVE       0x88A41C
+#define Hash_ANGLE      0xC3368C
+#define Hash_CIRCLE     0x7FC1D7
+#define Hash_CLEAR      0xE644EC
+#define Hash_LABEL      0x830D05
+#define Hash_GOTO       0x85599E
+#define Hash_EVAL       0x845C2D
+#define Hash_PUSH       0x8A6265
+#define Hash_POP        0x8811B4
+#define Hash_PEEK       0x8A1C8A
+#define Hash_PUSHVEC    0x3FFB43
+#define Hash_POPVEC     0x4858FC // This is with the [PV] token lol
+#define Hash_POP_VEC    0x3E9C32
+#define Hash_PEEKVEC    0xF1BF48
+#define Hash_IF         0x5973F4
+#define Hash_TURTLE     0x00E2E5
+#define Hash_INC        0x87F3bF
+#define Hash_DEC        0x87DD51
+#define Hash_ZERO       0x8F9A05
+#define Hash_STO        0x881F1B
+#define Hash_GOSUB      0x308A25
+#define Hash_RET        0x8818F0
+#define Hash_STACK      0x0C1F3B
+#define Hash_FADEOUT    0xC13ECD
+#define Hash_FADEIN     0xE6D28C
+#define Hash_PALETTE    0x187774
 
-#define HASH_FILL       0x000001
-#define HASH_GETKEY     0x000002
-#define HASH_TEXT       0x000003
-#define HASH_SPEED      0x000004
-#define HASH_BUFFERMODE 0x000005
-#define HASH_SWAPSCREEN 0x000006
-#define HASH_BLITSCREEN 0x000007
-#define HASH_ELLIPSE    0x000008
-#define HASH_SPRITE     0x000009
-#define HASH_DEFSPRITE  0x00000A
+#define Hash_FILL       0x000001
+
+#define Hash_GETKEY     0x000002
+#define Hash_KEYSCAN    0x000012
+#define Hash_ISDOWN     0x000022
+#define Hash_ISUP       0x000032
+
+#define Hash_TEXT       0x000003
+#define Hash_SPEED      0x000004
+
+#define Hash_DRAWSCREEN 0x000005
+#define Hash_DRAWBUFFER 0x000015
+#define Hash_SWAPDRAW   0x000006
+#define Hash_BLITSCREEN 0x000007
+#define Hash_BLITBUFFER 0x000017
+#define Hash_ELLIPSE    0x000008
+#define Hash_SPRITE     0x000009
+#define Hash_DEFSPRITE  0x00000A
+
+#define Hash_INIT       0x866CB9
 
 void Static_Initialize(void);
 

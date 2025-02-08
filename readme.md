@@ -16,7 +16,7 @@ Merthsoft Creations
 | ANGLE [amt] | Sets angle to [amt] degrees |
 | CLEAR [color] | Clears the screen with [color] |
 | LABEL [number] | Declares label [number] |
-|     :[number] | Same as LABEL [number] |
+|      :[number] | Same as LABEL [number] |
 | GOTO [number] | Goes to label number [number] |
 | PUSH [val] | Pushes [val] onto the stack |
 | POP | Pops off the stack into Ans |
@@ -52,15 +52,13 @@ Merthsoft Creations
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 | GETKEY | Gets the current key to Ans |
 | GETKEY [var] | Gets the current key to [var] |
-| POP [var] | Pops into [var] instead of Ans |
 | POP [num] | Pops a number of items off into a list in Ans |
 | PUSH [list] | Pushes a list onto the stack |
-| BUFFERMODE [mode] | Sets to draw to screen (0) or buffer (1) |
+| DRAWMODE [mode] | Sets to draw to screen (0) or buffer (1) |
 | SWAPSCREEN | Swaps the screen and buffer |
 | BLITSCREEN | Blits the screen to the buffer |
 | SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
 | DEFSPRITE {[num],[width],[height],[data...]} | Defines a sprite in the sprite dictionary
-
 
 ## Additional shorthands
 ### Symbolic
@@ -72,7 +70,7 @@ Merthsoft Creations
 | } | POP |
 | small E | PEEK |
 | -> | STO |
-| , | LABEL |
+| : | LABEL |
 | . | GOTO |
 | * | GOSUB |
 | / | RET |
@@ -82,6 +80,7 @@ Merthsoft Creations
 | < | PUSHVEC |
 | > | POPVEC |
 | = | PEEKVEC |
+| ? | IF |
 | angle | ANGLE |
 | ^2 | SPEED |
 | T | TURTLE |
@@ -102,3 +101,4 @@ Some additional conveniences from programming commands, space built in to token:
 | If | IF |
 | Lbl | LABEL |
 | Stop | STOP |
+| getkey | GETKEY |
