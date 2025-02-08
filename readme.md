@@ -1,14 +1,14 @@
-# TUGA Interpreter
-Merthsoft Creations
+# Tuga
+2025, Merthsoft Creations
 
 Tuga is a turtle programming language designed around the TI-84+CE graphing calculator. It's meant to be simple to learn and read while still providing enough power to make cool fractals and learn about programming. The specification itself is "missing" many things that would otherwise be necessary--this is intentional, this language is designed around existing functionailty on the TI-84+CE, and will reuse what's possible.
 
 TUGA is the accompanying interpreter. It uses the built-in program format as its container, and reuses the operating system variables and math evaluation. It aims to provide a turtle language that can be programmed on the calculator easily, and integrates with the OS as seamlessly as possible.
 
-# IN CONSTANT FLUX
+## IN CONSTANT FLUX
 The only constant is change. But right now, especially, things can change very quickly. This document may be out of date with the code base, but I'll do my best.
 
-# Header
+## Header
 There are two headers the are designed:
 
 ```
@@ -25,16 +25,16 @@ TUGA:"PROGRAM":prgmTUGA:Return
 
 `PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch. The first line is a comment that can be optionally used by shells to display a description. Subsequent comments will be skipped as well, and the interpreter will know "program start" occurs AFTER the initial comment block.
 
-## Current implementation
+### Current implementation
 As of right now, the code does not verify the header, and it takes for granted there will be a description comment. The description "comment" doesn't even need to be a strict comment (meaning it starts with `"`).
-# Commands
+## Commands
 Commands are typed in all caps and parameters are evaluated using the OS evaluation. Commands with `{` are expeting a list. Commands that don't accept lists can take a list, and only the first element will be used.
 
 Because TUGA uses the OS evaluation, your parameters can be formulas--and they can even be complex (imaginary value is truncated before passed on to the turtle itself). This means you can do `COLOR randInt(0, 255` to set the turtle to a random color. Additionally, the variables are the system variables. If you do `1->A` before running your program, and your program is `INC A`, then on the homescreen of TI-OS you check the value of `A`, it will be `2`.
 
 Comments start with `"` and are skipped entirely.
 
-## Implemented
+### Implemented
 | Command | Description |
 | - | - |
 | COLOR [color] | Sets the turtle color to [color] |
@@ -71,16 +71,16 @@ Comments start with `"` and are skipped entirely.
 | FADEIN [step] | Fades in at the rate of [step] |
 | INIT | Resets the current turtle to the initial conditions |
 
-## Proposed
+### Proposed
 
-### Misc.
+#### Misc.
 | Command | Description |
 | - | - |
 | STO [var] | Stores Ans to [var] |
 | EVAL [code] | Evaluates arbitrary BASIC code in [code] |
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 
-### Flow control
+#### Flow control
 | Command | Description |
 | - | - |
 | STOP | Ends the program |
@@ -89,7 +89,7 @@ Comments start with `"` and are skipped entirely.
 | DJNZ {[var],[label] | Decrements [var] and jumps to [label] if the result is non-zero |
 | PROG [program] | Runs [program] as a TUGA program |
 
-### Input
+#### Input
 | Command | Description |
 | - | - |
 | GETKEY | Gets the current key to Ans |
@@ -97,7 +97,7 @@ Comments start with `"` and are skipped entirely.
 | ISDOWN [key] | Processes the next line if the key is down (BASIC key code) |
 | ISUP [key] | Processes the next line if the key is UP (BASIC key code) |
 
-### Stack
+#### Stack
 | Command | Description |
 | - | - |
 | STACK -1 | Select the system stack for stack commands |
@@ -105,7 +105,7 @@ Comments start with `"` and are skipped entirely.
 | PUSH [list] | Pushes a list onto the stack |
 | PUSHPC | Pushes PC of the command after this one onto the stack |
 
-### Drawing commands
+#### Drawing commands
 | Command | Description |
 | - | - |
 | CIRCLE [radius] | Draws a circle of radius [radius] centered around the turtle |
@@ -118,7 +118,7 @@ Comments start with `"` and are skipped entirely.
 
 There're no text or string mechanisms right now. `TEXT` will require that.
 
-### Screen commands
+#### Screen commands
 | Command | Description |
 | - | - |
 | DRAWSCREEN | Draws to the screen |
@@ -127,14 +127,14 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | BLITSCREEN | Blits the screen to the buffer |
 | BLITBUFFER | Blits the buffer to the screen |
 
-### Sprites?
+#### Sprites?
 | Command | Description |
 | - | - |
 | DEFSPRITE {[num],[width],[height],[data...]} | Defines a sprite in the sprite dictionary |
 | SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
 | SPRITE {[num],[x],[y] | Draws sprite [num] at [x],[y] |
 
-### Palettes
+#### Palettes
 | Command | Description |
 | - | - |
 | PALETTE {[num],[param1],[param2] | Sets the palette. Currently supports 0 for default |
@@ -142,7 +142,7 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | PALSHIFT [amount] | Shifts the palette by [amount] |
 | PALSHIFT {[start], [amount], [length] | Shifts the palette starting at [start] ending at [start] + [length] by [amount], [amount] and [length] are optional and default to 1 and the full palette length |
 
-#### Built-in palettes are:
+##### Built-in palettes are:
 | Number | Palette |
 | - | - |
 | 0 | Default, takes direction |
@@ -153,8 +153,8 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | 5 | Random, takes direction |
 | 6 | Spectrum, takes direction and hue skip |
 
-## Additional shorthands
-### Symbolic
+### Additional shorthands
+#### Symbolic
 | Symbol | Command |
 | - | - |
 | + | INC |
@@ -188,7 +188,7 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | 0 | ZERO |
 | theta | STACK |
 
-### OS
+#### OS
 Some additional conveniences from programming commands, space built in to token:
 | Symbol | Command |
 | - | - |
@@ -200,7 +200,7 @@ Some additional conveniences from programming commands, space built in to token:
 | LEFT | LEFT |
 | PO[PV]EC | POPVEC |
 
-# Invocation of additional Tuga programs
+## Invocation of additional Tuga programs
 Still needs a lot of design work. Probably when a program gets invoked, it gets loaded and copied after the executing program. 
 
 PC gets pushed and jumps to sub program, much like a GOSUB. 
