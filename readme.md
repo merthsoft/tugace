@@ -1,6 +1,10 @@
 # TUGA Interpreter
 Merthsoft Creations
 
+Tuga is a turtle programming language designed around the TI-84+CE graphing calculator. It's meant to be simple to learn and read while still providing enough power to make cool fractals and learn about programming. The specification itself is "missing" many things that would otherwise be necessary--this is intentional, this language is designed around existing functionailty on the TI-84+CE, and will reuse what's possible.
+
+TUGA is the accompanying interpreter. It uses the built-in program format as its container, and reuses the operating system variables and math evaluation. It aims to provide a turtle language that can be programmed on the calculator easily, and integrates with the OS as seamlessly as possible.
+
 # Header
 There are two headers the are supported:
 
@@ -12,7 +16,7 @@ This header is the most basic. This marks the program as a TUGA program, and tel
 
 
 ```
-TUGA:"PROGRAM":prgmTUGA
+TUGA:"PROGRAM":prgmTUGA:Return
 "Description
 ```
 
@@ -20,6 +24,8 @@ TUGA:"PROGRAM":prgmTUGA
 
 # Commands
 Commands are typed in all caps and parameters are evaluated using the OS evaluation. Commands with `{` are expeting a list. Commands that don't accept lists can take a list, and only the first element will be used.
+
+Because TUGA uses the OS evaluation, your parameters can be formulas--and they can even be complex (imaginary value is truncated before passed on to the turtle itself). This means you can do `COLOR randInt(0, 255` to set the turtle to a random color. Additionally, the variables are the system variables. If you do `1->A` before running your program, and your program is `INC A`, then on the homescreen of TI-OS you check the value of `A`, it will be `2`.
 
 Comments start with `"` and are skipped entirely.
 
