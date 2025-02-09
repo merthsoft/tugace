@@ -17,17 +17,21 @@
 #include "turtle.h"
 
 #ifdef DEBUG
+//#define DEBUG_PROCESSOR
+#endif
+
+#ifdef DEBUG
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 {
-    void** ptr = (void**)(&buffer);
-    uint8_t tokenLength;
-    size_t tokenStringLength;
+    uint8_t tokenLength = 0;
+    size_t tokenStringLength = 0;
     uint8_t i = 0;
     if (stringLength)
         *stringLength = 0;
+    
     while(i < length)
     {
-        dbg_printf("%s", ti_GetTokenString(ptr, &tokenLength, &tokenStringLength));
+        dbg_printf("%s", ti_GetTokenString((void**)&buffer, &tokenLength, &tokenStringLength));
         i += tokenLength;
         if (stringLength)
             *stringLength += tokenStringLength;
@@ -117,7 +121,9 @@ program_start:
         if (!running)
             goto end_eval;
         
-        ProgramCounter startPc = programCounter;
+        #ifdef DEBUG_PROCESSOR
+        dbg_printf("%.4d: ", programCounter);
+        #endif
 
         ProgramToken* command = &program[programCounter];
         size_t commandLength = 0;
@@ -128,7 +134,9 @@ program_start:
         ProgramToken shortHand = program[programCounter];
         switch (shortHand) {
             case CommentToken:
-                dbg_printf("Skipping comment.");
+                #ifdef DEBUG_PROCESSOR
+                    dbg_printf("Skipping comment.");
+                #endif
                 goto end_eval;
             case LabelToken:
             case GotoToken:
@@ -180,9 +188,8 @@ program_start:
             paramsLength = Seek_ToNewLine(program, programSize, NewLineToken, &programCounter) - 1;
         }
 
-        #ifdef DEBUG
+        #ifdef DEBUG_PROCESSOR
         size_t outputTokenStringLength;
-        dbg_printf("%.4d: ", startPc);
         debug_print_tokens(command, commandLength, &outputTokenStringLength);
         
         while (outputTokenStringLength < 10)
@@ -201,7 +208,9 @@ program_start:
         #endif
 
         if (skipFlag) {
-            dbg_printf("Skipping because skipFlag is set.");
+            #ifdef DEBUG_PROCESSOR
+                dbg_printf("Skipping because skipFlag is set.");
+            #endif
             skipFlag = false;
             goto end_eval;
         }
@@ -284,7 +293,7 @@ program_start:
             }
         }
 
-        #ifdef DEBUG
+        #ifdef DEBUG_PROCESSOR
         if (param1) {
             dbg_printf("Param1: %f", os_RealToFloat(param1));
             dbg_printf("\t");
@@ -334,7 +343,6 @@ program_start:
                     gfx_FillRectangle(currentTurtle->X, currentTurtle->Y, param1Int, param2Int);
                 else
                     gfx_Rectangle(currentTurtle->X, currentTurtle->Y, param1Int, param2Int);
-                dbg_printf("%d,%d", param1Int, param2Int);
                 break;
             case Hash_STOP:
                 exit = true;
@@ -377,7 +385,9 @@ program_start:
                 if (commandHash == Hash_GOSUB) {
                     float pc = (float)programCounter;
                     Push_InLine(Main_systemStack, &Main_systemStackPointer, &pc);
-                    dbg_printf("pushing PC onto stack %f", pc);
+                    #ifdef DEBUG_PROCESSOR
+                        dbg_printf("pushing PC onto stack %f", pc);
+                    #endif
                 }
                 programCounter = labelIndex;
                 break;
@@ -401,7 +411,9 @@ program_start:
                     param1Val = os_RealToFloat(&ansList->items[pushListIndex]);
                     Push_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], &param1Val);
                 }
-                dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
+                #ifdef DEBUG_PROCESSOR
+                    dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
+                #endif
                 break;
             case Hash_RET:
                 if (Main_systemStackPointer == 0) {
@@ -409,9 +421,10 @@ program_start:
                     break;
                 }
                 eval = Pop_InLine(Main_systemStack, &Main_systemStackPointer);
-                dbg_printf("setting PC from stack %f", eval);
                 programCounter = (size_t)eval;
-                dbg_printf(" pc %d", programCounter);
+                #ifdef DEBUG_PROCESSOR
+                    dbg_printf("setting PC from stack %f pc %d", eval, programCounter);
+                #endif
                 break;
             case Hash_POP:
             case Hash_PEEK:
@@ -423,7 +436,9 @@ program_start:
                 if (commandHash == Hash_PEEK) {
                     Main_stackPointers[currentStackIndex]++;
                 }
-                dbg_printf("popped: %f", eval);
+                #ifdef DEBUG_PROCESSOR
+                    dbg_printf("popped: %f", eval);
+                #endif
                 if (param1 == NULL) {
                     retList[0] = eval;
                     retListPointer++;
@@ -585,13 +600,17 @@ program_start:
 
         if (retListPointer == 1) {
             real_t ans = os_FloatToReal(retList[0]);
-            dbg_printf("Ans: %.2f", retList[0]);
+            #ifdef DEBUG_PROCESSOR
+                dbg_printf("Ans: %.2f", retList[0]);
+            #endif
             os_SetRealVar(OS_VAR_ANS, &ans);
             goto end_eval;
         }
 
-        dbg_printf("Ans: ");
-        
+        #ifdef DEBUG_PROCESSOR
+            dbg_printf("Ans: ");
+        #endif
+
         errNo = os_SetListDim(OS_VAR_ANS, retListPointer);
         if (errNo) {
             dbg_printf("SYNTAX ERROR: Got error trying to set ans dim %d", retListPointer);
@@ -600,7 +619,9 @@ program_start:
 
         for (uint16_t retListIndex = 0; retListIndex < retListPointer; retListIndex++)
         {
+            #ifdef DEBUG_PROCESSOR
             dbg_printf("%.2f ", retList[retListIndex]);
+            #endif
             real_t ans = os_FloatToReal(retList[retListIndex]);
             errNo = os_SetRealListElement(OS_VAR_ANS, retListIndex+1, &ans);
             if (errNo) {
@@ -610,7 +631,7 @@ program_start:
         }
 
 end_eval:
-        #ifdef DEBUG
+        #ifdef DEBUG_PROCESSOR
         if (running)
             dbg_printf("\n");
         #endif

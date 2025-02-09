@@ -5,7 +5,7 @@
 
 #include "static.h"
 
-ProgramCounter Seek_ToNewLine(const ProgramToken* data, const size_t dataLength, ProgramToken additionalDelim, ProgramCounter* index) {
+ProgramCounter Seek_ToNewLine(const ProgramToken* data, size_t dataLength, ProgramToken additionalDelim, ProgramCounter* index) {
     const size_t start = *index;
 
     if (dataLength == 0) {

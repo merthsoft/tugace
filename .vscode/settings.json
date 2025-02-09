@@ -7,7 +7,9 @@
         "stdlib.h": "c",
         "real.h": "c",
         "seek.h": "c",
-        "rtc.h": "c"
+        "rtc.h": "c",
+        "debug.h": "c",
+        "cdefs.h": "c"
     },
     "makefile.configureOnOpen": false
 }

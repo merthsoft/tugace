@@ -15,7 +15,7 @@ ProgramCounter Seek_ToLabel(
 
 ProgramCounter Seek_ToNewLine(
     const ProgramToken* data, 
-    const size_t dataLength, 
+    size_t dataLength, 
     ProgramToken additionalDelim, 
     ProgramCounter* index);
 
