@@ -22,15 +22,15 @@ This header is the most basic. This marks the program as a TUGA program, and tel
 
 ```TUGA
 TUGA:"PROGRAM":prgmTUGA:Return
-"Description of the program
+Description of the program
 "Additional information
 ```
 
-`PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch. The first line is a comment that can be optionally used by shells to display a description. Subsequent comments will be skipped as well, and the interpreter will know "program start" occurs AFTER the initial comment block.
+`PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch. The first line is a comment that can be optionally used by shells to display a description. Subsequent comments will be skipped as well, and the interpreter will know "program start" occurs AFTER the initial comment block (in terms of program restart, label-seeking, and sub programs).
 
 ### Current implementation
 
-As of right now, the code does not verify the header, and it takes for granted there will be a description comment. The description "comment" doesn't even need to be a strict comment (meaning it starts with `"`).
+As of right now, the code does not verify the header, and it takes for granted there will be a description comment. Also, the program name is hardcoded rather than coming from ans.
 
 ## Commands
 
@@ -42,8 +42,11 @@ Comments start with `"` and are skipped entirely.
 
 ### Implemented
 
+### Turtle control
+
 | Command | Description |
 | - | - |
+| TURTLE [num] | Sets which turtle commands operate on |
 | COLOR [color] | Sets the turtle color to [color] |
 | PEN [status] | Sets the turtle pen status to [status] |
 | WRAP [status] | Sets the turtle wrap status to [status] |
@@ -52,9 +55,33 @@ Comments start with `"` and are skipped entirely.
 | RIGHT [amt] | Turn right by [amt] degrees |
 | MOVE {[X],[Y] | Moves to [X, Y] |
 | ANGLE [amt] | Sets angle to [amt] degrees |
+
+### Graphics
+
+| Command | Description |
+| - | - |
 | CLEAR [color] | Clears the screen with [color] |
+| FILL | Does a flood fill at the turtle's location of the current color |
+| FADEOUT [step] | Fades out at a rate of [step] |
+| FADEIN [step] | Fades in at the rate of [step] |
+| INIT | Resets the current turtle to the initial conditions |
+| RECT {[w],[h] | Draws a rectangle with upper-left corner at the turtle's location that's [w] by [h] |
+
+### Control flow
+
+| Command | Description |
+| - | - |
 | LABEL [number] | Declares label [number] |
 | GOTO [number] | Goes to label number [number] |
+| IF [val] | Skips the next line if [val] is 0 |
+| GOSUB [number] | Goes to label [number], pushing the the next line onto the system stack |
+| RET | Returns to where you jumped from, popping that value off the system stack |
+
+### Stack
+
+| Command | Description |
+| - | - |
+| STACK [num] | Operates which stack commands operate on |
 | PUSH [val] | Pushes [val] onto the stack |
 | PUSH [list] | Pushes a list onto the stack |
 | POP | Pops off the stack into Ans |
@@ -63,21 +90,17 @@ Comments start with `"` and are skipped entirely.
 | PUSHVEC | Pushes the entire turtle vector (x, y, angle, color, pen, wrap) onto the stack |
 | POPVEC | Pops the turtle vector off the stack, setting the current turtle's values to that |
 | PEEKVEC | Peeks the turtle vector from the stack, setting the current turtle's values to that without changing the stack pointer |
-| IF [val] | Skips the next line if [val] is 0 |
+
+### Variables
+
+| Command | Description |
+| - | - |
 | ZERO [var] | Sets real var [var] to zero |
 | INC [var] | Increments real var [var] by one |
 | INC {[var],[val] | Increments real var [var] by [val] |
 | DEC [var] | Decrements real var [var] by one |
 | DEV {[var],[val] | Decrements real var [var] by [val] |
 | STO {[var],[val] | Stores [val] to real var [var] |
-| GOSUB [number] | Goes to label [number], pushing the the next line onto the stack |
-| RET | Pops a value off the stack and jumps to that location |
-| TURTLE [num] | Sets which turtle commands operate on |
-| STACK [num] | Operates which stack commands operate on |
-| FILL | Does a flood fill at the turtle's location of the current color |
-| FADEOUT [step] | Fades out at a rate of [step] |
-| FADEIN [step] | Fades in at the rate of [step] |
-| INIT | Resets the current turtle to the initial conditions |
 
 ### Proposed
 
@@ -89,7 +112,7 @@ Comments start with `"` and are skipped entirely.
 | EVAL [code] | Evaluates arbitrary BASIC code in [code] |
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 
-#### Flow control
+#### Control flow
 
 | Command | Description |
 | - | - |
@@ -113,7 +136,7 @@ Comments start with `"` and are skipped entirely.
 | Command | Description |
 | - | - |
 | STACK -1 | Select the system stack for stack commands |
-| PUSHPC | Pushes PC of the command after this one onto the stack |
+| PUSHPC | Pushes PC of the command after this one onto the system stack |
 
 #### Drawing commands
 
