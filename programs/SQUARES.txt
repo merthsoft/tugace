@@ -1,0 +1,28 @@
+TUGA:"SQUARES":prgmTUGA:Return
+"Squares
+FADEOUT 2
+PEN 0
+COLOR 0
+CLEAR 0
+FADEIN 10
+PUSH {0,0,320,240
+GOSUB 0
+:1
+.1
+:0
+}H
+}W
+}Y
+}X
+?H<=15
+RET
+COLOR randInt(1,255
+MOVE {X,Y
+RECT {W/2,H/2
+PUSH {X,Y+H/2,W/2,H/2
+PUSH {X+W/2,Y,W/2,H/2
+PUSH {X+W/2,Y+H/2,W/2,H/2
+*0
+*0
+*0
+RET
