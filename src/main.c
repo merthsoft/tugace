@@ -2,7 +2,6 @@
 #include <keypadc.h>
 #include <graphx.h>
 #include <math.h>
-#include <string.h>
 #include <stdlib.h>
 #include <time.h>
 
