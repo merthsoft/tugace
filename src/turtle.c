@@ -126,16 +126,3 @@ void Turtle_SetWrap(Turtle *t, const float* wrap)
 {
     t->wrap = *wrap;
 }
-
-void Turtle_Draw(Turtle* t)
-{
-    uint24_t x = (uint24_t)t->x;
-    uint24_t y = (uint24_t)t->y;
-    
-    if (x >= 0 && x < GFX_LCD_WIDTH
-        && y >= 0 && y < GFX_LCD_HEIGHT)
-    {
-        gfx_SetColor(t->color);
-        gfx_SetPixel(x, y);
-    }
-}

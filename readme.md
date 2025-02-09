@@ -56,7 +56,9 @@ Comments start with `"` and are skipped entirely.
 | LABEL [number] | Declares label [number] |
 | GOTO [number] | Goes to label number [number] |
 | PUSH [val] | Pushes [val] onto the stack |
+| PUSH [list] | Pushes a list onto the stack |
 | POP | Pops off the stack into Ans |
+| POP [var] | Pops off the stack into [var] |
 | PEEK | Peeks at the stack into Ans without changing the stack pointer |
 | PUSHVEC | Pushes the entire turtle vector (x, y, angle, color, pen, wrap) onto the stack |
 | POPVEC | Pops the turtle vector off the stack, setting the current turtle's values to that |
@@ -70,7 +72,6 @@ Comments start with `"` and are skipped entirely.
 | STO {[var],[val] | Stores [val] to real var [var] |
 | GOSUB [number] | Goes to label [number], pushing the the next line onto the stack |
 | RET | Pops a value off the stack and jumps to that location |
-| STO [var] | Stores Ans to real var [var] |
 | TURTLE [num] | Sets which turtle commands operate on |
 | STACK [num] | Operates which stack commands operate on |
 | FILL | Does a flood fill at the turtle's location of the current color |
@@ -112,8 +113,6 @@ Comments start with `"` and are skipped entirely.
 | Command | Description |
 | - | - |
 | STACK -1 | Select the system stack for stack commands |
-| POP [num] | Pops a number of items off into a list in Ans |
-| PUSH [list] | Pushes a list onto the stack |
 | PUSHPC | Pushes PC of the command after this one onto the stack |
 
 #### Drawing commands

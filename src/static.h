@@ -16,9 +16,9 @@ typedef size_t  ProgramCounter;
 #define NumTurtles       10
 #define NumDataFields    6
 #define NumStacks        NumTurtles
-#define MaxStackDepth    100
-#define NumLabels        100
-#define SystemStackDepth 255
+#define MaxStackDepth    256
+#define NumLabels        256
+#define SystemStackDepth 256
 
 #define NewLineToken    OS_TOK_NEWLINE
 #define SpaceToken      OS_TOK_SPACE
@@ -31,6 +31,8 @@ typedef size_t  ProgramCounter;
 
 #define IfTokenOS       OS_TOK_IF
 #define IfToken         OS_TOK_QUESTION
+
+#define StopTokenOs     OS_TOK_STOP
 
 #define GosubToken      OS_TOK_MULTIPLY
 #define RetToken        OS_TOK_DIVIDE
@@ -77,6 +79,9 @@ typedef size_t  ProgramCounter;
 #define Hash_FADEOUT    0xC13ECD
 #define Hash_FADEIN     0xE6D28C
 #define Hash_PALETTE    0x187774
+#define Hash_STOP       0x8C02CB
+#define Hash_INIT       0x866CB9
+#define Hash_RECT       0x8B3513
 
 #define Hash_FILL       0x000001
 
@@ -97,7 +102,6 @@ typedef size_t  ProgramCounter;
 #define Hash_SPRITE     0x000009
 #define Hash_DEFSPRITE  0x00000A
 
-#define Hash_INIT       0x866CB9
 
 void Static_Initialize(void);
 
