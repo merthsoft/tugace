@@ -1,0 +1,13 @@
+#ifndef __ _H_
+#define __ _H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

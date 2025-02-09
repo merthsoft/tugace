@@ -1,10 +1,10 @@
+#include <stdint.h>
+#include <stdbool.h>
+
+#include <ti/tokens.h>
+
 #ifndef _CONST_H_
 #define _CONST_H_
-
-#include <ti/real.h>
-
-extern real_t StaticReal_0;
-extern real_t StaticReal_1;
 
 typedef uint8_t ProgramToken;
 typedef uint8_t LabelIndex;
@@ -101,8 +101,5 @@ typedef size_t  ProgramCounter;
 #define Hash_ELLIPSE    0x000008
 #define Hash_SPRITE     0x000009
 #define Hash_DEFSPRITE  0x00000A
-
-
-void Static_Initialize(void);
 
 #endif

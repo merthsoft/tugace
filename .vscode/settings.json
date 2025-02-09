@@ -4,7 +4,10 @@
         "static.h": "c",
         "stdint.h": "c",
         "palette.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "real.h": "c",
+        "seek.h": "c",
+        "rtc.h": "c"
     },
     "makefile.configureOnOpen": false
 }

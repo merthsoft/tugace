@@ -14,9 +14,12 @@
 
 #include <debug.h>
 
-#include "turtle.h"
+#include "const.h"
+#include "inline.h"
 #include "palette.h"
+#include "seek.h"
 #include "static.h"
+#include "turtle.h"
 
 #ifdef DEBUG
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
@@ -37,136 +40,18 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 }
 #endif
 
-size_t streamToNewline(const ProgramToken* data, const size_t dataLength, ProgramToken additionalDelim, ProgramCounter* index) {
-    const size_t start = *index;
-
-    if (dataLength == 0) {
-        return 0;
-    }
-
-    if (start > dataLength) {
-        return 0;
-    }
-
-    const char* d = (char*)data;
-    do {
-        char c = d[*index];
-        *index = *index + 1;
-        if (c == NewLineToken || c == additionalDelim) {
-            return *index - start; 
-        }
-    } while (*index < dataLength);
-    
-    *index = dataLength;
-    return *index - start + 1;
-}
-
-ProgramCounter labelSeek(const ProgramToken* data, size_t dataLength, ProgramCounter dataStart, LabelIndex label) {
-    if (dataLength == 0) {
-        return 0;
-    }
-    const ProgramToken* d = (ProgramToken*)data;
-    size_t index = dataStart;
-    while (index < dataLength) {
-        do {
-            ProgramToken c = d[index];
-            if (c == LabelToken || c == LabelTokenOS)
-                break;
-            if (strncmp((const char*)&d[index], "LABEL ", 6) == 0)
-                break;
-            
-            streamToNewline(data, dataLength, NewLineToken, &index);
-        } while (index < dataLength);
-        
-        if (index >= dataLength) {
-            return 0;
-        }
-
-        index++;
-        const ProgramToken* params = &d[index];
-        size_t paramsLength = streamToNewline(d, dataLength, NewLineToken, &index);
-
-        if (paramsLength == 0) {
-            continue;
-        }
-        
-        if (os_Eval(params, paramsLength)) {
-            continue;
-        }
-
-        uint8_t type;
-        void* ans = os_GetAnsData(&type);
-        if (!ans) {
-            continue;
-        }
-        real_t* realParam;
-        uint24_t param;
-        switch (type) {
-            case OS_TYPE_REAL:
-                realParam = ans;
-                break;
-            case OS_TYPE_CPLX:
-                realParam = ans;
-                break;
-            default:
-                continue;
-        }
-        param = os_RealToInt24(realParam);
-        if (param == label)
-            return index;
-    }
-
-    return 0;
-}
-
-// http://www.cse.yorku.ca/~oz/hash.html
-static inline uint24_t hash(const ProgramToken* arr, size_t length) {
-    uint32_t hash = 5381;
-    uint8_t c;
-    const uint8_t* d = (uint8_t*)arr;
-
-    while (length--) {
-        c = *d++;
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-    }
-
-    return hash;
-}
-
 #define clear_key_buffer() while(kb_AnyKey())
-
 #define null_coalesce(this, orThat) (this ? this : orThat)
 #define if_null_then_a_else_b(x, a, b) (!x ? a : b)
 
-static inline void pushTurtle(float* stack, StackPointer* stackPointer, const Turtle* turtle) {
-    memcpy(&stack[*stackPointer], &turtle->x, sizeof(float)*NumDataFields);
-    *stackPointer = *stackPointer + NumDataFields;
-}
-
-static inline void popTurtle(float* stack, StackPointer* stackPointer, Turtle* turtle) {
-    *stackPointer = *stackPointer - NumDataFields;
-    memcpy(&turtle->x, &stack[*stackPointer], sizeof(float)*NumDataFields);
-}
-
-static inline void push(float* stack, StackPointer* stackPointer, float* value) {
-    stack[*stackPointer] = *value;
-    *stackPointer = *stackPointer + 1;
-}
-
-static inline float pop(float* stack, StackPointer* stackPointer) {
-    *stackPointer = *stackPointer - 1;
-    float ret = stack[*stackPointer];
-    return ret;
-}
-
-Turtle turtles[NumTurtles];
-ProgramCounter labels[NumLabels];
-StackPointer stackPointers[NumStacks];
-StackPointer systemStackPointer;
-float stacks[NumStacks][MaxStackDepth];
-float systemStack[SystemStackDepth];
-
-uint16_t palette[256];
+// should be treated as private
+Turtle Main_turtles[NumTurtles];
+ProgramCounter Main_labels[NumLabels];
+StackPointer Main_stackPointers[NumStacks];
+StackPointer Main_systemStackPointer;
+float Main_stacks[NumStacks][MaxStackDepth];
+float Main_systemStack[SystemStackDepth];
+uint16_t Main_paletteBuffer[256];
 
 int main(void) {
     const char* filename = "SQUARES";
@@ -182,7 +67,7 @@ int main(void) {
     gfx_SetDrawScreen();
     //gfx_SetDrawBuffer();
 
-    Static_Initialize();
+    Const_Initialize();
 
     size_t programSize = ti_GetSize(programHandle);
     ProgramToken* program = malloc(programSize * sizeof(void*));
@@ -192,10 +77,10 @@ int main(void) {
     
     ProgramCounter programCounter = 0;
     // Header
-    streamToNewline(program, programSize, NewLineToken, &programCounter);
+    Seek_ToNewLine(program, programSize, NewLineToken, &programCounter);
     // Comment
     ProgramToken* comment = &program[programCounter];
-    size_t commentLength = streamToNewline(program, programSize, NewLineToken, &programCounter) - 1;
+    size_t commentLength = Seek_ToNewLine(program, programSize, NewLineToken, &programCounter) - 1;
     ProgramCounter programStart = programCounter;
     
     #ifdef DEBUG
@@ -203,7 +88,7 @@ int main(void) {
     debug_print_tokens(comment, commentLength, NULL);
     dbg_printf("\n");
     dbg_printf("Program size: %d PC: %d\n", programSize, programCounter);
-    dbg_printf("program: %p turtles: %p system stack: %p system sp: %p stacks: %p sp %p labels: %p palette: %p \n", program + programStart, turtles, systemStack, &systemStackPointer, stacks, stackPointers, labels, palette);
+    dbg_printf("program: %p turtles: %p system stack: %p system sp: %p stacks: %p sp %p labels: %p palette: %p \n", program + programStart, Main_turtles, Main_systemStack, &Main_systemStackPointer, Main_stacks, Main_stackPointers, Main_labels, Main_paletteBuffer);
     #endif
     
     clock_t time = clock();
@@ -212,14 +97,14 @@ int main(void) {
     char buffer[14] = "FPS: XXX     ";
 
 program_start:
-    memset(labels, 0, sizeof(ProgramCounter)*NumLabels);
-    memset(systemStack, 0, sizeof(float)*SystemStackDepth);
-    memset(stackPointers, 0, sizeof(StackPointer)*NumStacks);
-    memset(stacks, 0, sizeof(float)*NumStacks*MaxStackDepth);
-    systemStackPointer = 0;
-    Turtle_Initialize(turtles);
-    palette_default(palette);   
-    gfx_SetPalette(palette, 256, 0);
+    memset(Main_labels, 0, sizeof(ProgramCounter)*NumLabels);
+    memset(Main_systemStack, 0, sizeof(float)*SystemStackDepth);
+    memset(Main_stackPointers, 0, sizeof(StackPointer)*NumStacks);
+    memset(Main_stacks, 0, sizeof(float)*NumStacks*MaxStackDepth);
+    Main_systemStackPointer = 0;
+    Turtle_Initialize(Main_turtles);
+    Palette_Default(Main_paletteBuffer);   
+    gfx_SetPalette(Main_paletteBuffer, 256, 0);
     
     programCounter = programStart;
 
@@ -233,7 +118,7 @@ program_start:
 
     dbg_printf("Starting program exection.\n");
     while (!exit) {
-        Turtle* currentTurtle = &turtles[currentTurtleIndex];
+        Turtle* currentTurtle = &Main_turtles[currentTurtleIndex];
         if (!running)
             goto end_eval;
         
@@ -290,14 +175,14 @@ program_start:
                 programCounter++;
                 break;
             default:
-                commandLength = streamToNewline(program, programSize, SpaceToken, &programCounter) - 1;
-                commandHash = hash(command, commandLength);
+                commandLength = Seek_ToNewLine(program, programSize, SpaceToken, &programCounter) - 1;
+                commandHash = Hash_InLine(command, commandLength);
                 break;
         }
         
         if (program[programCounter-1] != NewLineToken) {
             params = &program[programCounter];
-            paramsLength = streamToNewline(program, programSize, NewLineToken, &programCounter) - 1;
+            paramsLength = Seek_ToNewLine(program, programSize, NewLineToken, &programCounter) - 1;
         }
 
         #ifdef DEBUG
@@ -415,7 +300,7 @@ program_start:
         }
         #endif
 
-        gfx_SetColor(currentTurtle->color);
+        gfx_SetColor(currentTurtle->Color);
         int errNo;
         switch (commandHash) {
             case Hash_COLOR:
@@ -442,18 +327,18 @@ program_start:
                 break;
             case Hash_CIRCLE:
                 param1Int = if_null_then_a_else_b(param1, 1, param1Val);
-                if (currentTurtle->pen)
-                    gfx_FillCircle(currentTurtle->x, currentTurtle->y, param1Int);
+                if (currentTurtle->Pen)
+                    gfx_FillCircle(currentTurtle->X, currentTurtle->Y, param1Int);
                 else
-                    gfx_Circle(currentTurtle->x, currentTurtle->y, param1Int);
+                    gfx_Circle(currentTurtle->X, currentTurtle->Y, param1Int);
                 break;
             case Hash_RECT:
                 param1Int = if_null_then_a_else_b(param1, 1, param1Val);
                 param2Int = if_null_then_a_else_b(param2, 1, param2Val);
-                if (currentTurtle->pen)
-                    gfx_FillRectangle(currentTurtle->x, currentTurtle->y, param1Int, param2Int);
+                if (currentTurtle->Pen)
+                    gfx_FillRectangle(currentTurtle->X, currentTurtle->Y, param1Int, param2Int);
                 else
-                    gfx_Rectangle(currentTurtle->x, currentTurtle->y, param1Int, param2Int);
+                    gfx_Rectangle(currentTurtle->X, currentTurtle->Y, param1Int, param2Int);
                 dbg_printf("%d,%d", param1Int, param2Int);
                 break;
             case Hash_STOP:
@@ -470,7 +355,7 @@ program_start:
                 }
                 param1Int = (uint24_t)param1Val;
                 if (param1Int >= 0 && param1Int < NumLabels)
-                    labels[param1Int] = programCounter;
+                    Main_labels[param1Int] = programCounter;
                 break;
             case Hash_GOSUB:
             case Hash_GOTO:
@@ -483,20 +368,20 @@ program_start:
                     dbg_printf("SYNTAX ERROR: Invalid label: %d.", param1Int);
                     break;
                 }
-                size_t labelIndex = labels[param1Int];
+                size_t labelIndex = Main_labels[param1Int];
                 if (labelIndex <= programStart || labelIndex >= programSize) {
-                    labelIndex = labelSeek(program, programSize, programStart, param1Int);
+                    labelIndex = Seek_ToLabel(program, programSize, programStart, param1Int);
                     if (labelIndex <= programStart || labelIndex >= programSize)
                     {
                         dbg_printf("SYNTAX ERROR: Invalid label: %d - %d.", param1Int, labelIndex);
                         break;
                     }
-                    labels[param1Int] = labelIndex;
+                    Main_labels[param1Int] = labelIndex;
                 }
 
                 if (commandHash == Hash_GOSUB) {
                     float pc = (float)programCounter;
-                    push(systemStack, &systemStackPointer, &pc);
+                    Push_InLine(Main_systemStack, &Main_systemStackPointer, &pc);
                     dbg_printf("pushing PC onto stack %f", pc);
                 }
                 programCounter = labelIndex;
@@ -506,42 +391,42 @@ program_start:
                 break;
             case Hash_PUSH:
                 if (ansList == NULL) {
-                    if (stackPointers[currentStackIndex] == MaxStackDepth-1) {
-                        dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, stackPointers[currentStackIndex]);
+                    if (Main_stackPointers[currentStackIndex] == MaxStackDepth-1) {
+                        dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
                         break;
                     }
-                    push(stacks[currentStackIndex], &stackPointers[currentStackIndex], &param1Val);
+                    Push_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], &param1Val);
                     break;
                 }
                 for (uint16_t pushListIndex = 0; pushListIndex < ansList->dim; pushListIndex++)  {
-                    if (stackPointers[currentStackIndex] == MaxStackDepth-1) {
-                        dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, stackPointers[currentStackIndex]);
+                    if (Main_stackPointers[currentStackIndex] == MaxStackDepth-1) {
+                        dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
                         break;
                     }
                     param1Val = os_RealToFloat(&ansList->items[pushListIndex]);
-                    push(stacks[currentStackIndex], &stackPointers[currentStackIndex], &param1Val);
+                    Push_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], &param1Val);
                 }
-                dbg_printf("new sp: %d", stackPointers[currentStackIndex]);
+                dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
                 break;
             case Hash_RET:
-                if (systemStackPointer == 0) {
+                if (Main_systemStackPointer == 0) {
                     dbg_printf("SYNTAX ERROR: Negative stack depth for system stack.");
                     break;
                 }
-                eval = pop(systemStack, &systemStackPointer);
+                eval = Pop_InLine(Main_systemStack, &Main_systemStackPointer);
                 dbg_printf("setting PC from stack %f", eval);
                 programCounter = (size_t)eval;
                 dbg_printf(" pc %d", programCounter);
                 break;
             case Hash_POP:
             case Hash_PEEK:
-                if (commandHash == Hash_POP && stackPointers[currentStackIndex] == 0) {
+                if (commandHash == Hash_POP && Main_stackPointers[currentStackIndex] == 0) {
                     dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
-                eval = pop(stacks[currentStackIndex], &stackPointers[currentStackIndex]);
+                eval = Pop_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex]);
                 if (commandHash == Hash_PEEK) {
-                    stackPointers[currentStackIndex]++;
+                    Main_stackPointers[currentStackIndex]++;
                 }
                 dbg_printf("popped: %f", eval);
                 if (param1 == NULL) {
@@ -558,22 +443,22 @@ program_start:
                 }
                 break;
             case Hash_PUSHVEC:
-                if (stackPointers[currentStackIndex] + 6 >= MaxStackDepth) {
-                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, stackPointers[currentStackIndex]);
+                if (Main_stackPointers[currentStackIndex] + 6 >= MaxStackDepth) {
+                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
                     break;
                 }
-                pushTurtle(stacks[currentStackIndex], &stackPointers[currentStackIndex], currentTurtle);
+                PushTurtle_Inline(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], currentTurtle);
                 break;
             case Hash_POPVEC:
             case Hash_POP_VEC:
             case Hash_PEEKVEC:
-                if (commandHash == Hash_POPVEC && stackPointers[currentStackIndex] <= NumDataFields-1) {
+                if (commandHash == Hash_POPVEC && Main_stackPointers[currentStackIndex] <= NumDataFields-1) {
                     dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
-                popTurtle(stacks[currentStackIndex], &stackPointers[currentStackIndex], currentTurtle);
+                PopTurtle_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], currentTurtle);
                 if (commandHash == Hash_PEEKVEC) {
-                    stackPointers[currentStackIndex] += NumDataFields;
+                    Main_stackPointers[currentStackIndex] += NumDataFields;
                 }
                 break;                
             case Hash_IF:
@@ -586,7 +471,7 @@ program_start:
                 }
                 break;
             case Hash_ZERO:
-                errNo = os_SetRealVar(param1Var, &StaticReal_0);
+                errNo = os_SetRealVar(param1Var, &Const_Real0);
                 if (errNo) {
                     dbg_printf("SYNTAX ERROR: Got error trying to zero out %c: %d", param1Var[0], errNo);    
                 }
@@ -599,7 +484,7 @@ program_start:
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
                     if (!param2)
-                        param2 = &StaticReal_1;
+                        param2 = &Const_Real1;
                     *param1 = os_RealAdd(param1, param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
@@ -614,7 +499,7 @@ program_start:
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
                     if (!param2)
-                        param2 = &StaticReal_1;
+                        param2 = &Const_Real1;
                     *param1 = os_RealSub(param1, param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
@@ -656,26 +541,26 @@ program_start:
                 break;
             case Hash_FADEOUT:
                 param1Int = (int24_t)param1Val;
-                fade_out(palette, 0, 255, param1Int);
+                Palette_FadeOut(Main_paletteBuffer, 0, 255, param1Int);
                 break;
             case Hash_FADEIN:
                 param1Int = (int24_t)param1Val;
-                fade_in(palette, 0, 255, param1Int);
+                Pallete_FadeIn(Main_paletteBuffer, 0, 255, param1Int);
                 break;
             case Hash_PALETTE:
                 param1Int = (int24_t)param1Val;
                 switch (param1Int) {
                     case 0:
-                        palette_default(palette);
+                        Palette_Default(Main_paletteBuffer);
                         break;
                     default:
                         dbg_printf("SYNTAX ERROR: Invalid palette %d", param1Int);
                         break;
                 }
-                gfx_SetPalette(palette, 256, 0);
+                gfx_SetPalette(Main_paletteBuffer, 256, 0);
                 break;
             case Hash_FILL:
-                gfx_FloodFill(currentTurtle->x, currentTurtle->y, currentTurtle->color);
+                gfx_FloodFill(currentTurtle->X, currentTurtle->Y, currentTurtle->Color);
                 break;
             case Hash_BLITSCREEN:
                 gfx_BlitScreen();
@@ -748,7 +633,7 @@ end_eval:
         //gfx_BlitScreen();
 
         for (int i = 0; i < NumTurtles; i++) {
-            Turtle_Draw(&turtles[i]);
+            Turtle_Draw_InLine(&Main_turtles[i]);
         }
 
         framecount++;

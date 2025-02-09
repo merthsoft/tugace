@@ -10,14 +10,14 @@ extern "C" {
 #endif
 
 typedef struct Turtle {
-    bool initialized;
+    bool Initialized;
     
-    float x;
-    float y;
-    float angle;
-    float color;
-    float pen;
-    float wrap;
+    float X;
+    float Y;
+    float Angle;
+    float Color;
+    float Pen;
+    float Wrap;
 } Turtle;
 
 void Turtle_Initialize(Turtle* t);
@@ -31,18 +31,18 @@ void Turtle_SetPen(Turtle* t, const float* pen);
 void Turtle_SetColor(Turtle* t, const float* color);
 void Turtle_SetWrap(Turtle* t, const float* wrap);
 
-static inline void Turtle_Draw(Turtle* t)
+static inline void Turtle_Draw_InLine(Turtle* t)
 {
-    if (!t->initialized || !t->pen)
+    if (!t->Initialized || !t->Pen)
         return;
 
-    uint24_t x = (uint24_t)t->x;
-    uint24_t y = (uint24_t)t->y;
+    uint24_t x = (uint24_t)t->X;
+    uint24_t y = (uint24_t)t->Y;
     
     if (x >= 0 && x < GFX_LCD_WIDTH
         && y >= 0 && y < GFX_LCD_HEIGHT)
     {
-        gfx_SetColor(t->color);
+        gfx_SetColor(t->Color);
         gfx_SetPixel(x, y);
     }
 }
