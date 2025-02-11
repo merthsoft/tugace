@@ -6,18 +6,18 @@
 #ifndef _CONST_H_
 #define _CONST_H_
 
+typedef uint24_t LabelIndex;
 typedef uint8_t ProgramToken;
-typedef uint8_t LabelIndex;
 typedef uint8_t StackIndex;
 typedef uint8_t TurtleIndex;
 typedef uint8_t StackPointer;
 typedef size_t  ProgramCounter;
 
-#define NumTurtles       10
+#define NumTurtles       100
 #define NumDataFields    6
-#define NumStacks        NumTurtles
+#define NumStacks        10
 #define MaxStackDepth    256
-#define NumLabels        256
+#define NumLabels        1024
 #define SystemStackDepth 256
 
 #define NewLineToken    OS_TOK_NEWLINE

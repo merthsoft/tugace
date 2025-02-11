@@ -17,7 +17,7 @@
 #include "turtle.h"
 
 #ifdef DEBUG
-//#define DEBUG_PROCESSOR
+#define DEBUG_PROCESSOR
 #endif
 
 #ifdef DEBUG
@@ -64,14 +64,11 @@ int main(void) {
 
     gfx_Begin();
     gfx_SetDrawScreen();
-    //gfx_SetDrawBuffer();
-
-    Const_Initialize();
-
-    size_t programSize = ti_GetSize(programHandle);
-    ProgramToken* program = malloc(programSize * sizeof(void*));
-    ti_Read(program, programSize, 1, programHandle);
     
+    size_t programSize = ti_GetSize(programHandle);
+    ProgramToken* program = malloc(programSize);
+    ti_Read(program, programSize, 1, programHandle);
+
     srand(rtc_Time());
     
     ProgramCounter programCounter = 0;
@@ -87,7 +84,7 @@ int main(void) {
     debug_print_tokens(comment, commentLength, NULL);
     dbg_printf("\n");
     dbg_printf("Program size: %d PC: %d\n", programSize, programCounter);
-    dbg_printf("size_t: %d program: %p pc %p turtles: %p system stack: %p system sp: %p stacks: %p sp %p labels: %p palette: %p \n", sizeof(size_t), program, &programCounter, Main_turtles, Main_systemStack, &Main_systemStackPointer, Main_stacks, Main_stackPointers, Main_labels, Main_paletteBuffer);
+    dbg_printf("size turtle: %d program: %p pc %p turtles: %p system stack: %p system sp: %p stacks: %p sp %p labels: %p palette: %p \n", sizeof(Turtle), program, &programCounter, Main_turtles, Main_systemStack, &Main_systemStackPointer, Main_stacks, Main_stackPointers, Main_labels, Main_paletteBuffer);
     #endif
     
     clock_t time = clock();
@@ -730,7 +727,8 @@ end_eval:
         gfx_BlitBuffer();
         goto program_start;
     }
-
+    goto exit;
+exit:
     free(program);
     ti_Close(programHandle);
     gfx_End();
