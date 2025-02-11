@@ -87,7 +87,7 @@ int main(void) {
     debug_print_tokens(comment, commentLength, NULL);
     dbg_printf("\n");
     dbg_printf("Program size: %d PC: %d\n", programSize, programCounter);
-    dbg_printf("program: %p turtles: %p system stack: %p system sp: %p stacks: %p sp %p labels: %p palette: %p \n", program + programStart, Main_turtles, Main_systemStack, &Main_systemStackPointer, Main_stacks, Main_stackPointers, Main_labels, Main_paletteBuffer);
+    dbg_printf("size_t: %d program: %p pc %p turtles: %p system stack: %p system sp: %p stacks: %p sp %p labels: %p palette: %p \n", sizeof(size_t), program, &programCounter, Main_turtles, Main_systemStack, &Main_systemStackPointer, Main_stacks, Main_stackPointers, Main_labels, Main_paletteBuffer);
     #endif
     
     clock_t time = clock();
@@ -97,12 +97,16 @@ int main(void) {
 
 program_start:
     memset(Main_labels, 0, sizeof(ProgramCounter)*NumLabels);
+    Main_labels[255] = 0xABCDEF;
     memset(Main_systemStack, 0, sizeof(float)*SystemStackDepth);
     memset(Main_stackPointers, 0, sizeof(StackPointer)*NumStacks);
     memset(Main_stacks, 0, sizeof(float)*NumStacks*MaxStackDepth);
     Main_systemStackPointer = 0;
     Turtle_Initialize(Main_turtles);
-    Palette_Default(Main_paletteBuffer);   
+    Palette_Default(Main_paletteBuffer); 
+    #ifdef DEBUG
+    Main_paletteBuffer[1] = gfx_RGBTo1555(0, 125, 0);
+    #endif  
     gfx_SetPalette(Main_paletteBuffer, 256, 0);
     
     programCounter = programStart;
@@ -148,7 +152,15 @@ program_start:
             case StopTokenOs:
             case PushToken:
             case PopToken:
+            case TurtleToken:
+            case StoToken:
                 switch (shortHand) {
+                    case StoToken:
+                        commandHash = Hash_STO;
+                        break;
+                    case TurtleToken:
+                        commandHash = Hash_TURTLE;
+                        break;
                     case PushToken:
                         commandHash = Hash_PUSH;
                         break;
@@ -226,15 +238,15 @@ program_start:
         
         uint8_t type;
         void* ans;
-        list_t* ansList;
-        cplx_list_t* cplx_ansList;
+        list_t* paramsList;
+        cplx_list_t* paramsListCplx;
         
         float retList[MaxStackDepth];
         uint16_t retListPointer = 0;
 
         if (paramsLength > 0) {
             if (os_Eval(params, paramsLength)) {
-                dbg_printf("SYNTAX ERROR: Failed to eval \"%.*s\" length: %d \n", paramsLength, (const char*)params, paramsLength);
+                dbg_printf("\nSYNTAX ERROR: Failed to eval \"%.*s\" length: %d.", paramsLength, (const char*)params, paramsLength);
                 goto end_eval;
             }
 
@@ -248,6 +260,8 @@ program_start:
             param2Val = 0;
             param1 = NULL;
             param2 = NULL;
+            paramsList = NULL;
+            paramsListCplx = NULL;
             retListPointer = 0;
 
             if (ans) {
@@ -260,29 +274,29 @@ program_start:
                         break;
                     case OS_TYPE_REAL_LIST:
                         param1Var[0] = (char)*(params + 1);
-                        ansList = (list_t*)ans;
-                        if (ansList->dim >= 1)
-                            param1 = &ansList->items[0];
-                        if (ansList->dim >= 2)
-                            param2 = &ansList->items[1];
+                        paramsList = (list_t*)ans;
+                        if (paramsList->dim >= 1)
+                            param1 = &paramsList->items[0];
+                        if (paramsList->dim >= 2)
+                            param2 = &paramsList->items[1];
                         break;
                     case OS_TYPE_CPLX_LIST:
                         param1Var[0] = (char)*(params + 1);
-                        cplx_ansList = (cplx_list_t*)ans;
-                        if (cplx_ansList->dim >= 1)
-                            param1 = &cplx_ansList->items[0].real;
-                        if (cplx_ansList->dim >= 2)
-                            param2 = &cplx_ansList->items[1].real;
+                        paramsListCplx = (cplx_list_t*)ans;
+                        if (paramsListCplx->dim >= 1)
+                            param1 = &paramsListCplx->items[0].real;
+                        if (paramsListCplx->dim >= 2)
+                            param2 = &paramsListCplx->items[1].real;
                         break;
                     case OS_TYPE_EQU:
-                        dbg_printf("SYNTAX ERROR: Equations not yet supported.");
+                        dbg_printf("\nSYNTAX ERROR: Equations not yet supported.");
                         goto end_eval;
                     default:
-                        dbg_printf("SYNTAX ERROR: Unsupported ans type: %d.", type);
+                        dbg_printf("\nSYNTAX ERROR: Unsupported ans type: %d.", type);
                         goto end_eval;
                 }
             } else {
-                dbg_printf("UNKNOWN ERROR: Failed to resolve ans.");
+                dbg_printf("\nUNKNOWN ERROR: Failed to resolve ans.");
                 goto end_eval;
             }
             
@@ -353,7 +367,7 @@ program_start:
                 break;
             case Hash_LABEL:
                 if (param1 == NULL) {
-                    dbg_printf("SYNTAX ERROR: No label.");
+                    dbg_printf("\nSYNTAX ERROR: No label.");
                     break;
                 }
                 param1Int = (uint24_t)param1Val;
@@ -363,12 +377,12 @@ program_start:
             case Hash_GOSUB:
             case Hash_GOTO:
                 if (param1 == NULL) {
-                    dbg_printf("SYNTAX ERROR: No label.");
+                    dbg_printf("\nSYNTAX ERROR: No label.");
                     break;
                 }
                 param1Int = (uint24_t)param1Val;
                 if (param1Int >= NumLabels) {
-                    dbg_printf("SYNTAX ERROR: Invalid label: %d.", param1Int);
+                    dbg_printf("\nSYNTAX ERROR: Invalid label: %d.", param1Int);
                     break;
                 }
                 size_t labelIndex = Main_labels[param1Int];
@@ -376,7 +390,7 @@ program_start:
                     labelIndex = Seek_ToLabel(program, programSize, programStart, param1Int);
                     if (labelIndex <= programStart || labelIndex >= programSize)
                     {
-                        dbg_printf("SYNTAX ERROR: Invalid label: %d - %d.", param1Int, labelIndex);
+                        dbg_printf("\nSYNTAX ERROR: Invalid label: %d - %d.", param1Int, labelIndex);
                         break;
                     }
                     Main_labels[param1Int] = labelIndex;
@@ -395,21 +409,21 @@ program_start:
                 dbg_printf(" *");
                 break;
             case Hash_PUSH:
-                if (ansList == NULL) {
+                if (paramsList == NULL) {
                     if (Main_stackPointers[currentStackIndex] == MaxStackDepth-1) {
-                        dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
-                        break;
+                        dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
+                        goto end_eval;
                     }
                     Push_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], &param1Val);
-                    break;
-                }
-                for (uint16_t pushListIndex = 0; pushListIndex < ansList->dim; pushListIndex++)  {
-                    if (Main_stackPointers[currentStackIndex] == MaxStackDepth-1) {
-                        dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
-                        break;
+                } else {
+                    for (uint16_t pushListIndex = 0; pushListIndex < paramsList->dim; pushListIndex++)  {
+                        if (Main_stackPointers[currentStackIndex] == MaxStackDepth-1) {
+                            dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
+                            goto end_eval;
+                        }
+                        param1Val = os_RealToFloat(&paramsList->items[pushListIndex]);
+                        Push_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], &param1Val);
                     }
-                    param1Val = os_RealToFloat(&ansList->items[pushListIndex]);
-                    Push_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], &param1Val);
                 }
                 #ifdef DEBUG_PROCESSOR
                     dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
@@ -417,7 +431,7 @@ program_start:
                 break;
             case Hash_RET:
                 if (Main_systemStackPointer == 0) {
-                    dbg_printf("SYNTAX ERROR: Negative stack depth for system stack.");
+                    dbg_printf("\nSYNTAX ERROR: Negative stack depth for system stack.");
                     break;
                 }
                 eval = Pop_InLine(Main_systemStack, &Main_systemStackPointer);
@@ -429,16 +443,22 @@ program_start:
             case Hash_POP:
             case Hash_PEEK:
                 if (commandHash == Hash_POP && Main_stackPointers[currentStackIndex] == 0) {
-                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
+                    dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
                 eval = Pop_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex]);
                 if (commandHash == Hash_PEEK) {
                     Main_stackPointers[currentStackIndex]++;
+                    #ifdef DEBUG_PROCESSOR
+                        dbg_printf("peeked: %f", eval);
+                        dbg_printf(" sp: %d", Main_stackPointers[currentStackIndex]);
+                    #endif
+                } else {
+                    #ifdef DEBUG_PROCESSOR
+                        dbg_printf("popped: %f", eval);
+                        dbg_printf(" sp: %d", Main_stackPointers[currentStackIndex]);
+                    #endif
                 }
-                #ifdef DEBUG_PROCESSOR
-                    dbg_printf("popped: %f", eval);
-                #endif
                 if (param1 == NULL) {
                     retList[0] = eval;
                     retListPointer++;
@@ -448,32 +468,38 @@ program_start:
                         *param1 = os_FloatToReal(eval);
                         os_SetRealVar(param1Var, param1);
                     } else {
-                        dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
+                        dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
                     }
                 }
                 break;
             case Hash_PUSHVEC:
                 if (Main_stackPointers[currentStackIndex] + 6 >= MaxStackDepth) {
-                    dbg_printf("SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
+                    dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Main_stackPointers[currentStackIndex]);
                     break;
                 }
                 PushTurtle_Inline(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], currentTurtle);
+                #ifdef DEBUG_PROCESSOR
+                    dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
+                #endif
                 break;
             case Hash_POPVEC:
             case Hash_POP_VEC:
             case Hash_PEEKVEC:
                 if (commandHash == Hash_POPVEC && Main_stackPointers[currentStackIndex] <= NumDataFields-1) {
-                    dbg_printf("SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
+                    dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     break;
                 }
                 PopTurtle_InLine(Main_stacks[currentStackIndex], &Main_stackPointers[currentStackIndex], currentTurtle);
                 if (commandHash == Hash_PEEKVEC) {
                     Main_stackPointers[currentStackIndex] += NumDataFields;
                 }
+                #ifdef DEBUG_PROCESSOR
+                    dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
+                #endif
                 break;                
             case Hash_IF:
                 if (param1 == NULL) {
-                    dbg_printf("SYNTAX ERROR: No predicate.");
+                    dbg_printf("\nSYNTAX ERROR: No predicate.");
                     break;
                 }
                 if (!param1Val) {
@@ -483,12 +509,12 @@ program_start:
             case Hash_ZERO:
                 errNo = os_SetRealVar(param1Var, &Const_Real0);
                 if (errNo) {
-                    dbg_printf("SYNTAX ERROR: Got error trying to zero out %c: %d", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to zero out %c: %d.", param1Var[0], errNo);    
                 }
                 break;
             case Hash_INC:
                 if (param1 == NULL) {
-                    dbg_printf("SYNTAX ERROR: No parameter to set.");
+                    dbg_printf("\nSYNTAX ERROR: No parameter to set.");
                     break;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
@@ -498,12 +524,12 @@ program_start:
                     *param1 = os_RealAdd(param1, param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
                 }
                 break;
             case Hash_DEC:
                 if (param1 == NULL) {
-                    dbg_printf("SYNTAX ERROR: No parameter to set.");
+                    dbg_printf("\nSYNTAX ERROR: No parameter to set.");
                     break;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
@@ -513,30 +539,30 @@ program_start:
                     *param1 = os_RealSub(param1, param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
                 }
                 break;
             case Hash_STO:
                 if (param1 == NULL) {
-                    dbg_printf("SYNTAX ERROR: No parameter to set.");
+                    dbg_printf("\nSYNTAX ERROR: No parameter to set.");
                     break;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
                     if (!param2) {
-                        dbg_printf("SYNTAX ERROR: No value to set.");
+                        dbg_printf("\nSYNTAX ERROR: No value to set.");
                         break;
                     }
                     *param1 = os_RealCopy(param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("SYNTAX ERROR: Got error trying to read %c: %d", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
                 }
                 break;
             case Hash_TURTLE:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < -1 || param1Int > NumTurtles) {
-                    dbg_printf("SYNTAX ERROR: Invalid turtle number %d", param1Int);
+                    dbg_printf("\nSYNTAX ERROR: Invalid turtle number %d.", param1Int);
                     break;
                 }
                 currentTurtleIndex = param1Int;
@@ -544,7 +570,7 @@ program_start:
             case Hash_STACK:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < -1 || param1Int > NumStacks) {
-                    dbg_printf("SYNTAX ERROR: Invalid stack number %d", param1Int);
+                    dbg_printf("\nSYNTAX ERROR: Invalid stack number %d.", param1Int);
                     break;
                 }
                 currentStackIndex = param1Int;
@@ -564,7 +590,7 @@ program_start:
                         Palette_Default(Main_paletteBuffer);
                         break;
                     default:
-                        dbg_printf("SYNTAX ERROR: Invalid palette %d", param1Int);
+                        dbg_printf("\nSYNTAX ERROR: Invalid palette %d.", param1Int);
                         break;
                 }
                 gfx_SetPalette(Main_paletteBuffer, 256, 0);
@@ -591,7 +617,7 @@ program_start:
                 Turtle_Initialize(currentTurtle);
                 break;
             default:
-                dbg_printf("SYNTAX ERROR: Unknown hash encountered 0x%.6lX", commandHash);
+                dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", commandHash, commandLength, command);
                 break;
         }
         
@@ -613,7 +639,7 @@ program_start:
 
         errNo = os_SetListDim(OS_VAR_ANS, retListPointer);
         if (errNo) {
-            dbg_printf("SYNTAX ERROR: Got error trying to set ans dim %d", retListPointer);
+            dbg_printf("\nSYNTAX ERROR: Got error trying to set ans dim %d.", retListPointer);
             goto end_eval;
         }
 
@@ -625,7 +651,7 @@ program_start:
             real_t ans = os_FloatToReal(retList[retListIndex]);
             errNo = os_SetRealListElement(OS_VAR_ANS, retListIndex+1, &ans);
             if (errNo) {
-                dbg_printf("SYNTAX ERROR: Got error trying to set ans index %d", retListIndex);
+                dbg_printf("\nSYNTAX ERROR: Got error trying to set ans index %d.", retListIndex);
                 break;
             }
         }
@@ -705,6 +731,7 @@ end_eval:
         goto program_start;
     }
 
+    free(program);
     ti_Close(programHandle);
     gfx_End();
 

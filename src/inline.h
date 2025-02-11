@@ -18,6 +18,9 @@ static inline void PushTurtle_Inline(float* stack, StackPointer* stackPointer, c
 static inline void PopTurtle_InLine(float* stack, StackPointer* stackPointer, Turtle* turtle) {
     *stackPointer = *stackPointer - NumDataFields;
     memcpy(&turtle->X, &stack[*stackPointer], sizeof(float)*NumDataFields);
+    #ifdef DEBUG
+    memset(&stack[*stackPointer], 0, sizeof(float)*NumDataFields);
+    #endif
 }
 
 static inline void Push_InLine(float* stack, StackPointer* stackPointer, const float* value) {
@@ -28,6 +31,9 @@ static inline void Push_InLine(float* stack, StackPointer* stackPointer, const f
 static inline float Pop_InLine(float* stack, StackPointer* stackPointer) {
     *stackPointer = *stackPointer - 1;
     float ret = stack[*stackPointer];
+    #ifdef DEBUG
+    stack[*stackPointer] = 0;
+    #endif
     return ret;
 }
 

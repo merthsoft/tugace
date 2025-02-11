@@ -1,6 +1,7 @@
 TUGA:"SQUARES":prgmTUGA:Return
 "Squares
 FADEOUT 2
+INIT
 PEN 0
 COLOR 0
 CLEAR 0

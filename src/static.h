@@ -47,6 +47,10 @@ typedef size_t  ProgramCounter;
 #define PushToken       OS_TOK_LEFT_BRACE
 #define PopToken        OS_TOK_RIGHT_BRACE
 
+#define TurtleToken     OS_TOK_X
+
+#define StoToken        OS_TOK_STO
+
 #define Hash_COLOR      0xE809A4
 #define Hash_PEN        0x881068
 #define Hash_FORWARD    0x70717A

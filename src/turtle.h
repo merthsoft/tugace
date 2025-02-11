@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-typedef struct Turtle {
+typedef struct __attribute__((packed)) Turtle {
     bool Initialized;
     
     float X;
