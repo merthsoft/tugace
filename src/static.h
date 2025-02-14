@@ -90,6 +90,9 @@ typedef size_t  ProgramCounter;
 #define Hash_KEYSCAN    0x7C8B53
 #define Hash_KEYDOWN    0x748786
 #define Hash_GETKEY     0x8D3C4E
+#define Hash_IFKEYDOWN  0x4DE395
+
+#define Hash_IFKEYUP    0x000009
 
 #define Hash_FILL       0x000001
 
@@ -104,8 +107,9 @@ typedef size_t  ProgramCounter;
 #define Hash_BLITSCREEN 0x000007
 #define Hash_BLITBUFFER 0x000017
 #define Hash_ELLIPSE    0x000008
+
 #define Hash_SPRITE     0x000009
 #define Hash_DEFSPRITE  0x00000A
-#define Hash_SETSPRITE  0x00000B
+#define Hash_SIZESPRITE 0x00000B
 
 #endif

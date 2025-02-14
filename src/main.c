@@ -55,7 +55,7 @@ uint16_t Main_paletteBuffer[256];
 gfx_sprite_t* Main_spriteDictionary[NumSprites];
 
 int main(void) {
-    const char* filename = "GETKEY";
+    const char* filename = "KEYSCAN";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0) {
         return 1;
@@ -116,7 +116,7 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = false;
+    bool showFps = true;
     bool skipFlag = false;
 
     dbg_printf("Starting program exection.\n");
@@ -234,6 +234,7 @@ program_start:
         int24_t param1Int;
         int24_t param2Int;
         float eval;
+        int24_t intEval;
         char param1Var[4];
         
         uint8_t type;
@@ -303,16 +304,16 @@ program_start:
             if (param1 != NULL) {
                 param1Val = os_RealToFloat(param1);
                 if (param2 != NULL)
-                param2Val= os_RealToFloat(param2);
+                    param2Val = os_RealToFloat(param2);
             }
         }
 
         #ifdef DEBUG_PROCESSOR
         if (param1) {
-            dbg_printf("Param1: %f", os_RealToFloat(param1));
+            dbg_printf("Param1: %f", param1Val);
             dbg_printf("\t");
             if (param2)  {
-                dbg_printf("Param2: %f", os_RealToFloat(param2));
+                dbg_printf("Param2: %f", param2Val);
                 dbg_printf("\t");
             }
         }
@@ -619,7 +620,7 @@ program_start:
             case Hash_GETKEY:
                 param1Int = keyhelper_GetKey();
                 if (param1 == NULL) {
-                    retList[0] = param1Int;
+                    retList[0] = (float)param1Int;
                     retListPointer = 1;
                 } else {
                     *param1 = os_Int24ToReal(param1Int);
@@ -633,18 +634,56 @@ program_start:
                 }
                 break;
             case Hash_KEYDOWN:
+                if (param1 == NULL) {
+                    dbg_printf("\nSYNTAX ERROR: No key value.");
+                    goto end_eval;
+                }
                 param1Int = (int24_t)param1Val;
                 retList[0] = keyhelper_IsDown(param1Int);
                 retListPointer = 1;
+                break;
+            case Hash_IFKEYDOWN:
+                if (param1 == NULL) {
+                    dbg_printf("\nSYNTAX ERROR: No key value.");
+                    goto end_eval;
+                }
+                param1Int = (int24_t)param1Val;
+                if (!keyhelper_IsDown(param1Int)) {
+                    skipFlag = true;
+                }
                 break;
             case Hash_KEYUP:
                 param1Int = (int24_t)param1Val;
                 retList[0] = keyhelper_IsUp(param1Int);
                 retListPointer = 1;
                 break;
+            case Hash_IFKEYUP:
+                if (param1 == NULL) {
+                    dbg_printf("\nSYNTAX ERROR: No key value.");
+                    goto end_eval;
+                }
+                param1Int = (int24_t)param1Val;
+                if (!keyhelper_IsUp(param1Int)) {
+                    skipFlag = true;
+                }
+                break;
             case Hash_KEYSCAN:
                 kb_Scan();
                 break;
+            case Hash_SIZESPRITE:
+                param1Int = (int24_t)param1Val;
+                if (param1Int < 0 || param1Int > NumSprites)
+                {
+                    dbg_printf("\nSYNTEAX ERROR: Out of range of sprites %d.", param1Int);
+                    goto end_eval;
+                }
+                param2Int = (int24_t)param2Val;
+                intEval = os_RealToInt24(&paramsList->items[2]);
+                if (Main_spriteDictionary[param1Int] != NULL)
+                    free(Main_spriteDictionary[param1Int]);
+                Main_spriteDictionary[param1Int] = gfx_MallocSprite(param2Int, intEval);
+                break;
+
             default:
                 dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", commandHash, commandLength, command);
                 break;
