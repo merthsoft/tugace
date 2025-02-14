@@ -19,6 +19,7 @@ typedef size_t  ProgramCounter;
 #define MaxStackDepth    256
 #define NumLabels        1024
 #define SystemStackDepth 256
+#define NumSprites       256
 
 #define NewLineToken    OS_TOK_NEWLINE
 #define SpaceToken      OS_TOK_SPACE
@@ -88,10 +89,10 @@ typedef size_t  ProgramCounter;
 #define Hash_RECT       0x8B3513
 #define Hash_KEYSCAN    0x7C8B53
 #define Hash_KEYDOWN    0x748786
+#define Hash_GETKEY     0x8D3C4E
 
 #define Hash_FILL       0x000001
 
-#define Hash_GETKEY     0x000002
 #define Hash_KEYUP      0x000032
 
 #define Hash_TEXT       0x000003
@@ -105,5 +106,6 @@ typedef size_t  ProgramCounter;
 #define Hash_ELLIPSE    0x000008
 #define Hash_SPRITE     0x000009
 #define Hash_DEFSPRITE  0x00000A
+#define Hash_SETSPRITE  0x00000B
 
 #endif

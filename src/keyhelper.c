@@ -4,7 +4,7 @@
 #include <keypadc.h>
 
 #define keyhelper_scanCodeToGetKeyLutOffset 1
-#define keyhelper_scanCodeToGetKeyLutSize   55
+#define keyhelper_scanCodeToGetKeyLutSize   56
 uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
     34,     // skDown		equ 01h
     24,     // skLeft		equ 02h
@@ -29,6 +29,7 @@ uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
     64,     // skRParen		equ 15h
     54,     // skTan		equ 16h
     44,     // skVars		equ 17h
+    0,      // 18h
     103,    // skDecPnt		equ 19h
     93,     // sk2			equ 1Ah
     83,     // sk5			equ 1Bh
@@ -163,30 +164,17 @@ kb_lkey_t keyhelper_getKeyToKbKeyLut[keyhelper_getKeyToKbKeyLutSize] = {
     kb_KeyEnter,
 };
 
-// code by jacobly
 uint8_t keyhelper_GetKey(void) {
-    static uint8_t last_key;
-    uint8_t only_key = 0;
     kb_Scan();
     for (uint8_t key = 1, group = 7; group; --group) {
         for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
             if (kb_Data[group] & mask) {
-                if (only_key) {
-                    last_key = 0;
-                    return 0;
-                } else {
-                    only_key = key;
-                }
+                return keyhelper_scanCodeToGetKeyLut[key - keyhelper_scanCodeToGetKeyLutOffset];
             }
         }
     }
-    if (only_key == last_key) {
-        return 0;
-    }
-    last_key = only_key;
-    if (only_key == 0)
-        return 0;
-    return keyhelper_scanCodeToGetKeyLut[only_key - keyhelper_scanCodeToGetKeyLutOffset];
+
+    return 0;
 }
 
 bool keyhelper_IsDown(int24_t getKey) {

@@ -52,9 +52,10 @@ StackPointer Main_systemStackPointer;
 float Main_stacks[NumStackPages][MaxStackDepth];
 float Main_systemStack[SystemStackDepth];
 uint16_t Main_paletteBuffer[256];
+gfx_sprite_t* Main_spriteDictionary[NumSprites];
 
 int main(void) {
-    const char* filename = "KEYSCAN";
+    const char* filename = "GETKEY";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0) {
         return 1;
@@ -93,6 +94,7 @@ int main(void) {
     float fps = 0.0f;
     char buffer[14] = "FPS: XXX     ";
 
+    memset(Main_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
 program_start:
     memset(Main_labels, 0, sizeof(ProgramCounter)*NumLabels);
     Main_labels[255] = 0xABCDEF;
@@ -615,13 +617,16 @@ program_start:
                 Turtle_Initialize(currentTurtle);
                 break;
             case Hash_GETKEY:
-                eval = keyhelper_GetKey();
+                param1Int = keyhelper_GetKey();
                 if (param1 == NULL) {
-                    retList[0] = eval;
+                    retList[0] = param1Int;
                     retListPointer = 1;
                 } else {
-                    *param1 = os_FloatToReal(eval);
+                    *param1 = os_Int24ToReal(param1Int);
                     errNo = os_SetRealVar(param1Var, param1);
+                    #ifdef DEBUG_PROCESSOR
+                    dbg_printf(" Wrote %d to %c ", param1Int, param1Var[0]);
+                    #endif
                     if (errNo) {
                         dbg_printf("\nSYNTAX ERROR: Got error trying to write %c: %d.", param1Var[0], errNo);
                     }
