@@ -1,10 +1,20 @@
+#ifndef _STATIC_H_
+#define _STATIC_H_
+
+#include <keypadc.h>
+
 #include <stdint.h>
 #include <stdbool.h>
 
 #include <ti/tokens.h>
 
-#ifndef _CONST_H_
-#define _CONST_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define clear_key_buffer() while(kb_AnyKey())
+#define null_coalesce(this, orThat) (this ? this : orThat)
+#define if_null_then_a_else_b(x, a, b) (!x ? a : b)
 
 typedef uint24_t LabelIndex;
 typedef uint8_t ProgramToken;
@@ -111,5 +121,9 @@ typedef size_t  ProgramCounter;
 #define Hash_SPRITE     0x000009
 #define Hash_DEFSPRITE  0x00000A
 #define Hash_SIZESPRITE 0x00000B
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

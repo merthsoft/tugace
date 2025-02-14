@@ -1,5 +1,5 @@
-#ifndef __PALETTE_H_
-#define __PALETTE_H_
+#ifndef _PALETTE_H_
+#define _PALETTE_H_
 
 #include <stdint.h>
 

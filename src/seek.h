@@ -1,5 +1,5 @@
-#ifndef __SEEK_H_
-#define __SEEK_H_
+#ifndef _SEEK_H_
+#define _SEEK_H_
 
 #include "static.h"
 
