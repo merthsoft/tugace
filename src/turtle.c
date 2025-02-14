@@ -63,7 +63,7 @@ void Turtle_Initialize(Turtle *t)
     t->Y = GFX_LCD_HEIGHT / 2;
     t->Angle = 0;
     t->Color = 255;
-    t->Pen = 0;
+    t->Pen = 1;
     t->Wrap = 1;
 }
 
@@ -83,13 +83,13 @@ static inline void clip_angle(Turtle* t)
 
 void Turtle_Right(Turtle* t, const float* angle)
 {
-    t->Angle -= *angle;
+    t->Angle += *angle;
     clip_angle(t);
 }
 
 void Turtle_Left(Turtle* t, const  float* angle)
 {
-    t->Angle += *angle;
+    t->Angle -= *angle;
     clip_angle(t);
 }
 

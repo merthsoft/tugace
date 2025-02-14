@@ -10,6 +10,7 @@
 #include <debug.h>
 
 #include "const.h"
+#include "keyhelper.h"
 #include "inline.h"
 #include "palette.h"
 #include "seek.h"
@@ -17,7 +18,7 @@
 #include "turtle.h"
 
 #ifdef DEBUG
-#define DEBUG_PROCESSOR
+//#define DEBUG_PROCESSOR
 #endif
 
 #ifdef DEBUG
@@ -46,14 +47,14 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 // should be treated as private
 Turtle Main_turtles[NumTurtles];
 ProgramCounter Main_labels[NumLabels];
-StackPointer Main_stackPointers[NumStacks];
+StackPointer Main_stackPointers[NumStackPages];
 StackPointer Main_systemStackPointer;
-float Main_stacks[NumStacks][MaxStackDepth];
+float Main_stacks[NumStackPages][MaxStackDepth];
 float Main_systemStack[SystemStackDepth];
 uint16_t Main_paletteBuffer[256];
 
 int main(void) {
-    const char* filename = "SQUARES";
+    const char* filename = "KEYSCAN";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0) {
         return 1;
@@ -96,8 +97,8 @@ program_start:
     memset(Main_labels, 0, sizeof(ProgramCounter)*NumLabels);
     Main_labels[255] = 0xABCDEF;
     memset(Main_systemStack, 0, sizeof(float)*SystemStackDepth);
-    memset(Main_stackPointers, 0, sizeof(StackPointer)*NumStacks);
-    memset(Main_stacks, 0, sizeof(float)*NumStacks*MaxStackDepth);
+    memset(Main_stackPointers, 0, sizeof(StackPointer)*NumStackPages);
+    memset(Main_stacks, 0, sizeof(float)*NumStackPages*MaxStackDepth);
     Main_systemStackPointer = 0;
     Turtle_Initialize(Main_turtles);
     Palette_Default(Main_paletteBuffer); 
@@ -566,7 +567,7 @@ program_start:
                 break;
             case Hash_STACK:
                 param1Int = (int24_t)param1Val;
-                if (param1Int < -1 || param1Int > NumStacks) {
+                if (param1Int < -1 || param1Int > NumStackPages) {
                     dbg_printf("\nSYNTAX ERROR: Invalid stack number %d.", param1Int);
                     break;
                 }
@@ -612,6 +613,32 @@ program_start:
                 break;
             case Hash_INIT:
                 Turtle_Initialize(currentTurtle);
+                break;
+            case Hash_GETKEY:
+                eval = keyhelper_GetKey();
+                if (param1 == NULL) {
+                    retList[0] = eval;
+                    retListPointer = 1;
+                } else {
+                    *param1 = os_FloatToReal(eval);
+                    errNo = os_SetRealVar(param1Var, param1);
+                    if (errNo) {
+                        dbg_printf("\nSYNTAX ERROR: Got error trying to write %c: %d.", param1Var[0], errNo);
+                    }
+                }
+                break;
+            case Hash_KEYDOWN:
+                param1Int = (int24_t)param1Val;
+                retList[0] = keyhelper_IsDown(param1Int);
+                retListPointer = 1;
+                break;
+            case Hash_KEYUP:
+                param1Int = (int24_t)param1Val;
+                retList[0] = keyhelper_IsUp(param1Int);
+                retListPointer = 1;
+                break;
+            case Hash_KEYSCAN:
+                kb_Scan();
                 break;
             default:
                 dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", commandHash, commandLength, command);

@@ -86,13 +86,13 @@ typedef size_t  ProgramCounter;
 #define Hash_STOP       0x8C02CB
 #define Hash_INIT       0x866CB9
 #define Hash_RECT       0x8B3513
+#define Hash_KEYSCAN    0x7C8B53
+#define Hash_KEYDOWN    0x748786
 
 #define Hash_FILL       0x000001
 
 #define Hash_GETKEY     0x000002
-#define Hash_KEYSCAN    0x000012
-#define Hash_ISDOWN     0x000022
-#define Hash_ISUP       0x000032
+#define Hash_KEYUP      0x000032
 
 #define Hash_TEXT       0x000003
 #define Hash_SPEED      0x000004
