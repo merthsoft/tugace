@@ -1,4 +1,5 @@
 #include <graphx.h>
+#include <string.h>
 #include <time.h>
 
 #include <sys/rtc.h>
@@ -15,9 +16,9 @@
 #include "static.h"
 #include "turtle.h"
 
+#include <debug.h>
 #ifdef DEBUG
 //#define DEBUG_PROCESSOR
-#include <debug.h>
 #include <fileioc.h>
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
@@ -100,7 +101,9 @@ program_start:
     bool showFps = true;
     bool skipFlag = false;
 
+    #ifdef DEBUG
     dbg_printf("Starting program exection.\n");
+    #endif
     while (!exit) {
         Turtle* currentTurtle = &Interpreter_turtles[currentTurtleIndex];
         if (!running)
@@ -112,7 +115,8 @@ program_start:
 
         ProgramToken* command = &program[programCounter];
         size_t commandLength = 0;
-        uint32_t commandHash = 0;
+        uint24_t commandHash = 0;
+        TugaOpCode opCode = toc_NOP;
         ProgramToken* params;
         size_t paramsLength = 0;
 
@@ -140,41 +144,41 @@ program_start:
             case Token_Right:
                 switch (shortHand) {
                     case Token_Right:
-                        commandHash = Hash_RIGHT;
+                        opCode = toc_RIGHT;
                         break;
                     case Token_Left:
                     case Token_LeftOs:
-                        commandHash = Hash_LEFT;
+                        opCode = toc_LEFT;
                         break;
                     case Token_Sto:
-                        commandHash = Hash_STO;
+                        opCode = toc_STO;
                         break;
                     case Token_Turtle:
-                        commandHash = Hash_TURTLE;
+                        opCode = toc_TURTLE;
                         break;
                     case Token_Push:
-                        commandHash = Hash_PUSH;
+                        opCode = toc_PUSH;
                         break;
                     case Token_Pop:
-                        commandHash = Hash_POP;
+                        opCode = toc_POP;
                         break;
                     case Token_StopOs:
-                        commandHash = Hash_STOP;
+                        opCode = toc_STOP;
                         break;
                     case Token_GoSub:
-                        commandHash = Hash_GOSUB;
+                        opCode = toc_GOSUB;
                         break;
                     case Token_Label:
                     case Token_LabelOs:
-                        commandHash = Hash_LABEL;
+                        opCode = toc_LABEL;
                         break;
                     case Token_Goto:
                     case Token_GotoOs:
-                        commandHash = Hash_GOTO;
+                        opCode = toc_GOTO;
                         break;
                     case Token_If:
                     case Token_IfOs:
-                        commandHash = Hash_IF;
+                        opCode = toc_IF;
                         break;
                 }
                 commandLength = 1;
@@ -183,6 +187,7 @@ program_start:
             default:
                 commandLength = Seek_ToNewLine(program, programSize, Token_Space, &programCounter) - 1;
                 commandHash = Hash_InLine(command, commandLength);
+                opCode = GetOpCodeFromHash_Inline(commandHash);
                 break;
         }
         
@@ -310,36 +315,38 @@ program_start:
 
         gfx_SetColor(currentTurtle->Color);
         int errNo;
-        switch (commandHash) {
-            case Hash_COLOR:
+        switch (opCode) {
+            case toc_NOP:
+                break;
+            case toc_COLOR:
                 Turtle_SetColor(currentTurtle, &param1Val);
                 break;
-            case Hash_PEN:
+            case toc_PEN:
                 Turtle_SetPen(currentTurtle, &param1Val);
                 break;
-            case Hash_FORWARD:
+            case toc_FORWARD:
                 Turtle_Forward(currentTurtle, &param1Val);
                 break;
-            case Hash_LEFT:
+            case toc_LEFT:
                 Turtle_Left(currentTurtle, &param1Val);
                 break;
-            case Hash_RIGHT:
+            case toc_RIGHT:
                 Turtle_Right(currentTurtle, &param1Val);
                 break;
-            case Hash_MOVE:
+            case toc_MOVE:
                 Turtle_Goto(currentTurtle, &param1Val, &param2Val);
                 break;
-            case Hash_ANGLE:
+            case toc_ANGLE:
                 Turtle_SetAngle(currentTurtle, &param1Val);
                 break;
-            case Hash_CIRCLE:
+            case toc_CIRCLE:
                 param1Int = if_null_then_a_else_b(param1, 1, param1Val);
                 if (currentTurtle->Pen)
                     gfx_FillCircle(currentTurtle->X, currentTurtle->Y, param1Int);
                 else
                     gfx_Circle(currentTurtle->X, currentTurtle->Y, param1Int);
                 break;
-            case Hash_RECT:
+            case toc_RECT:
                 param1Int = if_null_then_a_else_b(param1, 1, param1Val);
                 param2Int = if_null_then_a_else_b(param2, 1, param2Val);
                 if (currentTurtle->Pen)
@@ -347,14 +354,14 @@ program_start:
                 else
                     gfx_Rectangle(currentTurtle->X, currentTurtle->Y, param1Int, param2Int);
                 break;
-            case Hash_STOP:
+            case toc_STOP:
                 exit = true;
                 break;
-            case Hash_CLEAR:
+            case toc_CLEAR:
                 param1Int = (uint24_t)param1Val;
                 gfx_FillScreen(param1Int % 256);
                 break;
-            case Hash_LABEL:
+            case toc_LABEL:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No label.");
                     goto end_eval;
@@ -363,8 +370,8 @@ program_start:
                 if (param1Int >= 0 && param1Int < NumLabels)
                     Interpreter_labels[param1Int] = programCounter;
                 break;
-            case Hash_GOSUB:
-            case Hash_GOTO:
+            case toc_GOSUB:
+            case toc_GOTO:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No label.");
                     goto end_eval;
@@ -385,7 +392,7 @@ program_start:
                     Interpreter_labels[param1Int] = labelIndex;
                 }
 
-                if (commandHash == Hash_GOSUB) {
+                if (commandHash == toc_GOSUB) {
                     float pc = (float)programCounter;
                     Push_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer, &pc);
                     #ifdef DEBUG_PROCESSOR
@@ -394,10 +401,10 @@ program_start:
                 }
                 programCounter = labelIndex;
                 break;
-            case Hash_EVAL:
+            case toc_EVAL:
                 dbg_printf(" *");
                 break;
-            case Hash_PUSH:
+            case toc_PUSH:
                 if (paramsList == NULL) {
                     if (Interpreter_stackPointers[currentStackIndex] == MaxStackDepth-1) {
                         dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
@@ -418,7 +425,7 @@ program_start:
                     dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
                 #endif
                 break;
-            case Hash_RET:
+            case toc_RET:
                 if (Interpreter_systemStackPointer == 0) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for system stack.");
                     goto end_eval;
@@ -429,14 +436,14 @@ program_start:
                     dbg_printf("setting PC from stack %f pc %d", eval, programCounter);
                 #endif
                 break;
-            case Hash_POP:
-            case Hash_PEEK:
-                if (commandHash == Hash_POP && Interpreter_stackPointers[currentStackIndex] == 0) {
+            case toc_POP:
+            case toc_PEEK:
+                if (commandHash == toc_POP && Interpreter_stackPointers[currentStackIndex] == 0) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     goto end_eval;
                 }
                 eval = Pop_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
-                if (commandHash == Hash_PEEK) {
+                if (commandHash == toc_PEEK) {
                     Interpreter_stackPointers[currentStackIndex]++;
                     #ifdef DEBUG_PROCESSOR
                         dbg_printf("peeked: %f", eval);
@@ -462,7 +469,7 @@ program_start:
                     }
                 }
                 break;
-            case Hash_PUSHVEC:
+            case toc_PUSHVEC:
                 if (Interpreter_stackPointers[currentStackIndex] + 6 >= MaxStackDepth) {
                     dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
                     goto end_eval;
@@ -472,22 +479,21 @@ program_start:
                     dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
                 #endif
                 break;
-            case Hash_POPVEC:
-            case Hash_POP_VEC:
-            case Hash_PEEKVEC:
-                if (commandHash == Hash_POPVEC && Interpreter_stackPointers[currentStackIndex] <= NumDataFields-1) {
+            case toc_POPVEC:
+            case toc_PEEKVEC:
+                if (commandHash == toc_POPVEC && Interpreter_stackPointers[currentStackIndex] <= NumDataFields-1) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     goto end_eval;
                 }
                 PopTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
-                if (commandHash == Hash_PEEKVEC) {
+                if (commandHash == toc_PEEKVEC) {
                     Interpreter_stackPointers[currentStackIndex] += NumDataFields;
                 }
                 #ifdef DEBUG_PROCESSOR
                     dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
                 #endif
                 break;                
-            case Hash_IF:
+            case toc_IF:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No predicate.");
                     goto end_eval;
@@ -496,14 +502,14 @@ program_start:
                     skipFlag = true;
                 }
                 break;
-            case Hash_ZERO:
+            case toc_ZERO:
                 errNo = os_SetRealVar(param1Var, &Const_Real0);
                 if (errNo) {
                     dbg_printf("\nSYNTAX ERROR: Got error trying to zero out %c: %d.", param1Var[0], errNo);   
                     goto end_eval; 
                 }
                 break;
-            case Hash_INC:
+            case toc_INC:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No parameter to set.");
                     goto end_eval;
@@ -519,7 +525,7 @@ program_start:
                     goto end_eval;  
                 }
                 break;
-            case Hash_DEC:
+            case toc_DEC:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No parameter to set.");
                     goto end_eval;
@@ -535,7 +541,7 @@ program_start:
                     goto end_eval;
                 }
                 break;
-            case Hash_STO:
+            case toc_STO:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No parameter to set.");
                     goto end_eval;
@@ -553,7 +559,7 @@ program_start:
                     goto end_eval;
                 }
                 break;
-            case Hash_TURTLE:
+            case toc_TURTLE:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < -1 || param1Int > NumTurtles) {
                     dbg_printf("\nSYNTAX ERROR: Invalid turtle number %d.", param1Int);
@@ -561,7 +567,7 @@ program_start:
                 }
                 currentTurtleIndex = param1Int;
                 break;
-            case Hash_STACK:
+            case toc_STACK:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < -1 || param1Int > NumStackPages) {
                     dbg_printf("\nSYNTAX ERROR: Invalid stack number %d.", param1Int);
@@ -569,15 +575,15 @@ program_start:
                 }
                 currentStackIndex = param1Int;
                 break;
-            case Hash_FADEOUT:
+            case toc_FADEOUT:
                 param1Int = (int24_t)param1Val;
                 Palette_FadeOut(Interpreter_paletteBuffer, 0, 255, param1Int);
                 break;
-            case Hash_FADEIN:
+            case toc_FADEIN:
                 param1Int = (int24_t)param1Val;
                 Pallete_FadeIn(Interpreter_paletteBuffer, 0, 255, param1Int);
                 break;
-            case Hash_PALETTE:
+            case toc_PALETTE:
                 param1Int = (int24_t)param1Val;
                 switch (param1Int) {
                     case 0:
@@ -589,28 +595,28 @@ program_start:
                 }
                 gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
                 break;
-            case Hash_FILL:
+            case toc_FILL:
                 gfx_FloodFill(currentTurtle->X, currentTurtle->Y, currentTurtle->Color);
                 break;
-            case Hash_BLITSCREEN:
+            case toc_BLITSCREEN:
                 gfx_BlitScreen();
                 break;
-            case Hash_BLITBUFFER:
+            case toc_BLITBUFFER:
                 gfx_BlitBuffer();
                 break;
-            case Hash_DRAWBUFFER:
+            case toc_DRAWBUFFER:
                 gfx_SetDrawBuffer();
                 break;
-            case Hash_DRAWSCREEN:
+            case toc_DRAWSCREEN:
                 gfx_SetDrawScreen();
                 break;
-            case Hash_SWAPDRAW:
+            case toc_SWAPDRAW:
                 gfx_SwapDraw();
                 break;
-            case Hash_INIT:
+            case toc_INIT:
                 Turtle_Initialize(currentTurtle);
                 break;
-            case Hash_GETKEY:
+            case toc_GETKEY:
                 param1Int = keyhelper_GetKey();
                 if (param1 == NULL) {
                     retList[0] = (float)param1Int;
@@ -626,7 +632,7 @@ program_start:
                     }
                 }
                 break;
-            case Hash_KEYDOWN:
+            case toc_KEYDOWN:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No key value.");
                     goto end_eval;
@@ -635,7 +641,7 @@ program_start:
                 retList[0] = keyhelper_IsDown(param1Int);
                 retListPointer = 1;
                 break;
-            case Hash_IFKEYDOWN:
+            case toc_IFKEYDOWN:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No key value.");
                     goto end_eval;
@@ -645,12 +651,12 @@ program_start:
                     skipFlag = true;
                 }
                 break;
-            case Hash_KEYUP:
+            case toc_KEYUP:
                 param1Int = (int24_t)param1Val;
                 retList[0] = keyhelper_IsUp(param1Int);
                 retListPointer = 1;
                 break;
-            case Hash_IFKEYUP:
+            case toc_IFKEYUP:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No key value.");
                     goto end_eval;
@@ -660,10 +666,10 @@ program_start:
                     skipFlag = true;
                 }
                 break;
-            case Hash_KEYSCAN:
+            case toc_KEYSCAN:
                 kb_Scan();
                 break;
-            case Hash_SIZESPRITE:
+            case toc_SIZESPRITE:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < 0 || param1Int > NumSprites)
                 {
@@ -676,7 +682,7 @@ program_start:
                     free(Interpreter_spriteDictionary[param1Int]);
                 Interpreter_spriteDictionary[param1Int] = gfx_MallocSprite(param2Int, intEval);
                 break;
-            case Hash_DEFSPRITE:
+            case toc_DEFSPRITE:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < 0 || param1Int > NumSprites)
                 {
@@ -690,8 +696,11 @@ program_start:
                     goto end_eval;
                 }
                 break;
+            case toc_UNKNOWN:
+                dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandLength, command);
+                break;
             default:
-                dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", commandHash, commandLength, command);
+                dbg_printf("\nUNIMPLEMENETED OPCODE %d %.*s.", opCode, commandLength, command);
                 break;
         }
         
@@ -779,7 +788,7 @@ end_eval:
         } else if (showFps) {
             gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
-            sprintf(buffer, "FPS: %d   ", (uint8_t)fps);
+            snprintf(buffer, 14, "FPS: %d   ", (uint8_t)fps);
             gfx_PrintStringXY(buffer, 2, 2);
         }
         

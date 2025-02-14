@@ -119,11 +119,12 @@ typedef size_t  ProgramCounter;
 #define Hash_BLITBUFFER 0x000017
 #define Hash_ELLIPSE    0x000008
 
-#define Hash_SPRITE     0x000009
+#define Hash_SPRITE     0x00000C
 #define Hash_DEFSPRITE  0x00000A
 #define Hash_SIZESPRITE 0x00000B
 
 typedef enum TugaOpCode {
+    toc_UNKNOWN,
     toc_NOP,
     toc_COLOR,
     toc_PEN,
@@ -141,7 +142,7 @@ typedef enum TugaOpCode {
     toc_POP,
     toc_PEEK,
     toc_PUSHVEC,
-    toc_POP_VEC,
+    toc_POPVEC,
     toc_PEEKVEC,
     toc_IF,
     toc_TURTLE,
@@ -167,8 +168,12 @@ typedef enum TugaOpCode {
     toc_KEYUP,
     toc_TEXT,
     toc_SPEED,
-    toc_DRAWSCREEN,toc_DRAWBUFFER,toc_SWAPDRAW,
-    toc_BLITSCREEN,toc_BLITBUFFER,toc_ELLIPSE,
+    toc_DRAWSCREEN,
+    toc_DRAWBUFFER,
+    toc_SWAPDRAW,
+    toc_BLITSCREEN,
+    toc_BLITBUFFER,
+    toc_ELLIPSE,
     toc_SPRITE,
     toc_DEFSPRITE,
     toc_SIZESPRITE,
