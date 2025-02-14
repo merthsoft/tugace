@@ -48,16 +48,17 @@ float Interpreter_systemStack[SystemStackDepth];
 uint16_t Interpreter_paletteBuffer[256];
 gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
 
+__attribute__((hot))
 void Interpreter_Interpret(ProgramToken* program, size_t programSize) {
     gfx_Begin();
     srand(rtc_Time());
     
     ProgramCounter programCounter = 0;
     // Header
-    Seek_ToNewLine(program, programSize, NewLineToken, &programCounter);
+    Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
     // Comment
     ProgramToken* comment = &program[programCounter];
-    size_t commentLength = Seek_ToNewLine(program, programSize, NewLineToken, &programCounter) - 1;
+    size_t commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter) - 1;
     ProgramCounter programStart = programCounter;
     
     #ifdef DEBUG
@@ -117,52 +118,62 @@ program_start:
 
         ProgramToken shortHand = program[programCounter];
         switch (shortHand) {
-            case CommentToken:
+            case Token_Comment:
                 #ifdef DEBUG_PROCESSOR
                     dbg_printf("Skipping comment.");
                 #endif
                 goto end_eval;
-            case LabelToken:
-            case GotoToken:
-            case LabelTokenOS:
-            case GotoTokenOS:
-            case IfToken:
-            case IfTokenOS:
-            case GosubToken:
-            case StopTokenOs:
-            case PushToken:
-            case PopToken:
-            case TurtleToken:
-            case StoToken:
+            case Token_Label:
+            case Token_Goto:
+            case Token_LabelOs:
+            case Token_GotoOs:
+            case Token_If:
+            case Token_IfOs:
+            case Token_GoSub:
+            case Token_StopOs:
+            case Token_Push:
+            case Token_Pop:
+            case Token_Turtle:
+            case Token_Sto:
+            case Token_Left:
+            case Token_LeftOs:
+            case Token_Right:
                 switch (shortHand) {
-                    case StoToken:
+                    case Token_Right:
+                        commandHash = Hash_RIGHT;
+                        break;
+                    case Token_Left:
+                    case Token_LeftOs:
+                        commandHash = Hash_LEFT;
+                        break;
+                    case Token_Sto:
                         commandHash = Hash_STO;
                         break;
-                    case TurtleToken:
+                    case Token_Turtle:
                         commandHash = Hash_TURTLE;
                         break;
-                    case PushToken:
+                    case Token_Push:
                         commandHash = Hash_PUSH;
                         break;
-                    case PopToken:
+                    case Token_Pop:
                         commandHash = Hash_POP;
                         break;
-                    case StopTokenOs:
+                    case Token_StopOs:
                         commandHash = Hash_STOP;
                         break;
-                    case GosubToken:
+                    case Token_GoSub:
                         commandHash = Hash_GOSUB;
                         break;
-                    case LabelToken:
-                    case LabelTokenOS:
+                    case Token_Label:
+                    case Token_LabelOs:
                         commandHash = Hash_LABEL;
                         break;
-                    case GotoToken:
-                    case GotoTokenOS:
+                    case Token_Goto:
+                    case Token_GotoOs:
                         commandHash = Hash_GOTO;
                         break;
-                    case IfToken:
-                    case IfTokenOS:
+                    case Token_If:
+                    case Token_IfOs:
                         commandHash = Hash_IF;
                         break;
                 }
@@ -170,30 +181,28 @@ program_start:
                 programCounter++;
                 break;
             default:
-                commandLength = Seek_ToNewLine(program, programSize, SpaceToken, &programCounter) - 1;
+                commandLength = Seek_ToNewLine(program, programSize, Token_Space, &programCounter) - 1;
                 commandHash = Hash_InLine(command, commandLength);
                 break;
         }
         
-        if (program[programCounter-1] != NewLineToken) {
+        if (program[programCounter-1] != Token_NewLine) {
             params = &program[programCounter];
-            paramsLength = Seek_ToNewLine(program, programSize, NewLineToken, &programCounter) - 1;
+            paramsLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter) - 1;
         }
 
         #ifdef DEBUG_PROCESSOR
         size_t outputTokenStringLength;
         debug_print_tokens(command, commandLength, &outputTokenStringLength);
         
-        while (outputTokenStringLength < 10)
-        {
+        while (outputTokenStringLength < 10) {
             dbg_printf(" ");
             outputTokenStringLength++;
         }
 
         debug_print_tokens(params, paramsLength, &outputTokenStringLength);
         
-        while (outputTokenStringLength < 30)
-        {
+        while (outputTokenStringLength < 30) {
             dbg_printf(" ");
             outputTokenStringLength++;
         }
@@ -312,7 +321,6 @@ program_start:
                 Turtle_Forward(currentTurtle, &param1Val);
                 break;
             case Hash_LEFT:
-            case Hash_LEFT_OS:
                 Turtle_Left(currentTurtle, &param1Val);
                 break;
             case Hash_RIGHT:
@@ -349,7 +357,7 @@ program_start:
             case Hash_LABEL:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No label.");
-                    break;
+                    goto end_eval;
                 }
                 param1Int = (uint24_t)param1Val;
                 if (param1Int >= 0 && param1Int < NumLabels)
@@ -359,12 +367,12 @@ program_start:
             case Hash_GOTO:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No label.");
-                    break;
+                    goto end_eval;
                 }
                 param1Int = (uint24_t)param1Val;
                 if (param1Int >= NumLabels) {
                     dbg_printf("\nSYNTAX ERROR: Invalid label: %d.", param1Int);
-                    break;
+                    goto end_eval;
                 }
                 size_t labelIndex = Interpreter_labels[param1Int];
                 if (labelIndex <= programStart || labelIndex >= programSize) {
@@ -372,7 +380,7 @@ program_start:
                     if (labelIndex <= programStart || labelIndex >= programSize)
                     {
                         dbg_printf("\nSYNTAX ERROR: Invalid label: %d - %d.", param1Int, labelIndex);
-                        break;
+                        goto end_eval;
                     }
                     Interpreter_labels[param1Int] = labelIndex;
                 }
@@ -413,7 +421,7 @@ program_start:
             case Hash_RET:
                 if (Interpreter_systemStackPointer == 0) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for system stack.");
-                    break;
+                    goto end_eval;
                 }
                 eval = Pop_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer);
                 programCounter = (size_t)eval;
@@ -425,7 +433,7 @@ program_start:
             case Hash_PEEK:
                 if (commandHash == Hash_POP && Interpreter_stackPointers[currentStackIndex] == 0) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
-                    break;
+                    goto end_eval;
                 }
                 eval = Pop_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
                 if (commandHash == Hash_PEEK) {
@@ -449,14 +457,15 @@ program_start:
                         *param1 = os_FloatToReal(eval);
                         os_SetRealVar(param1Var, param1);
                     } else {
-                        dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
+                        dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);   
+                        goto end_eval; 
                     }
                 }
                 break;
             case Hash_PUSHVEC:
                 if (Interpreter_stackPointers[currentStackIndex] + 6 >= MaxStackDepth) {
                     dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
-                    break;
+                    goto end_eval;
                 }
                 PushTurtle_Inline(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
                 #ifdef DEBUG_PROCESSOR
@@ -468,7 +477,7 @@ program_start:
             case Hash_PEEKVEC:
                 if (commandHash == Hash_POPVEC && Interpreter_stackPointers[currentStackIndex] <= NumDataFields-1) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
-                    break;
+                    goto end_eval;
                 }
                 PopTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
                 if (commandHash == Hash_PEEKVEC) {
@@ -481,7 +490,7 @@ program_start:
             case Hash_IF:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No predicate.");
-                    break;
+                    goto end_eval;
                 }
                 if (!param1Val) {
                     skipFlag = true;
@@ -490,13 +499,14 @@ program_start:
             case Hash_ZERO:
                 errNo = os_SetRealVar(param1Var, &Const_Real0);
                 if (errNo) {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to zero out %c: %d.", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to zero out %c: %d.", param1Var[0], errNo);   
+                    goto end_eval; 
                 }
                 break;
             case Hash_INC:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No parameter to set.");
-                    break;
+                    goto end_eval;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
@@ -505,13 +515,14 @@ program_start:
                     *param1 = os_RealAdd(param1, param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    goto end_eval;  
                 }
                 break;
             case Hash_DEC:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No parameter to set.");
-                    break;
+                    goto end_eval;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
@@ -520,31 +531,33 @@ program_start:
                     *param1 = os_RealSub(param1, param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    goto end_eval;
                 }
                 break;
             case Hash_STO:
                 if (param1 == NULL) {
                     dbg_printf("\nSYNTAX ERROR: No parameter to set.");
-                    break;
+                    goto end_eval;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
                     if (!param2) {
                         dbg_printf("\nSYNTAX ERROR: No value to set.");
-                        break;
+                        goto end_eval;
                     }
                     *param1 = os_RealCopy(param2);
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);    
+                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    goto end_eval;
                 }
                 break;
             case Hash_TURTLE:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < -1 || param1Int > NumTurtles) {
                     dbg_printf("\nSYNTAX ERROR: Invalid turtle number %d.", param1Int);
-                    break;
+                    goto end_eval;
                 }
                 currentTurtleIndex = param1Int;
                 break;
@@ -552,7 +565,7 @@ program_start:
                 param1Int = (int24_t)param1Val;
                 if (param1Int < -1 || param1Int > NumStackPages) {
                     dbg_printf("\nSYNTAX ERROR: Invalid stack number %d.", param1Int);
-                    break;
+                    goto end_eval;
                 }
                 currentStackIndex = param1Int;
                 break;
@@ -572,7 +585,7 @@ program_start:
                         break;
                     default:
                         dbg_printf("\nSYNTAX ERROR: Invalid palette %d.", param1Int);
-                        break;
+                        goto end_eval;
                 }
                 gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
                 break;
@@ -685,12 +698,13 @@ program_start:
         if (retListPointer == 0)
             goto end_eval;
 
+        real_t ansEntry;
         if (retListPointer == 1) {
-            real_t ans = os_FloatToReal(retList[0]);
+            ansEntry = os_FloatToReal(retList[0]);
             #ifdef DEBUG_PROCESSOR
                 dbg_printf("Ans: %.2f", retList[0]);
             #endif
-            os_SetRealVar(OS_VAR_ANS, &ans);
+            os_SetRealVar(OS_VAR_ANS, &ansEntry);
             goto end_eval;
         }
 
@@ -709,11 +723,11 @@ program_start:
             #ifdef DEBUG_PROCESSOR
             dbg_printf("%.2f ", retList[retListIndex]);
             #endif
-            real_t ans = os_FloatToReal(retList[retListIndex]);
-            errNo = os_SetRealListElement(OS_VAR_ANS, retListIndex+1, &ans);
+            ansEntry = os_FloatToReal(retList[retListIndex]);
+            errNo = os_SetRealListElement(OS_VAR_ANS, retListIndex+1, &ansEntry);
             if (errNo) {
                 dbg_printf("\nSYNTAX ERROR: Got error trying to set ans index %d.", retListIndex);
-                break;
+                goto end_eval;
             }
         }
 
@@ -792,6 +806,5 @@ end_eval:
         goto program_start;
     }
 
-    
     gfx_End();
 }

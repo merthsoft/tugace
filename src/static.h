@@ -24,49 +24,50 @@ typedef uint8_t StackPointer;
 typedef size_t  ProgramCounter;
 
 #define NumTurtles       100
-#define NumDataFields    6
+#define NumDataFields    3
 #define NumStackPages    16
 #define MaxStackDepth    256
 #define NumLabels        1024
 #define SystemStackDepth 256
 #define NumSprites       256
 
-#define NewLineToken    OS_TOK_NEWLINE
-#define SpaceToken      OS_TOK_SPACE
-#define CommentToken    OS_TOK_DOUBLE_QUOTE
+#define Token_NewLine    OS_TOK_NEWLINE
+#define Token_Space      OS_TOK_SPACE
+#define Token_Comment    OS_TOK_DOUBLE_QUOTE
 
-#define LabelToken      OS_TOK_COLON
-#define GotoToken       OS_TOK_DECIMAL_POINT
-#define LabelTokenOS    OS_TOK_LBL
-#define GotoTokenOS     OS_TOK_GOTO
+#define Token_Label      OS_TOK_COLON
+#define Token_Goto       OS_TOK_DECIMAL_POINT
+#define Token_LabelOs    OS_TOK_LBL
+#define Token_GotoOs     OS_TOK_GOTO
 
-#define IfTokenOS       OS_TOK_IF
-#define IfToken         OS_TOK_QUESTION
+#define Token_If        OS_TOK_IF
+#define Token_IfOs      OS_TOK_QUESTION
 
-#define StopTokenOs     OS_TOK_STOP
+#define Token_StopOs    OS_TOK_STOP
 
-#define GosubToken      OS_TOK_MULTIPLY
-#define RetToken        OS_TOK_DIVIDE
+#define Token_GoSub     OS_TOK_MULTIPLY
+#define Token_Ret       OS_TOK_DIVIDE
 
-#define IncToken        OS_TOK_ADD
-#define DecToken        OS_TOK_SUB
+#define Token_Inc       OS_TOK_ADD
+#define Token_Dec       OS_TOK_SUB
 
-#define ForwardToken    OS_TOK_POWER
-#define LeftToken       OS_TOK_LEFT_PAREN
-#define RightToken      OS_TOK_RIGHT_PAREN
+#define Token_Forward  OS_TOK_POWER
+#define Token_Left     OS_TOK_LEFT_PAREN
+#define Token_LeftOs   OS_TOK_LEFT
+#define Token_Right    OS_TOK_RIGHT_PAREN
 
-#define PushToken       OS_TOK_LEFT_BRACE
-#define PopToken        OS_TOK_RIGHT_BRACE
+#define Token_Push     OS_TOK_LEFT_BRACE
+#define Token_Pop      OS_TOK_RIGHT_BRACE
 
-#define TurtleToken     OS_TOK_X
+#define Token_Turtle   OS_TOK_X
 
-#define StoToken        OS_TOK_STO
+#define Token_Sto      OS_TOK_STO
+
 
 #define Hash_COLOR      0xE809A4
 #define Hash_PEN        0x881068
 #define Hash_FORWARD    0x70717A
 #define Hash_LEFT       0x87EB30
-#define Hash_LEFT_OS    0x5989A6
 #define Hash_RIGHT      0xF418C3
 #define Hash_MOVE       0x88A41C
 #define Hash_ANGLE      0xC3368C
@@ -121,6 +122,57 @@ typedef size_t  ProgramCounter;
 #define Hash_SPRITE     0x000009
 #define Hash_DEFSPRITE  0x00000A
 #define Hash_SIZESPRITE 0x00000B
+
+typedef enum TugaOpCode {
+    toc_NOP,
+    toc_COLOR,
+    toc_PEN,
+    toc_FORWARD,
+    toc_LEFT,
+    toc_RIGHT,
+    toc_MOVE,
+    toc_ANGLE,
+    toc_CIRCLE,
+    toc_CLEAR,
+    toc_LABEL,
+    toc_GOTO,
+    toc_EVAL,
+    toc_PUSH,
+    toc_POP,
+    toc_PEEK,
+    toc_PUSHVEC,
+    toc_POP_VEC,
+    toc_PEEKVEC,
+    toc_IF,
+    toc_TURTLE,
+    toc_INC,
+    toc_DEC,
+    toc_ZERO,
+    toc_STO,
+    toc_GOSUB,
+    toc_RET,
+    toc_STACK,
+    toc_FADEOUT,
+    toc_FADEIN,
+    toc_PALETTE,
+    toc_STOP,
+    toc_INIT,
+    toc_RECT,
+    toc_KEYSCAN,
+    toc_KEYDOWN,
+    toc_GETKEY,
+    toc_IFKEYDOWN,
+    toc_IFKEYUP,
+    toc_FILL,
+    toc_KEYUP,
+    toc_TEXT,
+    toc_SPEED,
+    toc_DRAWSCREEN,toc_DRAWBUFFER,toc_SWAPDRAW,
+    toc_BLITSCREEN,toc_BLITBUFFER,toc_ELLIPSE,
+    toc_SPRITE,
+    toc_DEFSPRITE,
+    toc_SIZESPRITE,
+} TugaOpCode;
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@ ProgramCounter Seek_ToNewLine(const ProgramToken* data, size_t dataLength, Progr
     do {
         char c = d[*index];
         *index = *index + 1;
-        if (c == NewLineToken || c == additionalDelim) {
+        if (c == Token_NewLine || c == additionalDelim) {
             return *index - start; 
         }
     } while (*index < dataLength);
@@ -38,12 +38,12 @@ ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, Program
     while (index < dataLength) {
         do {
             ProgramToken c = d[index];
-            if (c == LabelToken || c == LabelTokenOS)
+            if (c == Token_Label || c == Token_LabelOs)
                 break;
             if (strncmp((const char*)&d[index], "LABEL ", 6) == 0)
                 break;
             
-            Seek_ToNewLine(data, dataLength, NewLineToken, &index);
+            Seek_ToNewLine(data, dataLength, Token_NewLine, &index);
         } while (index < dataLength);
         
         if (index >= dataLength) {
@@ -52,7 +52,7 @@ ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, Program
 
         index++;
         const ProgramToken* params = &d[index];
-        size_t paramsLength = Seek_ToNewLine(d, dataLength, NewLineToken, &index);
+        size_t paramsLength = Seek_ToNewLine(d, dataLength, Token_NewLine, &index);
 
         if (paramsLength == 0) {
             continue;
