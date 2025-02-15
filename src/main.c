@@ -1,4 +1,5 @@
 #include <fileioc.h>
+#include <string.h>
 
 #ifdef DEBUG
 #include <debug.h>
@@ -8,10 +9,21 @@
 #include "static.h"
 
 int main(void) {
-    const char* filename = "SNOW";
+    char filename[10];
+    uint8_t ansType;
+    void* ans = os_GetAnsData(&ansType);
+    if (ans == NULL || ansType != OS_TYPE_STR) {
+        dbg_printf("Ans is not a string. In the future, this will open a file picker.\n");
+        return 1;
+    }
+
+    string_t* ansString = ans;
+    uint8_t size = ansString->len > 10 ? 10 : ansString->len;
+    strncpy(filename, ansString->data, size);
+
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0) {
-        dbg_printf("Unable to read prgm%s.", filename);
+        dbg_printf("Unable to read prgm%s. In the future, this will open a file picker.", filename);
         return 1;
     }
 
