@@ -55,12 +55,18 @@ void Interpreter_Interpret(ProgramToken* program, size_t programSize) {
     #ifdef DEBUG
     dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
     #endif
-    gfx_Begin();
-    srand(rtc_Time());
     
     ProgramCounter programCounter = 0;
     // Header
+    if (program[0] == OS_TOK_COLON) {
+        // We've detected the DCS header
+        Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+        Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);    
+    }
     Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+    if (programCounter > programSize) {
+        return;
+    }
     // Comment
     ProgramToken* comment = &program[programCounter];
     size_t commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
@@ -80,9 +86,9 @@ void Interpreter_Interpret(ProgramToken* program, size_t programSize) {
     dbg_printf("\n");
     debug_print_tokens(comment, commentLength, NULL);
     dbg_printf("\n");
-    size_t count = 0;
+
     ProgramCounter dbgPc = programCounter;
-    while (dbgPc < programSize && ++count != 0) {
+    while (dbgPc < programSize) {
         dbg_printf("%.6X: ", dbgPc);
         ProgramCounter start = dbgPc;
         size_t lineLength = Seek_ToNewLine(program, programSize, Token_NewLine, &dbgPc);
@@ -91,6 +97,8 @@ void Interpreter_Interpret(ProgramToken* program, size_t programSize) {
     }
     #endif
 
+    gfx_Begin();
+    srand(rtc_Time());
     clock_t time = clock();
     uint24_t framecount = 0;
     float fps = 0.0f;
