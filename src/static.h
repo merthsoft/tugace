@@ -23,11 +23,11 @@ typedef uint8_t  TurtleIndex;
 typedef uint8_t  StackPointer;
 typedef size_t   ProgramCounter;
 
-#define NumTurtles       100
+#define NumTurtles       50
 #define NumDataFields    3
 #define NumStackPages    16
 #define MaxStackDepth    256
-#define NumLabels        1024
+#define NumLabels        512
 #define SystemStackDepth 256
 #define NumSprites       256
 

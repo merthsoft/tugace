@@ -21,12 +21,12 @@ ProgramCounter Seek_ToNewLine(const ProgramToken* data, size_t dataLength, Progr
         char c = d[*index];
         *index = *index + 1;
         if (c == Token_NewLine || c == additionalDelim) {
-            return *index - start; 
+            return *index - start - 1; 
         }
     } while (*index < dataLength);
     
     *index = dataLength;
-    return *index - start + 1;
+    return *index - start;
 }
 
 ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, ProgramCounter dataStart, LabelIndex label) {
