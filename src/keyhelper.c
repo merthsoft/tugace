@@ -5,7 +5,7 @@
 
 #define keyhelper_scanCodeToGetKeyLutOffset 1
 #define keyhelper_scanCodeToGetKeyLutSize   56
-uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
+static const uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
     34,     // skDown		equ 01h
     24,     // skLeft		equ 02h
     26,     // skRight		equ 03h
@@ -66,7 +66,7 @@ uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
 
 #define keyhelper_getKeyToKbKeyLutOffset 11
 #define keyhelper_getKeyToKbKeyLutSize   95
-kb_lkey_t keyhelper_getKeyToKbKeyLut[keyhelper_getKeyToKbKeyLutSize] = {
+static const kb_lkey_t keyhelper_getKeyToKbKeyLut[keyhelper_getKeyToKbKeyLutSize] = {
     kb_KeyYequ,     // 11
     kb_KeyWindow,
     kb_KeyZoom,
