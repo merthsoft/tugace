@@ -8,7 +8,7 @@
 #include "static.h"
 
 int main(void) {
-    const char* filename = "BUSH";
+    const char* filename = "SNOW";
     uint8_t programHandle = ti_OpenVar(filename, "r", OS_TYPE_PRGM);
     if (programHandle == 0) {
         return 1;

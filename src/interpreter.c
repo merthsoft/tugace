@@ -75,6 +75,13 @@ void Interpreter_Interpret(ProgramToken* program, size_t programSize) {
     char buffer[14] = "FPS: XXX     ";
 
     memset(Interpreter_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
+    
+    Palette_Default(Interpreter_paletteBuffer); 
+    #ifdef DEBUG
+    Interpreter_paletteBuffer[1] = gfx_RGBTo1555(0, 125, 0);
+    #endif  
+    gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
+    
 program_start:
     gfx_SetDrawScreen();
 
@@ -85,11 +92,6 @@ program_start:
     memset(Interpreter_stacks, 0, sizeof(float)*NumStackPages*MaxStackDepth);
     Interpreter_systemStackPointer = 0;
     Turtle_Initialize(Interpreter_turtles);
-    Palette_Default(Interpreter_paletteBuffer); 
-    #ifdef DEBUG
-    Interpreter_paletteBuffer[1] = gfx_RGBTo1555(0, 125, 0);
-    #endif  
-    gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
     
     programCounter = programStart;
 
@@ -394,7 +396,7 @@ program_start:
                     labelIndex = Seek_ToLabel(program, programSize, programStart, param1Int);
                     if (labelIndex <= programStart || labelIndex >= programSize)
                     {
-                        dbg_printf("\nSYNTAX ERROR: Invalid label: %d - %d.", param1Int, labelIndex);
+                        dbg_printf("\nSYNTAX ERROR: Label not found: %d - %d.", param1Int, labelIndex);
                         goto end_eval;
                     }
                     Interpreter_labels[param1Int] = labelIndex;
@@ -450,14 +452,14 @@ program_start:
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     goto end_eval;
                 }
-                eval = Pop_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
                 if (opCode == toc_PEEK) {
-                    Interpreter_stackPointers[currentStackIndex]++;
+                    eval = Peek_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
                     #ifdef DEBUG_PROCESSOR
-                        dbg_printf("peeked: %f", eval);
-                        dbg_printf(" sp: %d", Interpreter_stackPointers[currentStackIndex]);
+                    dbg_printf("peeked: %f", eval);
+                    dbg_printf(" sp: %d", Interpreter_stackPointers[currentStackIndex]);
                     #endif
                 } else {
+                    eval = Pop_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
                     #ifdef DEBUG_PROCESSOR
                         dbg_printf("popped: %f", eval);
                         dbg_printf(" sp: %d", Interpreter_stackPointers[currentStackIndex]);
@@ -493,9 +495,10 @@ program_start:
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     goto end_eval;
                 }
-                PopTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
                 if (opCode == toc_PEEKVEC) {
-                    Interpreter_stackPointers[currentStackIndex] += NumDataFields;
+                    PeekTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
+                } else {
+                    PopTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
                 }
                 #ifdef DEBUG_PROCESSOR
                     dbg_printf("new sp: %d", Interpreter_stackPointers[currentStackIndex]);
@@ -784,7 +787,7 @@ end_eval:
             gfx_BlitScreen();
             gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
-            gfx_PrintStringXY("Paused", 4, 4);
+            gfx_PrintStringXY("Paused ", 4, 4);
             clear_key_buffer();
             do {
                 kb_Scan();

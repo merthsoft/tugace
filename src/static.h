@@ -17,11 +17,11 @@ extern "C" {
 #define if_null_then_a_else_b(x, a, b) (!x ? a : b)
 
 typedef uint24_t LabelIndex;
-typedef uint8_t ProgramToken;
-typedef uint8_t StackIndex;
-typedef uint8_t TurtleIndex;
-typedef uint8_t StackPointer;
-typedef size_t  ProgramCounter;
+typedef uint8_t  ProgramToken;
+typedef uint8_t  StackIndex;
+typedef uint8_t  TurtleIndex;
+typedef uint8_t  StackPointer;
+typedef size_t   ProgramCounter;
 
 #define NumTurtles       100
 #define NumDataFields    3
@@ -101,11 +101,9 @@ typedef size_t  ProgramCounter;
 #define Hash_KEYDOWN    0x748786
 #define Hash_GETKEY     0x8D3C4E
 #define Hash_IFKEYDOWN  0x4DE395
+#define Hash_FILL       0x84B2AC
 
 #define Hash_IFKEYUP    0x000009
-
-#define Hash_FILL       0x000001
-
 #define Hash_KEYUP      0x000032
 
 #define Hash_TEXT       0x000003

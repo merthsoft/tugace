@@ -23,6 +23,10 @@ static inline void PopTurtle_InLine(float* stack, StackPointer* stackPointer, Tu
     #endif
 }
 
+static inline void PeekTurtle_InLine(float* stack, StackPointer* stackPointer, Turtle* turtle) {
+    memcpy(&turtle->X, &stack[*stackPointer - NumDataFields], sizeof(float)*NumDataFields);
+}
+
 static inline void Push_InLine(float* stack, StackPointer* stackPointer, const float* value) {
     stack[*stackPointer] = *value;
     *stackPointer = *stackPointer + 1;
@@ -35,6 +39,10 @@ static inline float Pop_InLine(float* stack, StackPointer* stackPointer) {
     stack[*stackPointer] = 0;
     #endif
     return ret;
+}
+
+static inline float Peek_InLine(float* stack, StackPointer* stackPointer) {
+    return stack[*stackPointer - 1];
 }
 
 // http://www.cse.yorku.ca/~oz/hash.html
