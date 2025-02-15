@@ -1,0 +1,64 @@
+TUGA:Return
+"FF+[+F-F-F]-[-F+F+F]
+FADEOUT 2
+PALETTE 1
+INIT
+PEN 0
+MOVE {0,240/2
+RIGHT 90
+CLEAR 0
+PEN 1
+FADEIN 10
+{8
+*0
+STOP
+:0
+}W
+?W<=5
+RET
+COLOR randInt(1,255
+^W
+{{W,W-1
+*0
+}W
+^W
+{{W,W-1
+*0
+}W
+)randInt(20,25
+PUSHVEC
+)randInt(20,25
+^W
+{{W,W-1
+*0
+}W
+(randInt(20,25
+^W
+{{W,W-1
+*0
+}W
+(randInt(20,25
+^W
+{{W,W-1
+*0
+}W
+POPVEC
+(randInt(20,25
+PUSHVEC
+(randInt(20,25
+^W
+{{W,W-1
+*0
+}W
+)randInt(20,25
+^W
+{{W,W-1
+*0
+}W
+)randInt(20,25
+^W
+{{W,W-1
+*0
+}W
+POPVEC
+RET

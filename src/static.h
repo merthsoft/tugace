@@ -63,7 +63,6 @@ typedef size_t  ProgramCounter;
 
 #define Token_Sto      OS_TOK_STO
 
-
 #define Hash_COLOR      0xE809A4
 #define Hash_PEN        0x881068
 #define Hash_FORWARD    0x70717A

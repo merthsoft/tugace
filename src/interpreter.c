@@ -133,6 +133,7 @@ program_start:
             case Token_GotoOs:
             case Token_If:
             case Token_IfOs:
+            case Token_Ret:
             case Token_GoSub:
             case Token_StopOs:
             case Token_Push:
@@ -142,7 +143,11 @@ program_start:
             case Token_Left:
             case Token_LeftOs:
             case Token_Right:
+            case Token_Forward:
                 switch (shortHand) {
+                    case Token_Forward:
+                        opCode = toc_FORWARD;
+                        break;
                     case Token_Right:
                         opCode = toc_RIGHT;
                         break;
@@ -164,6 +169,9 @@ program_start:
                         break;
                     case Token_StopOs:
                         opCode = toc_STOP;
+                        break;
+                    case Token_Ret:
+                        opCode = toc_RET;
                         break;
                     case Token_GoSub:
                         opCode = toc_GOSUB;
@@ -392,7 +400,7 @@ program_start:
                     Interpreter_labels[param1Int] = labelIndex;
                 }
 
-                if (commandHash == toc_GOSUB) {
+                if (opCode == toc_GOSUB) {
                     float pc = (float)programCounter;
                     Push_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer, &pc);
                     #ifdef DEBUG_PROCESSOR
@@ -422,7 +430,7 @@ program_start:
                     }
                 }
                 #ifdef DEBUG_PROCESSOR
-                    dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
+                    dbg_printf("new sp: %d", Interpreter_stackPointers[currentStackIndex]);
                 #endif
                 break;
             case toc_RET:
@@ -438,21 +446,21 @@ program_start:
                 break;
             case toc_POP:
             case toc_PEEK:
-                if (commandHash == toc_POP && Interpreter_stackPointers[currentStackIndex] == 0) {
+                if (opCode == toc_POP && Interpreter_stackPointers[currentStackIndex] == 0) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     goto end_eval;
                 }
                 eval = Pop_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
-                if (commandHash == toc_PEEK) {
+                if (opCode == toc_PEEK) {
                     Interpreter_stackPointers[currentStackIndex]++;
                     #ifdef DEBUG_PROCESSOR
                         dbg_printf("peeked: %f", eval);
-                        dbg_printf(" sp: %d", Main_stackPointers[currentStackIndex]);
+                        dbg_printf(" sp: %d", Interpreter_stackPointers[currentStackIndex]);
                     #endif
                 } else {
                     #ifdef DEBUG_PROCESSOR
                         dbg_printf("popped: %f", eval);
-                        dbg_printf(" sp: %d", Main_stackPointers[currentStackIndex]);
+                        dbg_printf(" sp: %d", Interpreter_stackPointers[currentStackIndex]);
                     #endif
                 }
                 if (param1 == NULL) {
@@ -476,21 +484,21 @@ program_start:
                 }
                 PushTurtle_Inline(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
                 #ifdef DEBUG_PROCESSOR
-                    dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
+                    dbg_printf("new sp: %d", Interpreter_stackPointers[currentStackIndex]);
                 #endif
                 break;
             case toc_POPVEC:
             case toc_PEEKVEC:
-                if (commandHash == toc_POPVEC && Interpreter_stackPointers[currentStackIndex] <= NumDataFields-1) {
+                if (opCode == toc_POPVEC && Interpreter_stackPointers[currentStackIndex] <= NumDataFields-1) {
                     dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
                     goto end_eval;
                 }
                 PopTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
-                if (commandHash == toc_PEEKVEC) {
+                if (opCode == toc_PEEKVEC) {
                     Interpreter_stackPointers[currentStackIndex] += NumDataFields;
                 }
                 #ifdef DEBUG_PROCESSOR
-                    dbg_printf("new sp: %d", Main_stackPointers[currentStackIndex]);
+                    dbg_printf("new sp: %d", Interpreter_stackPointers[currentStackIndex]);
                 #endif
                 break;                
             case toc_IF:
@@ -588,6 +596,9 @@ program_start:
                 switch (param1Int) {
                     case 0:
                         Palette_Default(Interpreter_paletteBuffer);
+                        break;
+                    case 1:
+                        Palette_Rainbow(Interpreter_paletteBuffer);
                         break;
                     default:
                         dbg_printf("\nSYNTAX ERROR: Invalid palette %d.", param1Int);
@@ -745,7 +756,7 @@ end_eval:
         if (running)
             dbg_printf("\n");
         #endif
-        if (programCounter >= programSize - 1) {
+        if (programCounter >= programSize) {
             exit = true;
         }
 
@@ -773,7 +784,7 @@ end_eval:
             gfx_BlitScreen();
             gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
-            gfx_PrintStringXY("Paused", 2, 2);
+            gfx_PrintStringXY("Paused", 4, 4);
             clear_key_buffer();
             do {
                 kb_Scan();
@@ -789,7 +800,7 @@ end_eval:
             gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
             snprintf(buffer, 14, "FPS: %d   ", (uint8_t)fps);
-            gfx_PrintStringXY(buffer, 2, 2);
+            gfx_PrintStringXY(buffer, 4, 4);
         }
         
         //gfx_SwapDraw();
