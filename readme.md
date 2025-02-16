@@ -23,10 +23,19 @@ This header is the most basic. This marks the program as a TUGA program, and tel
 ```TUGA
 TUGA:"PROGRAM":prgmTUGA:Return
 Description of the program
-"Additional information
 ```
 
-`PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch. The first line is a comment that can be optionally used by shells to display a description. Subsequent comments will be skipped as well, and the interpreter will know "program start" occurs AFTER the initial comment block (in terms of program restart, label-seeking, and sub programs).
+`PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch. The first line is a comment that can be optionally used by shells to display a description.
+
+Additionally, the DCS header is supported, to give your programs a nice icon. A full TUGA+DCS header looks as follows:
+
+```TUGA
+:DCS
+"33333333333333333333333BB33333333333B3B33B3B3333333B3B3333B3B33333B3333333333B33333B33333333B33333B3333333333B333B333333333333B33B333333333333B333B3333333333B33333B33333333B33333B3333333333B33333B3B3333B3B3333333B3B33B3B33333333333BB33333333333333333333333
+TUGA:"SNOW":Asm(prgmTUGA:Return
+"Draws a Koch snowflake
+```
+
 
 ### Current implementation
 
@@ -55,6 +64,7 @@ Comments start with `"` and are skipped entirely.
 | RIGHT [amt] | Turn right by [amt] degrees |
 | MOVE {[X],[Y] | Moves to [X, Y] |
 | ANGLE [amt] | Sets angle to [amt] degrees |
+| INIT | Initializes the turtle, moving it the center of the screen, setting the color to 255, and setting the pen to 1 |
 
 ### Graphics
 
@@ -67,6 +77,20 @@ Comments start with `"` and are skipped entirely.
 | INIT | Resets the current turtle to the initial conditions |
 | RECT {[w],[h] | Draws a rectangle with upper-left corner at the turtle's location that's [w] by [h] |
 
+#### Palettes
+
+| Command | Description |
+| - | - |
+| PALETTE {[num],[param1],[param2] | Sets the palette. Currently supports 0 for default |
+| PALSHIFT | Shifts the palette by 1 |
+
+##### Built-in palettes
+
+| Number | Palette |
+| - | - |
+| 0 | Default, takes direction |
+| 1 | Rainbow, takes direction |
+
 ### Control flow
 
 | Command | Description |
@@ -76,6 +100,18 @@ Comments start with `"` and are skipped entirely.
 | IF [val] | Skips the next line if [val] is 0 |
 | GOSUB [number] | Goes to label [number], pushing the the next line onto the system stack |
 | RET | Returns to where you jumped from, popping that value off the system stack |
+| STOP | Ends the program |
+
+#### Input
+
+| Command | Description |
+| - | - |
+| GETKEY | Gets the current key to Ans |
+| GETKEY [var] | Gets the current key to [var] |
+| KEYDOWN [key] | Sets ans to 1 if the key is down, otherwise 0 (BASIC key code) |
+| KEYUP [key] | Sets ans to 1 if the key is UP, otherwise 0 (BASIC key code) |
+| IFKEYDOWN [key] | Processes the next line if the key is down (BASIC key code) |
+| IFKEYUP [key] | Processes the next line if the key is UP (BASIC key code) |
 
 ### Stack
 
@@ -112,26 +148,16 @@ Comments start with `"` and are skipped entirely.
 | EVAL [code] | Evaluates arbitrary BASIC code in [code] |
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 
-#### Control flow
+#### Control flow (propsed)
 
 | Command | Description |
 | - | - |
-| STOP | Ends the program |
 | RESET | Reset the program |
 | JNZ {[val],[label] | Jumps to [label] is [val] isn't zero |
 | DJNZ {[var],[label] | Decrements [var] and jumps to [label] if the result is non-zero |
 | PROG [program] | Runs [program] as a TUGA program |
 
-#### Input
-
-| Command | Description |
-| - | - |
-| GETKEY | Gets the current key to Ans |
-| GETKEY [var] | Gets the current key to [var] |
-| ISDOWN [key] | Processes the next line if the key is down (BASIC key code) |
-| ISUP [key] | Processes the next line if the key is UP (BASIC key code) |
-
-#### Stack
+#### Stack (propsed)
 
 | Command | Description |
 | - | - |
@@ -170,21 +196,19 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
 | SPRITE {[num],[x],[y] | Draws sprite [num] at [x],[y] |
 
-#### Palettes
+#### Palettes (proposed)
 
 | Command | Description |
 | - | - |
 | PALETTE {[num],[param1],[param2] | Sets the palette. Currently supports 0 for default |
-| DEFPAL [list] | Sets the palette to [list] |
 | PALSHIFT [amount] | Shifts the palette by [amount] |
+| DEFPAL [list] | Sets the palette to [list] |
 | PALSHIFT {[start], [amount], [length] | Shifts the palette starting at [start] ending at [start] + [length] by [amount], [amount] and [length] are optional and default to 1 and the full palette length |
 
-##### Built-in palettes
+##### Additional palettes
 
 | Number | Palette |
 | - | - |
-| 0 | Default, takes direction |
-| 1 | Rainbow, takes direction |
 | 2 | Monochromatic HSV saturation-spectrum, takes two additional params, color and direction |
 | 3 | Monochromatic HSV value-spectrum, takes two additional params, color and direction |
 | 4 | Grayscale, takes direction |
