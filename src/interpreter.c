@@ -172,7 +172,7 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = true;
+    bool showFps = false;
     bool skipFlag = false;
 
     #ifdef DEBUG
@@ -414,6 +414,9 @@ program_start:
                 break;
             case toc_PEN:
                 Turtle_SetPen(currentTurtle, &eval);
+                break;
+            case toc_WRAP:
+                Turtle_SetWrap(currentTurtle, &eval);
                 break;
             case toc_FORWARD:
                 Turtle_Forward(currentTurtle, &eval);

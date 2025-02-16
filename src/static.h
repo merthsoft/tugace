@@ -104,6 +104,9 @@ typedef size_t   ProgramCounter;
 #define Hash_FILL       0x84B2AC
 #define Hash_PALSHIFT   0x1DFA20
 #define Hash_TEXT       0x8C508A
+#define Hash_WRAP       0x8E29FF
+
+#define Hash_PEER       0x111111
 
 #define Hash_IFKEYUP    0x000009
 #define Hash_KEYUP      0x000032
@@ -126,6 +129,7 @@ typedef enum TugaOpCode {
     toc_NOP,
     toc_COLOR,
     toc_PEN,
+    toc_WRAP,
     toc_FORWARD,
     toc_LEFT,
     toc_RIGHT,
@@ -175,7 +179,7 @@ typedef enum TugaOpCode {
     toc_SPRITE,
     toc_DEFSPRITE,
     toc_SIZESPRITE,
-    toc_PALSHIFT
+    toc_PALSHIFT,
 } TugaOpCode;
 
 #ifdef __cplusplus

@@ -175,6 +175,8 @@ static inline TugaOpCode GetOpCodeFromHash_Inline(uint24_t hash)
             return toc_SIZESPRITE;
         case Hash_PALSHIFT:
             return toc_PALSHIFT;
+        case Hash_WRAP:
+            return toc_WRAP;
         default:
             return toc_UNKNOWN;
     }
