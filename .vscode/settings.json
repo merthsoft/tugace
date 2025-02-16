@@ -1,16 +1,7 @@
 {
     "files.associations": {
-        "turtle.h": "c",
-        "static.h": "c",
-        "stdint.h": "c",
-        "palette.h": "c",
-        "stdlib.h": "c",
-        "real.h": "c",
-        "seek.h": "c",
-        "rtc.h": "c",
-        "debug.h": "c",
-        "cdefs.h": "c",
-        "fileioc.h": "c"
+        "*.h": "c",
+        "*.c": "c"
     },
     "makefile.configureOnOpen": false
 }

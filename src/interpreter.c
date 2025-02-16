@@ -1,3 +1,4 @@
+#include <fileioc.h>
 #include <graphx.h>
 #include <string.h>
 #include <time.h>
@@ -19,7 +20,6 @@
 #include <debug.h>
 #ifdef DEBUG
 //#define DEBUG_PROCESSOR
-#include <fileioc.h>
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
@@ -38,7 +38,7 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 }
 #endif
 
-void print_string(size_t length, const unsigned char buffer[length], const Turtle* turtle) {
+void print_string(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
     #ifdef DEBUG_PROCESSOR
     dbg_printf(" Ans text (%d): ", length);
     debug_print_tokens(buffer, length, NULL);
@@ -137,6 +137,7 @@ program_start:
     gfx_SetDrawScreen();
     gfx_SetTextBGColor(0);
     gfx_SetTextTransparentColor(1);
+    gfx_FillScreen(0);
 
     memset(Interpreter_labels, 0, sizeof(ProgramCounter)*NumLabels);
     Interpreter_labels[255] = 0xABCDEF;
@@ -167,6 +168,7 @@ program_start:
 
     uint8_t type;
     void* ans;
+    string_t* ansString;
     uint16_t paramsListLength;
     list_t* paramsList;
     cplx_list_t* paramsListCplx;
@@ -176,7 +178,7 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = true;
+    bool showFps = false;
     bool skipFlag = false;
 
     #ifdef DEBUG
@@ -200,16 +202,6 @@ program_start:
 
         ProgramToken shortHand = program[programCounter];
         switch (shortHand) {
-            case Token_NewLine:
-                #ifdef DEBUG_PROCESSOR
-                dbg_printf("Skipping empty line.");
-                #endif
-                goto end_eval;
-            case Token_Comment:
-                #ifdef DEBUG_PROCESSOR
-                    dbg_printf("Skipping comment.");
-                #endif
-                goto end_eval;
             case Token_Label:
             case Token_Goto:
             case Token_LabelOs:
@@ -227,7 +219,21 @@ program_start:
             case Token_LeftOs:
             case Token_Right:
             case Token_Forward:
+            case Token_NewLine:
+            case Token_Comment:
                 switch (shortHand) {
+                    case Token_NewLine:
+                        #ifdef DEBUG_PROCESSOR
+                        dbg_printf("Skipping empty line.");
+                        #endif
+                        opCode = toc_NOP;
+                        break;
+                    case Token_Comment:
+                        #ifdef DEBUG_PROCESSOR
+                            dbg_printf("Skipping comment.");
+                        #endif
+                        opCode = toc_NOP;
+                        break;
                     case Token_Forward:
                         opCode = toc_FORWARD;
                         break;
@@ -304,6 +310,13 @@ program_start:
         }
         #endif
 
+        if (opCode == toc_NOP) {
+            #ifdef DEBUG_PROCESSOR
+                dbg_printf("Skipping because nopped.");
+            #endif
+            goto end_eval;
+        }
+
         if (skipFlag) {
             #ifdef DEBUG_PROCESSOR
                 dbg_printf("Skipping because skipFlag is set.");
@@ -320,10 +333,18 @@ program_start:
         paramsListCplx = NULL;
         retListPointer = 0;
         ans = NULL;
+        ansString = NULL;
 
         if (paramsStringLength > 0 && params[0] != OS_TOK_DOUBLE_QUOTE) {
             if (os_Eval(params, paramsStringLength)) {
                 dbg_printf("\nSYNTAX ERROR: Failed to eval \"%.*s\" length: %d.", paramsStringLength, (const char*)params, paramsStringLength);
+                goto end_eval;
+            }
+
+            if (opCode == toc_EVAL) {
+                #ifdef DEBUG_PROCESSOR
+                dbg_printf("Eval'd with type %d.", type);
+                #endif
                 goto end_eval;
             }
 
@@ -353,6 +374,9 @@ program_start:
                         if (paramsListCplx->dim >= 1)
                             param1 = &paramsListCplx->items[0].real;
                         break;
+                    case OS_TYPE_STR:
+                        ansString = ans;
+                        break;
                     default:
                         dbg_printf("\nSYNTAX ERROR: Unsupported ans type: %d.\n", type);
                         goto end_eval;
@@ -379,6 +403,7 @@ program_start:
         int errNo;
         switch (opCode) {
             case toc_NOP:
+            case toc_EVAL:
                 break;
             case toc_COLOR:
                 Turtle_SetColor(currentTurtle, &eval);
@@ -465,9 +490,6 @@ program_start:
                     #endif
                 }
                 programCounter = labelIndex;
-                break;
-            case toc_EVAL:
-                dbg_printf(" *");
                 break;
             case toc_PUSH:
                 if (paramsList == NULL) {
@@ -741,14 +763,21 @@ program_start:
                     dbg_printf("\nSYNTEAX ERROR: Out of range of sprites %d.", intEval);
                     goto end_eval;
                 }
-                if (intEval < 0 || intEval > NumSprites)
-                {
+                if (intEval < 0 || intEval > NumSprites) {
                     dbg_printf("\nSYNTEAX ERROR: Out of range of sprites %d.", intEval);
                     goto end_eval;
                 }
                 break;
             case toc_TEXT:
-                print_string(paramsStringLength - 1, &params[1], currentTurtle);
+                if (params[0] != OS_TOK_DOUBLE_QUOTE) {
+                    if (ansString == NULL) {
+                        dbg_printf("\nSYNTEAX ERROR: Ans wasn't a string. Type: %d.", type);
+                        goto end_eval;
+                    }
+                    print_string(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
+                } else { 
+                    print_string(paramsStringLength - 1, &params[1], currentTurtle);
+                }
                 break;
             case toc_UNKNOWN:
                 dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandStringLength, command);
