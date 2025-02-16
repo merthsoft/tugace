@@ -64,7 +64,7 @@ int main(void) {
     }
 
     Const_Initialize();
-    Interpreter_Interpret(program, programSize);
+    Interpreter_Interpret(programSize, program);
 
     free(program);
     ti_Close(programHandle);

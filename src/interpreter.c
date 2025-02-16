@@ -38,22 +38,25 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 }
 #endif
 
-void print_string(const string_t* string, const Turtle* turtle) {
-    #ifdef DEBUG
-    dbg_printf("Ans text (%d): ", string->len);
-    debug_print_tokens(string->data, string->len, NULL);
+void print_string(size_t length, const unsigned char buffer[length], const Turtle* turtle) {
+    #ifdef DEBUG_PROCESSOR
+    dbg_printf(" Ans text (%d): ", length);
+    debug_print_tokens(buffer, length, NULL);
+    dbg_printf(" ");
     #endif
-
     gfx_SetTextFGColor(turtle->Color);
     gfx_SetTextXY(turtle->X, turtle->Y);
-
     uint8_t tokenLength = 0;
+    size_t tokenStringLength = 0;
     uint8_t i = 0;
+    size_t* stringLength = 0;
         
-    void** readPointer = (void**)&string->data;
-    while(i < string->len) {
-        gfx_PrintString(ti_GetTokenString(readPointer, &tokenLength, NULL));
+    void** readPointer = (void**)&buffer;
+    while(i < length) {
+        gfx_PrintString(ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength));
         i += tokenLength;
+        if (stringLength)
+            *stringLength += tokenStringLength;
     }
 }
 
@@ -68,7 +71,7 @@ uint16_t Interpreter_paletteBuffer[256];
 gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
 
 __attribute__((hot))
-void Interpreter_Interpret(ProgramToken* program, size_t programSize) {
+void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]) {
     #ifdef DEBUG
     dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
     #endif
@@ -127,10 +130,13 @@ void Interpreter_Interpret(ProgramToken* program, size_t programSize) {
     #ifdef DEBUG
     Interpreter_paletteBuffer[1] = gfx_RGBTo1555(0, 125, 0);
     #endif  
-    gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
-    
+
 program_start:
+    gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+    
     gfx_SetDrawScreen();
+    gfx_SetTextBGColor(0);
+    gfx_SetTextTransparentColor(1);
 
     memset(Interpreter_labels, 0, sizeof(ProgramCounter)*NumLabels);
     Interpreter_labels[255] = 0xABCDEF;
@@ -138,6 +144,7 @@ program_start:
     memset(Interpreter_stackPointers, 0, sizeof(StackPointer)*NumStackPages);
     memset(Interpreter_stacks, 0, sizeof(float)*NumStackPages*MaxStackDepth);
     Interpreter_systemStackPointer = 0;
+    memset(Interpreter_turtles, 0, sizeof(Turtle) * NumTurtles);
     Turtle_Initialize(Interpreter_turtles);
     
     programCounter = programStart;
@@ -160,7 +167,6 @@ program_start:
 
     uint8_t type;
     void* ans;
-    string_t* ansString;
     uint16_t paramsListLength;
     list_t* paramsList;
     cplx_list_t* paramsListCplx;
@@ -170,14 +176,14 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = false;
+    bool showFps = true;
     bool skipFlag = false;
 
     #ifdef DEBUG
     dbg_printf("Starting program exection.\n");
     #endif
+    Turtle* currentTurtle = &Interpreter_turtles[0];
     while (!exit) {
-        Turtle* currentTurtle = &Interpreter_turtles[currentTurtleIndex];
         if (!running)
             goto end_eval;
         
@@ -314,9 +320,8 @@ program_start:
         paramsListCplx = NULL;
         retListPointer = 0;
         ans = NULL;
-        ansString = NULL;
 
-        if (paramsStringLength > 0) {
+        if (paramsStringLength > 0 && params[0] != OS_TOK_DOUBLE_QUOTE) {
             if (os_Eval(params, paramsStringLength)) {
                 dbg_printf("\nSYNTAX ERROR: Failed to eval \"%.*s\" length: %d.", paramsStringLength, (const char*)params, paramsStringLength);
                 goto end_eval;
@@ -347,9 +352,6 @@ program_start:
                         paramsListLength = paramsListCplx->dim;
                         if (paramsListCplx->dim >= 1)
                             param1 = &paramsListCplx->items[0].real;
-                        break;
-                    case OS_TYPE_STR:
-                        ansString = ans;
                         break;
                     default:
                         dbg_printf("\nSYNTAX ERROR: Unsupported ans type: %d.\n", type);
@@ -621,6 +623,9 @@ program_start:
                     goto end_eval;
                 }
                 currentTurtleIndex = intEval;
+                currentTurtle = &Interpreter_turtles[currentTurtleIndex];
+                if (!currentTurtle->Initialized)
+                    Turtle_Initialize(currentTurtle);
                 break;
             case toc_STACK:
                 if (intEval < -1 || intEval > NumStackPages) {
@@ -647,11 +652,11 @@ program_start:
                         dbg_printf("\nSYNTAX ERROR: Invalid palette %d.", intEval);
                         goto end_eval;
                 }
-                gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
+                gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
                 break;
             case toc_PALSHIFT:
                 Palette_Shift(Interpreter_paletteBuffer);
-                gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
+                gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
                 break;
             case toc_FILL:
                 gfx_FloodFill(currentTurtle->X, currentTurtle->Y, currentTurtle->Color);
@@ -743,8 +748,7 @@ program_start:
                 }
                 break;
             case toc_TEXT:
-                ansString = ans;
-                print_string(ansString, currentTurtle);
+                print_string(paramsStringLength - 1, &params[1], currentTurtle);
                 break;
             case toc_UNKNOWN:
                 dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandStringLength, command);
@@ -821,7 +825,6 @@ end_eval:
 
         if (!running) {
             gfx_BlitScreen();
-            gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
             gfx_PrintStringXY("Paused ", 4, 4);
             clear_key_buffer();
@@ -836,7 +839,6 @@ end_eval:
             clear_key_buffer();
             gfx_BlitBuffer();
         } else if (showFps) {
-            gfx_SetTextBGColor(0);
             gfx_SetTextFGColor(124);
             snprintf(buffer, 14, "FPS: %d   ", (uint8_t)fps);
             gfx_PrintStringXY(buffer, 4, 4);
@@ -848,7 +850,6 @@ end_eval:
     dbg_printf("Done. PC: %.6X\n", programCounter);
     gfx_BlitScreen();
     gfx_SetTextFGColor(124);
-    gfx_SetTextBGColor(0);
     gfx_SetColor(0);
     gfx_FillRectangle(0, 0, 84, 12);
     gfx_PrintStringXY("Done", 2, 2);

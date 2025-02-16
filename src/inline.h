@@ -10,11 +10,13 @@
 extern "C" {
 #endif
 
+__attribute__((hot))
 static inline void PushTurtle_Inline(float* stack, StackPointer* stackPointer, const Turtle* turtle) {
     memcpy(&stack[*stackPointer], &turtle->X, sizeof(float)*NumDataFields);
     *stackPointer = *stackPointer + NumDataFields;
 }
 
+__attribute__((hot))
 static inline void PopTurtle_InLine(float* stack, StackPointer* stackPointer, Turtle* turtle) {
     *stackPointer = *stackPointer - NumDataFields;
     memcpy(&turtle->X, &stack[*stackPointer], sizeof(float)*NumDataFields);
@@ -23,15 +25,18 @@ static inline void PopTurtle_InLine(float* stack, StackPointer* stackPointer, Tu
     #endif
 }
 
+__attribute__((hot))
 static inline void PeekTurtle_InLine(float* stack, StackPointer* stackPointer, Turtle* turtle) {
     memcpy(&turtle->X, &stack[*stackPointer - NumDataFields], sizeof(float)*NumDataFields);
 }
 
+__attribute__((hot))
 static inline void Push_InLine(float* stack, StackPointer* stackPointer, const float* value) {
     stack[*stackPointer] = *value;
     *stackPointer = *stackPointer + 1;
 }
 
+__attribute__((hot))
 static inline float Pop_InLine(float* stack, StackPointer* stackPointer) {
     *stackPointer = *stackPointer - 1;
     float ret = stack[*stackPointer];
@@ -41,11 +46,13 @@ static inline float Pop_InLine(float* stack, StackPointer* stackPointer) {
     return ret;
 }
 
+__attribute__((hot))
 static inline float Peek_InLine(float* stack, StackPointer* stackPointer) {
     return stack[*stackPointer - 1];
 }
 
 // http://www.cse.yorku.ca/~oz/hash.html
+__attribute__((hot))
 static inline uint24_t Hash_InLine(const ProgramToken* arr, size_t length) {
     uint32_t hash = 5381;
     uint8_t c;
@@ -59,6 +66,7 @@ static inline uint24_t Hash_InLine(const ProgramToken* arr, size_t length) {
     return hash;
 }
 
+__attribute__((hot))
 static inline TugaOpCode GetOpCodeFromHash_Inline(uint24_t hash)
 {
     switch (hash) {
