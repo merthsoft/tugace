@@ -19,7 +19,7 @@
 
 #include <debug.h>
 #ifdef DEBUG
-#define DEBUG_PROCESSOR
+//#define DEBUG_PROCESSOR
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
@@ -70,13 +70,14 @@ float Interpreter_systemStack[SystemStackDepth];
 uint16_t Interpreter_paletteBuffer[256];
 gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
 
+char errorMessage[256];
+#define errorMessageLength 256
+
 __attribute__((hot))
 void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]) {
     #ifdef DEBUG
     dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
     #endif
-    char errorMessage[256];
-    #define errorMessageLength 256
     
     ProgramCounter programCounter = 0;
     // Header

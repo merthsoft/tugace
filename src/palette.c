@@ -1,7 +1,6 @@
 #include <sys/util.h>
 
 #include "palette.h"
-#include "string.h"
 
 void Palette_FadeOut(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step) {
     if (step == 0)
@@ -66,7 +65,8 @@ uint16_t Palette_HsvToRgb(uint8_t h, uint8_t s, uint8_t v) {
 
 void Palette_Shift(uint16_t* palette) {
     palette[255] = palette[1];
-    memmove(&palette[1], &palette[2], 254*2);
+    for (int i = 1; i < 255; i++)
+        palette[i] = palette[i+1];
 }
 
 void Palette_Default(uint16_t* palette) {
@@ -126,8 +126,7 @@ void Palette_Spectrum(uint16_t* palette, uint8_t color, int hueSkip) {
     uint8_t i = 1;
     int hue = color;
     int val = 128;
-    while (i <= 255)
-    {
+    while (i <= 255) {
         palette[i++] = Palette_HsvToRgb(hue, 255, val);
         val+=4;
         if (val >= 256)
