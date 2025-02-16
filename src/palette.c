@@ -110,7 +110,7 @@ void Palette_Saturation(uint16_t* palette, uint8_t color, uint8_t direction) {
 void Palette_Gray(uint16_t* palette, uint8_t direction) {
     int index = direction ? 255 : 1;
     int delta = direction ? -1 : 1;
-    for (uint8_t i = 1; i <= 255; i++)
+    for (int i = 1; i <= 255; i++)
     {
         palette[index] = gfx_RGBTo1555(i, i, i);
         index += delta;
