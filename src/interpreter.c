@@ -677,6 +677,9 @@ program_start:
                     case 1:
                         Palette_Rainbow(Interpreter_paletteBuffer);
                         break;
+                    case 2:
+                        Palette_Gray(Interpreter_paletteBuffer, intEval);
+                        break;
                     default:
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid palette %d.", intEval);
                         goto syntax_error;
