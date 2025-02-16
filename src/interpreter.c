@@ -19,7 +19,7 @@
 
 #include <debug.h>
 #ifdef DEBUG
-//#define DEBUG_PROCESSOR
+#define DEBUG_PROCESSOR
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
@@ -171,7 +171,7 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = false;
+    bool showFps = true;
     bool skipFlag = false;
 
     #ifdef DEBUG
@@ -347,11 +347,10 @@ program_start:
 
             if (opCode == toc_EVAL) {
                 #ifdef DEBUG_PROCESSOR
-                dbg_printf("Eval'd with type %d.", type);
+                dbg_printf("Eval'd.");
                 #endif
                 goto end_eval;
             }
-
             ans = os_GetAnsData(&type);
 
             if (ans) {
