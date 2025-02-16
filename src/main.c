@@ -1,9 +1,6 @@
+#include <debug.h>
 #include <fileioc.h>
 #include <string.h>
-
-#ifdef DEBUG
-#include <debug.h>
-#endif
 
 #include "const.h"
 #include "interpreter.h"

@@ -75,6 +75,8 @@ void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]
     #ifdef DEBUG
     dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
     #endif
+    char errorMessage[256];
+    #define errorMessageLength 256
     
     ProgramCounter programCounter = 0;
     // Header
@@ -109,7 +111,7 @@ void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]
 
     ProgramCounter dbgPc = programCounter;
     while (dbgPc < programSize) {
-        dbg_printf("%.6X: ", dbgPc);
+        dbg_printf("%.8d: ", dbgPc);
         ProgramCounter start = dbgPc;
         size_t lineLength = Seek_ToNewLine(program, programSize, Token_NewLine, &dbgPc);
         debug_print_tokens(&program[start], lineLength, NULL);
@@ -133,6 +135,7 @@ void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]
 
 program_start:
     gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+    gfx_SetTextConfig(gfx_text_clip);
     
     gfx_SetDrawScreen();
     gfx_SetTextBGColor(0);
@@ -166,16 +169,6 @@ program_start:
     memset(paramsListFloats, 0, 0x4*sizeof(float));
     memset(paramsListInts, 0, 0x4*sizeof(int24_t));
 
-    uint8_t type;
-    void* ans;
-    string_t* ansString;
-    uint16_t paramsListLength;
-    list_t* paramsList;
-    cplx_list_t* paramsListCplx;
-
-    float retList[MaxStackDepth];
-    uint16_t retListPointer = 0;
-
     bool exit = false;
     bool running = true;
     bool showFps = false;
@@ -190,8 +183,19 @@ program_start:
             goto end_eval;
         
         #ifdef DEBUG_PROCESSOR
-        dbg_printf("%.6X: ", programCounter);
+        dbg_printf("%.8d: ", programCounter);
         #endif
+        ProgramCounter lineStartPc = programCounter;
+
+        uint8_t type;
+        void* ans;
+        string_t* ansString;
+        uint16_t paramsListLength;
+        list_t* paramsList;
+        cplx_list_t* paramsListCplx;
+    
+        float retList[MaxStackDepth];
+        uint16_t retListPointer = 0;
 
         ProgramToken* command = &program[programCounter];
         size_t commandStringLength = 0;
@@ -337,8 +341,8 @@ program_start:
 
         if (paramsStringLength > 0 && params[0] != OS_TOK_DOUBLE_QUOTE) {
             if (os_Eval(params, paramsStringLength)) {
-                dbg_printf("\nSYNTAX ERROR: Failed to eval \"%.*s\" length: %d.", paramsStringLength, (const char*)params, paramsStringLength);
-                goto end_eval;
+                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d.", paramsStringLength, (const char*)params, paramsStringLength);
+                goto syntax_error;
             }
 
             if (opCode == toc_EVAL) {
@@ -378,12 +382,12 @@ program_start:
                         ansString = ans;
                         break;
                     default:
-                        dbg_printf("\nSYNTAX ERROR: Unsupported ans type: %d.\n", type);
-                        goto end_eval;
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Unsupported ans type: %d.\n", type);
+                        goto syntax_error;
                 }
             } else {
-                dbg_printf("\nUNKNOWN ERROR: Failed to resolve ans.\n");
-                goto end_eval;
+                snprintf(errorMessage, errorMessageLength, "\nUNKNOWN ERROR: Failed to resolve ans.\n");
+                goto syntax_error;
             }
             
             if (param1 != NULL) {
@@ -422,8 +426,8 @@ program_start:
                 break;
             case toc_MOVE:
                 if (paramsListLength < 2) {
-                    dbg_printf("\nSYNTAX ERROR: Missing parameters. Needed 2, found %d.", paramsListLength);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Missing parameters. Needed 2, found %d.", paramsListLength);
+                    goto syntax_error;
                 }
                 paramsListFloats[1] = getListElementFloatOrDefault(1, 0);
                 Turtle_Goto(currentTurtle, &paramsListFloats[0], &paramsListFloats[1]);
@@ -455,8 +459,8 @@ program_start:
                 break;
             case toc_LABEL:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No label.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
+                    goto syntax_error;
                 }
                 if (intEval >= 0 && intEval < NumLabels)
                     Interpreter_labels[intEval] = programCounter;
@@ -464,20 +468,20 @@ program_start:
             case toc_GOSUB:
             case toc_GOTO:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No label.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
+                    goto syntax_error;
                 }
                 if (intEval >= NumLabels) {
-                    dbg_printf("\nSYNTAX ERROR: Invalid label: %d.", intEval);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid label: %d.", intEval);
+                    goto syntax_error;
                 }
                 size_t labelIndex = Interpreter_labels[intEval];
                 if (labelIndex <= programStart || labelIndex >= programSize) {
                     labelIndex = Seek_ToLabel(program, programSize, programStart, intEval);
                     if (labelIndex <= programStart || labelIndex >= programSize)
                     {
-                        dbg_printf("\nSYNTAX ERROR: Label not found: %d - %d.", intEval, labelIndex);
-                        goto end_eval;
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %d - %d.", intEval, labelIndex);
+                        goto syntax_error;
                     }
                     Interpreter_labels[intEval] = labelIndex;
                 }
@@ -494,15 +498,15 @@ program_start:
             case toc_PUSH:
                 if (paramsList == NULL) {
                     if (Interpreter_stackPointers[currentStackIndex] == MaxStackDepth-1) {
-                        dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
-                        goto end_eval;
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
+                        goto syntax_error;
                     }
                     Push_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], &paramsListFloats[0]);
                 } else {
                     for (uint16_t pushListIndex = 0; pushListIndex < paramsList->dim; pushListIndex++)  {
                         if (Interpreter_stackPointers[currentStackIndex] == MaxStackDepth-1) {
-                            dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
-                            goto end_eval;
+                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
+                            goto syntax_error;
                         }
                         paramsListFloats[0] = os_RealToFloat(&paramsList->items[pushListIndex]);
                         Push_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], &paramsListFloats[0]);
@@ -514,8 +518,8 @@ program_start:
                 break;
             case toc_RET:
                 if (Interpreter_systemStackPointer == 0) {
-                    dbg_printf("\nSYNTAX ERROR: Negative stack depth for system stack.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Negative stack depth for system stack.");
+                    goto syntax_error;
                 }
                 eval = Pop_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer);
                 programCounter = (size_t)eval;
@@ -526,8 +530,8 @@ program_start:
             case toc_POP:
             case toc_PEEK:
                 if (opCode == toc_POP && Interpreter_stackPointers[currentStackIndex] == 0) {
-                    dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
+                    goto syntax_error;
                 }
                 if (opCode == toc_PEEK) {
                     eval = Peek_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
@@ -551,15 +555,15 @@ program_start:
                         *param1 = os_FloatToReal(eval);
                         os_SetRealVar(param1Var, param1);
                     } else {
-                        dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);   
-                        goto end_eval; 
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);   
+                        goto syntax_error; 
                     }
                 }
                 break;
             case toc_PUSHVEC:
                 if (Interpreter_stackPointers[currentStackIndex] + 6 >= MaxStackDepth) {
-                    dbg_printf("\nSYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
+                    goto syntax_error;
                 }
                 PushTurtle_Inline(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
                 #ifdef DEBUG_PROCESSOR
@@ -569,8 +573,8 @@ program_start:
             case toc_POPVEC:
             case toc_PEEKVEC:
                 if (opCode == toc_POPVEC && Interpreter_stackPointers[currentStackIndex] <= NumDataFields-1) {
-                    dbg_printf("\nSYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Negative stack depth for stack number %d.", currentStackIndex);
+                    goto syntax_error;
                 }
                 if (opCode == toc_PEEKVEC) {
                     PeekTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
@@ -583,8 +587,8 @@ program_start:
                 break;                
             case toc_IF:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No predicate.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No predicate.");
+                    goto syntax_error;
                 }
                 if (!paramsListFloats[0]) {
                     skipFlag = true;
@@ -593,56 +597,56 @@ program_start:
             case toc_ZERO:
                 errNo = os_SetRealVar(param1Var, &Const_Real0);
                 if (errNo) {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to zero out %c: %d.", param1Var[0], errNo);   
-                    goto end_eval; 
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to zero out %c: %d.", param1Var[0], errNo);   
+                    goto syntax_error; 
                 }
                 break;
             case toc_INC:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No parameter to set.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
+                    goto syntax_error;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
                     *param1 = os_RealAdd(param1, getListElementPointerOrDefaultPointer(1, Const_Real1));
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
-                    goto end_eval;  
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    goto syntax_error;  
                 }
                 break;
             case toc_DEC:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No parameter to set.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
+                    goto syntax_error;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
                     *param1 = os_RealSub(param1, getListElementPointerOrDefaultPointer(1, Const_Real1));
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    goto syntax_error;
                 }
                 break;
             case toc_STO:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No parameter to set.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
+                    goto syntax_error;
                 }
                 errNo = os_GetRealVar(param1Var, param1);
                 if (!errNo) {
                     *param1 = os_RealCopy(getListElementPointerOrDefaultPointer(1, Const_Real1));
                     os_SetRealVar(param1Var, param1);
                 } else {
-                    dbg_printf("\nSYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    goto syntax_error;
                 }
                 break;
             case toc_TURTLE:
                 if (intEval < -1 || intEval > NumTurtles) {
-                    dbg_printf("\nSYNTAX ERROR: Invalid turtle number %d.", intEval);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid turtle number %d.", intEval);
+                    goto syntax_error;
                 }
                 currentTurtleIndex = intEval;
                 currentTurtle = &Interpreter_turtles[currentTurtleIndex];
@@ -651,8 +655,8 @@ program_start:
                 break;
             case toc_STACK:
                 if (intEval < -1 || intEval > NumStackPages) {
-                    dbg_printf("\nSYNTAX ERROR: Invalid stack number %d.", intEval);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid stack number %d.", intEval);
+                    goto syntax_error;
                 }
                 currentStackIndex = intEval;
                 break;
@@ -671,8 +675,8 @@ program_start:
                         Palette_Rainbow(Interpreter_paletteBuffer);
                         break;
                     default:
-                        dbg_printf("\nSYNTAX ERROR: Invalid palette %d.", intEval);
-                        goto end_eval;
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid palette %d.", intEval);
+                        goto syntax_error;
                 }
                 gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
                 break;
@@ -713,22 +717,23 @@ program_start:
                     dbg_printf(" Wrote %d to %c ", intEval, param1Var[0]);
                     #endif
                     if (errNo) {
-                        dbg_printf("\nSYNTAX ERROR: Got error trying to write %c: %d.", param1Var[0], errNo);
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to write %c: %d.", param1Var[0], errNo);
+                        goto syntax_error;
                     }
                 }
                 break;
             case toc_KEYDOWN:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No key value.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No key value.");
+                    goto syntax_error;
                 }
                 retList[0] = keyhelper_IsDown(intEval);
                 retListPointer = 1;
                 break;
             case toc_IFKEYDOWN:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No key value.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No key value.");
+                    goto syntax_error;
                 }
                 if (!keyhelper_IsDown(intEval)) {
                     skipFlag = true;
@@ -740,8 +745,8 @@ program_start:
                 break;
             case toc_IFKEYUP:
                 if (param1 == NULL) {
-                    dbg_printf("\nSYNTAX ERROR: No key value.");
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No key value.");
+                    goto syntax_error;
                 }
                 if (!keyhelper_IsUp(intEval)) {
                     skipFlag = true;
@@ -753,26 +758,26 @@ program_start:
             case toc_SIZESPRITE:
                 if (intEval < 0 || intEval > NumSprites)
                 {
-                    dbg_printf("\nSYNTEAX ERROR: Out of range of sprites %d.", intEval);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
+                    goto syntax_error;
                 }
                 break;
             case toc_DEFSPRITE:
                 if (intEval < 0 || intEval > NumSprites)
                 {
-                    dbg_printf("\nSYNTEAX ERROR: Out of range of sprites %d.", intEval);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
+                    goto syntax_error;
                 }
                 if (intEval < 0 || intEval > NumSprites) {
-                    dbg_printf("\nSYNTEAX ERROR: Out of range of sprites %d.", intEval);
-                    goto end_eval;
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
+                    goto syntax_error;
                 }
                 break;
             case toc_TEXT:
                 if (params[0] != OS_TOK_DOUBLE_QUOTE) {
                     if (ansString == NULL) {
-                        dbg_printf("\nSYNTEAX ERROR: Ans wasn't a string. Type: %d.", type);
-                        goto end_eval;
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ans wasn't a string. Type: %d.", type);
+                        goto syntax_error;
                     }
                     print_string(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
                 } else { 
@@ -780,10 +785,12 @@ program_start:
                 }
                 break;
             case toc_UNKNOWN:
-                dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandStringLength, command);
+                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandStringLength, command);
+                goto syntax_error;
                 break;
             default:
-                dbg_printf("\nUNIMPLEMENETED OPCODE %d %.*s.", opCode, commandStringLength, command);
+                snprintf(errorMessage, errorMessageLength, "\nUNIMPLEMENETED OPCODE %d %.*s.", opCode, commandStringLength, command);
+                goto syntax_error;
                 break;
         }
         
@@ -806,8 +813,8 @@ program_start:
 
         errNo = os_SetListDim(OS_VAR_ANS, retListPointer);
         if (errNo) {
-            dbg_printf("\nSYNTAX ERROR: Got error trying to set ans dim %d.", retListPointer);
-            goto end_eval;
+            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to set ans dim %d.", retListPointer);
+            goto syntax_error;
         }
 
         for (uint16_t retListIndex = 0; retListIndex < retListPointer; retListIndex++)
@@ -818,11 +825,53 @@ program_start:
             ansEntry = os_FloatToReal(retList[retListIndex]);
             errNo = os_SetRealListElement(OS_VAR_ANS, retListIndex+1, &ansEntry);
             if (errNo) {
-                dbg_printf("\nSYNTAX ERROR: Got error trying to set ans index %d.", retListIndex);
-                goto end_eval;
+                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to set ans index %d.", retListIndex);
+                goto syntax_error;
             }
         }
 
+        goto end_eval;
+syntax_error:
+        #ifdef DEBUG
+        #ifdef DEBUG_PROCESSOR
+        dbg_printf("\n\t");
+        #else
+        dbg_printf("%.8d: ", lineStartPc);
+        #endif
+        dbg_printf("%.*s\n", errorMessageLength, errorMessage);
+        #endif
+
+        gfx_BlitScreen();
+        gfx_SetTextFGColor(124);
+        gfx_PrintStringXY("ERROR - Check console. Paused.", 4, 4);
+        
+        #if 0
+        const char* messageBuffer = errorMessage;
+        uint16_t y = 14;
+        gfx_SetTextXY(4, y);
+        uint16_t width = 0;
+        while (*messageBuffer != 0 && y < GFX_LCD_HEIGHT) {
+            gfx_PrintChar(*messageBuffer);
+            width += gfx_GetCharWidth(*messageBuffer);
+            if (width >= GFX_LCD_WIDTH) {
+                y += 8;
+                gfx_SetTextXY(8, y);
+            }
+            messageBuffer++;
+        }
+        #endif
+
+        clear_key_buffer();
+        do {
+            kb_Scan();
+            exit |= kb_IsDown(kb_KeyDel) | kb_IsDown(kb_KeyClear) | kb_IsDown(kb_KeyMode) | kb_IsDown(kb_KeyEnter);
+        } while (!exit);
+        if (kb_IsDown(kb_KeyEnter)) {
+            exit = false;
+            running = true;
+        }
+        clear_key_buffer();
+        gfx_BlitBuffer();
 end_eval:
         #ifdef DEBUG_PROCESSOR
         if (running)
@@ -876,7 +925,7 @@ end_eval:
         //gfx_SwapDraw();
     }
 
-    dbg_printf("Done. PC: %.6X\n", programCounter);
+    dbg_printf("Done. PC: %.8d\n", programCounter);
     gfx_BlitScreen();
     gfx_SetTextFGColor(124);
     gfx_SetColor(0);
