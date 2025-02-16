@@ -165,9 +165,11 @@ static inline TugaOpCode GetOpCodeFromHash_Inline(uint24_t hash)
             return toc_DEFSPRITE;
         case Hash_SIZESPRITE:
             return toc_SIZESPRITE;
+        case Hash_PALSHIFT:
+            return toc_PALSHIFT;
+        default:
+            return toc_UNKNOWN;
     }
-
-    return toc_UNKNOWN;
 }
 
 #ifdef __cplusplus

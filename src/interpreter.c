@@ -21,8 +21,7 @@
 //#define DEBUG_PROCESSOR
 #include <fileioc.h>
 
-void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
-{
+void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
     size_t tokenStringLength = 0;
     uint8_t i = 0;
@@ -30,8 +29,7 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
         *stringLength = 0;
         
     void** readPointer = (void**)&buffer;
-    while(i < length)
-    {
+    while(i < length) {
         dbg_printf("%s", ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength));
         i += tokenLength;
         if (stringLength)
@@ -39,6 +37,25 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
     }
 }
 #endif
+
+void print_string(const string_t* string, const Turtle* turtle) {
+    #ifdef DEBUG
+    dbg_printf("Ans text (%d): ", string->len);
+    debug_print_tokens(string->data, string->len, NULL);
+    #endif
+
+    gfx_SetTextFGColor(turtle->Color);
+    gfx_SetTextXY(turtle->X, turtle->Y);
+
+    uint8_t tokenLength = 0;
+    uint8_t i = 0;
+        
+    void** readPointer = (void**)&string->data;
+    while(i < string->len) {
+        gfx_PrintString(ti_GetTokenString(readPointer, &tokenLength, NULL));
+        i += tokenLength;
+    }
+}
 
 // should be treated as private
 Turtle Interpreter_turtles[NumTurtles];
@@ -143,6 +160,7 @@ program_start:
 
     uint8_t type;
     void* ans;
+    string_t* ansString;
     uint16_t paramsListLength;
     list_t* paramsList;
     cplx_list_t* paramsListCplx;
@@ -152,7 +170,7 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = true;
+    bool showFps = false;
     bool skipFlag = false;
 
     #ifdef DEBUG
@@ -296,6 +314,7 @@ program_start:
         paramsListCplx = NULL;
         retListPointer = 0;
         ans = NULL;
+        ansString = NULL;
 
         if (paramsStringLength > 0) {
             if (os_Eval(params, paramsStringLength)) {
@@ -329,21 +348,24 @@ program_start:
                         if (paramsListCplx->dim >= 1)
                             param1 = &paramsListCplx->items[0].real;
                         break;
-                    case OS_TYPE_EQU:
-                        dbg_printf("\nSYNTAX ERROR: Equations not yet supported.");
-                        goto end_eval;
+                    case OS_TYPE_STR:
+                        ansString = ans;
+                        break;
                     default:
-                        dbg_printf("\nSYNTAX ERROR: Unsupported ans type: %d.", type);
+                        dbg_printf("\nSYNTAX ERROR: Unsupported ans type: %d.\n", type);
                         goto end_eval;
                 }
             } else {
-                dbg_printf("\nUNKNOWN ERROR: Failed to resolve ans.");
+                dbg_printf("\nUNKNOWN ERROR: Failed to resolve ans.\n");
                 goto end_eval;
             }
             
             if (param1 != NULL) {
                 eval = paramsListFloats[0] = os_RealToFloat(param1);
                 intEval = paramsListInts[0] = os_RealToInt24(param1);
+                #ifdef DEBUG_PROCESSOR
+                dbg_printf(" param1: %f ", eval);
+                #endif
             }
         }
         
@@ -627,6 +649,10 @@ program_start:
                 }
                 gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
                 break;
+            case toc_PALSHIFT:
+                Palette_Shift(Interpreter_paletteBuffer);
+                gfx_SetPalette(Interpreter_paletteBuffer, 256, 0);
+                break;
             case toc_FILL:
                 gfx_FloodFill(currentTurtle->X, currentTurtle->Y, currentTurtle->Color);
                 break;
@@ -715,6 +741,10 @@ program_start:
                     dbg_printf("\nSYNTEAX ERROR: Out of range of sprites %d.", intEval);
                     goto end_eval;
                 }
+                break;
+            case toc_TEXT:
+                ansString = ans;
+                print_string(ansString, currentTurtle);
                 break;
             case toc_UNKNOWN:
                 dbg_printf("\nSYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandStringLength, command);

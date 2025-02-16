@@ -5,6 +5,7 @@
 #include <debug.h>
 #endif
 
+#include "const.h"
 #include "interpreter.h"
 #include "static.h"
 
@@ -62,6 +63,7 @@ int main(void) {
         return 4;
     }
 
+    Const_Initialize();
     Interpreter_Interpret(program, programSize);
 
     free(program);
