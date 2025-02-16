@@ -188,13 +188,23 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | BLITSCREEN | Blits the screen to the buffer |
 | BLITBUFFER | Blits the buffer to the screen |
 
-#### Sprites?
+#### Sprites
 
 | Command | Description |
 | - | - |
-| DEFSPRITE {[num],[width],[height],[data...]} | Defines a sprite in the sprite dictionary |
+| SIZESPRITE {[num],[width],[height] | Sets the size of a sprite in the sprite dictionary. This should be called first as it initializes the sprite. |
+| DEFSPRITE "HEX SPRITE DATA" | Defines the most-recently-sized sprite in the sprite dictionary with the hex sprite string |
+| LOADSPRITES "APPVAR | Loads a sprite dictionary from APPVAR |
 | SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
 | SPRITE {[num],[x],[y] | Draws sprite [num] at [x],[y] |
+
+#### Tilemaps
+
+| Command | Description |
+| - | - |
+| SIZETILEMAP {[width],[height] | Sets the size of the tilemap to [width]x[height] |
+| DEFTILEMAP "HEX TILEMAP DATA" | Defines the hex tilemap data |
+| TILEMAP {[x],[y],[map_x],[map_y],[view_width],[view_height] | Draws a tilemap at [x],[y] on the screen, offset at [map_x],[map_y] of [view_width]x[view_height] tiles |
 
 #### Palettes (proposed)
 
