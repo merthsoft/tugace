@@ -19,7 +19,7 @@
 
 #include <debug.h>
 #ifdef DEBUG
-//#define DEBUG_PROCESSOR
+#define DEBUG_PROCESSOR
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
