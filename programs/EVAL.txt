@@ -1,0 +1,11 @@
+TUGA:"EVAL":Asm(prgmTUGA:Return
+"Eval test
+CLEAR 0
+INIT 0
+TEXT "Ans=
+PEN 0
+ANGLE 90
+FORWARD 35
+EVAL inString("SHAUN","A→A
+TEXT toString(Ans→A
+MOVE
