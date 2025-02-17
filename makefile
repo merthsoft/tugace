@@ -8,7 +8,7 @@ DESCRIPTION = "TUGA Interpreter"
 COMPRESSED = NO
 ARCHIVED = YES
 
-CFLAGS = -Wall -Wextra -Ofast
+CFLAGS = -Wall -Wextra -Ofast -Rpass=inline -Rpass-missed=inline -exhaustive-register-search -v
 CXXFLAGS = -Wall -Wextra -Oz
 
 PREFER_OS_CRT = NO

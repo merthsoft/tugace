@@ -8,9 +8,9 @@
 extern "C" {
 #endif
 
-uint8_t keyhelper_GetKey(void);
-bool keyhelper_IsDown(int24_t getKey);
-bool keyhelper_IsUp(int24_t getKey);
+uint8_t KeyHelper_GetKey(void);
+bool KeyHelper_IsDown(int24_t getKey);
+bool KeyHelper_IsUp(int24_t getKey);
 
 #ifdef __cplusplus
 }

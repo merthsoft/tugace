@@ -5,6 +5,7 @@
 
 #include "static.h"
 
+__attribute__((hot))
 ProgramCounter Seek_ToNewLine(const ProgramToken* data, size_t dataLength, ProgramToken additionalDelim, ProgramCounter* index) {
     const size_t start = *index;
 
@@ -29,6 +30,7 @@ ProgramCounter Seek_ToNewLine(const ProgramToken* data, size_t dataLength, Progr
     return *index - start;
 }
 
+__attribute__((hot))
 ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, ProgramCounter dataStart, LabelIndex label) {
     if (dataLength == 0) {
         return 0;

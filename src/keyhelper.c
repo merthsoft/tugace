@@ -164,7 +164,7 @@ static const kb_lkey_t keyhelper_getKeyToKbKeyLut[keyhelper_getKeyToKbKeyLutSize
     kb_KeyEnter,
 };
 
-uint8_t keyhelper_GetKey(void) {
+uint8_t KeyHelper_GetKey(void) {
     kb_Scan();
     for (uint8_t key = 1, group = 7; group; --group) {
         for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
@@ -177,14 +177,14 @@ uint8_t keyhelper_GetKey(void) {
     return 0;
 }
 
-bool keyhelper_IsDown(int24_t getKey) {
+bool KeyHelper_IsDown(int24_t getKey) {
     getKey -= keyhelper_getKeyToKbKeyLutOffset;
     if (getKey < 0 || getKey > keyhelper_getKeyToKbKeyLutSize)
         return false;
     return kb_IsDown(keyhelper_getKeyToKbKeyLut[getKey]);
 }
 
-bool keyhelper_IsUp(int24_t getKey) {
+bool KeyHelper_IsUp(int24_t getKey) {
     getKey -= keyhelper_getKeyToKbKeyLutOffset;
     if (getKey < 0 || getKey > keyhelper_getKeyToKbKeyLutSize)
         return false;
