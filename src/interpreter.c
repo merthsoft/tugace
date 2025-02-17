@@ -58,7 +58,7 @@ void Interpreter_printString(size_t length, const uint8_t buffer[length], const 
     }
 }
 
-#define hexCharToVal(c) ((c >= '0' && c <= '9') ? (c - '0') : ((c >= 'A' && c <= 'F') ? (c - 'A' + 10) : (c - 'a' + 10)))
+#define hexCharToVal(c) ((c >= '0' && c <= '9') ? (c - '0') : (c - 'A' + 10))
 #define convert(buffer, i) ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
 
 __attribute__((hot))
