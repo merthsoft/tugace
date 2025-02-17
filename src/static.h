@@ -16,12 +16,13 @@ extern "C" {
 #define null_coalesce(this, orThat) (this ? this : orThat)
 #define if_null_then_a_else_b(x, a, b) (!x ? a : b)
 
-typedef uint24_t LabelIndex;
-typedef uint8_t  ProgramToken;
-typedef uint8_t  StackIndex;
-typedef uint8_t  TurtleIndex;
-typedef uint8_t  StackPointer;
-typedef size_t   ProgramCounter;
+typedef uint24_t    LabelIndex;
+typedef uint8_t     SpriteIndex;
+typedef uint8_t     TurtleIndex;
+typedef uint8_t     ProgramToken;
+typedef uint8_t     StackIndex;
+typedef uint8_t     StackPointer;
+typedef size_t      ProgramCounter;
 
 #define NumTurtles       50
 #define NumDataFields    3
@@ -106,6 +107,8 @@ typedef size_t   ProgramCounter;
 #define Hash_TEXT       0x8C508A
 #define Hash_WRAP       0x8E29FF
 
+#define Hash_ONERROR    0xF9B72C
+
 #define Hash_PEER       0x111111
 
 #define Hash_IFKEYUP    0x000009
@@ -113,16 +116,20 @@ typedef size_t   ProgramCounter;
 
 #define Hash_SPEED      0x000004
 
+#define Hash_AUTODRAW   0x2E172C
 #define Hash_DRAWSCREEN 0x000005
-#define Hash_DRAWBUFFER 0x000015
-#define Hash_SWAPDRAW   0x000006
+#define Hash_DRAWBUFFER 0x3882ED
+#define Hash_SWAPDRAW   0x839D0E
+#define Hash_DRAW       0x83BED3
+
 #define Hash_BLITSCREEN 0x000007
 #define Hash_BLITBUFFER 0x000017
+
 #define Hash_ELLIPSE    0x000008
 
-#define Hash_SPRITE     0x00000C
-#define Hash_DEFSPRITE  0x00000A
-#define Hash_SIZESPRITE 0x00000B
+#define Hash_SPRITE     0x5111FC
+#define Hash_DEFSPRITE  0xC7998B
+#define Hash_SIZESPRITE 0xA06A97
 
 typedef enum TugaOpCode {
     toc_UNKNOWN,
@@ -170,6 +177,9 @@ typedef enum TugaOpCode {
     toc_KEYUP,
     toc_TEXT,
     toc_SPEED,
+    toc_DRAW,
+    toc_AUTODRAW,
+    toc_ONERROR,
     toc_DRAWSCREEN,
     toc_DRAWBUFFER,
     toc_SWAPDRAW,

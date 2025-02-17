@@ -24,7 +24,7 @@
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
     size_t tokenStringLength = 0;
-    uint8_t i = 0;
+    size_t i = 0;
     if (stringLength)
         *stringLength = 0;
         
@@ -33,12 +33,13 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
         dbg_printf("%s", ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength));
         i += tokenLength;
         if (stringLength)
-            *stringLength += tokenStringLength;
+            *stringLength = i;
     }
 }
 #endif
 
-void print_string(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
+__attribute__((hot))
+void Interpreter_printString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
     #ifdef DEBUG_PROCESSOR
     dbg_printf(" Ans text (%d): ", length);
     debug_print_tokens(buffer, length, NULL);
@@ -48,15 +49,22 @@ void print_string(size_t length, const uint8_t buffer[length], const Turtle* tur
     gfx_SetTextXY(turtle->X, turtle->Y);
     uint8_t tokenLength = 0;
     size_t tokenStringLength = 0;
-    uint8_t i = 0;
-    size_t* stringLength = 0;
+    size_t i = 0;
         
     void** readPointer = (void**)&buffer;
     while(i < length) {
         gfx_PrintString(ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength));
         i += tokenLength;
-        if (stringLength)
-            *stringLength += tokenStringLength;
+    }
+}
+
+#define hexCharToVal(c) ((c >= '0' && c <= '9') ? (c - '0') : ((c >= 'A' && c <= 'F') ? (c - 'A' + 10) : (c - 'a' + 10)))
+#define convert(buffer, i) ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
+
+__attribute__((hot))
+static inline void Interpreter_copySprite(size_t dataLength, const unsigned char buffer[dataLength], gfx_sprite_t* sprite) {
+    for (size_t i = 0; i < dataLength; i+=2) {
+        sprite->data[i/2] = convert(buffer, i);
     }
 }
 
@@ -173,7 +181,11 @@ program_start:
     bool exit = false;
     bool running = true;
     bool showFps = false;
+    bool pauseOnError = true;
+    bool autoDraw = true;
     bool skipFlag = false;
+
+    SpriteIndex currentSpriteIndex = 0;
 
     #ifdef DEBUG
     dbg_printf("Starting program exection.\n");
@@ -419,7 +431,7 @@ program_start:
                 Turtle_SetWrap(currentTurtle, &eval);
                 break;
             case toc_FORWARD:
-                Turtle_Forward(currentTurtle, &eval);
+                Turtle_Forward(currentTurtle, &eval, autoDraw);
                 break;
             case toc_LEFT:
                 Turtle_Left(currentTurtle, &eval);
@@ -433,7 +445,7 @@ program_start:
                     goto syntax_error;
                 }
                 paramsListFloats[1] = getListElementFloatOrDefault(1, 0);
-                Turtle_Goto(currentTurtle, &paramsListFloats[0], &paramsListFloats[1]);
+                Turtle_Goto(currentTurtle, &paramsListFloats[0], &paramsListFloats[1], autoDraw);
                 break;
             case toc_ANGLE:
                 Turtle_SetAngle(currentTurtle, &eval);
@@ -762,11 +774,23 @@ program_start:
                 kb_Scan();
                 break;
             case toc_SIZESPRITE:
-                if (intEval < 0 || intEval > NumSprites)
-                {
+                if (paramsListLength != 3) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Incorrect number of parameters. Expected 3, got %d.", paramsListLength);
+                    goto syntax_error;
+                }
+                if (intEval < 0 || intEval > NumSprites) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
                     goto syntax_error;
                 }
+                currentSpriteIndex = intEval;
+                if (Interpreter_spriteDictionary[currentSpriteIndex] != NULL)
+                    free(Interpreter_spriteDictionary[currentSpriteIndex]);
+                Interpreter_spriteDictionary[currentSpriteIndex] = gfx_MallocSprite(
+                                                                        os_RealToInt24(&paramsList->items[1]), 
+                                                                        os_RealToInt24(&paramsList->items[2]));
+                #ifdef DEBUG_PROCESSOR
+                dbg_printf(" sprite: %p ", Interpreter_spriteDictionary[currentSpriteIndex]);
+                #endif
                 break;
             case toc_DEFSPRITE:
                 if (intEval < 0 || intEval > NumSprites)
@@ -774,8 +798,14 @@ program_start:
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
                     goto syntax_error;
                 }
-                if (intEval < 0 || intEval > NumSprites) {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
+                if (Interpreter_spriteDictionary[currentSpriteIndex] == NULL) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Sprite %d undefined. You must call SIZESPRITE first.", intEval);
+                    goto syntax_error;
+                }
+                if (params[0] == OS_TOK_DOUBLE_QUOTE) {
+                    Interpreter_copySprite(paramsStringLength - 1, &params[1], Interpreter_spriteDictionary[currentSpriteIndex]);
+                } else {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Only quoted strings are current supported.");
                     goto syntax_error;
                 }
                 break;
@@ -785,10 +815,28 @@ program_start:
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ans wasn't a string. Type: %d.", type);
                         goto syntax_error;
                     }
-                    print_string(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
+                    Interpreter_printString(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
                 } else { 
-                    print_string(paramsStringLength - 1, &params[1], currentTurtle);
+                    Interpreter_printString(paramsStringLength - 1, &params[1], currentTurtle);
                 }
+                break;
+            case toc_ONERROR:
+                pauseOnError = intEval != 1;
+                break;
+            case toc_AUTODRAW:
+                autoDraw = intEval != 0;
+                #ifdef DEBUG_PROCESSOR
+                dbg_printf("Setting autodraw to %d.", autoDraw);
+                #endif
+                break;
+            case toc_SPRITE:
+                currentTurtle->SpriteNumber = intEval;
+                #ifdef DEBUG_PROCESSOR
+                dbg_printf("Setting sprite number to %d.", intEval);
+                #endif
+                break;
+            case toc_DRAW:
+                Turtle_Draw_InLine(currentTurtle, Interpreter_spriteDictionary);
                 break;
             case toc_UNKNOWN:
                 snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandStringLength, command);
@@ -841,9 +889,8 @@ syntax_error:
         #ifdef DEBUG
         #ifdef DEBUG_PROCESSOR
         dbg_printf("\n\t");
-        #else
-        dbg_printf("%.8d: ", lineStartPc);
         #endif
+        dbg_printf("%.8d: ", lineStartPc);
         dbg_printf("%.*s\n", errorMessageLength, errorMessage);
         #endif
 
@@ -866,6 +913,9 @@ syntax_error:
             messageBuffer++;
         }
         #endif
+
+        if (!pauseOnError)
+            goto end_eval;
 
         clear_key_buffer();
         do {
@@ -896,8 +946,10 @@ end_eval:
 
         //gfx_BlitScreen();
 
-        for (int i = 0; i < NumTurtles; i++) {
-            Turtle_Draw_InLine(&Interpreter_turtles[i]);
+        if (autoDraw) {
+            for (uint8_t i = 0; i < NumTurtles; i++) {
+                Turtle_Draw_InLine(&Interpreter_turtles[i], Interpreter_spriteDictionary);
+            }
         }
 
         framecount++;
