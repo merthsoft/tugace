@@ -1,3 +1,4 @@
+#include <debug.h>
 #include <string.h>
 
 #include <ti/real.h>
@@ -41,14 +42,20 @@ ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, Program
         do {
             ProgramToken c = data[index];
             if (c == Token_Label || c == Token_LabelOs)
+            {
+                index++;
                 break;
+            }
             if (data[index]        == 'L'
                 && data[index + 1] == 'A'
                 && data[index + 2] == 'B'
                 && data[index + 3] == 'E'
                 && data[index + 4] == 'L'
-                && data[index + 5] == ' ')
+                && data[index + 5] == OS_TOK_SPACE)
+            {
+                index += 6;
                 break;
+            }
             
             Seek_ToNewLine(data, dataLength, Token_NewLine, &index);
         } while (index < dataLength);
@@ -57,7 +64,6 @@ ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, Program
             return 0;
         }
 
-        index++;
         const ProgramToken* params = &data[index];
         size_t paramsLength = Seek_ToNewLine(data, dataLength, Token_NewLine, &index);
 

@@ -106,9 +106,19 @@ typedef size_t      ProgramCounter;
 #define Hash_PALSHIFT   0x1DFA20
 #define Hash_TEXT       0x8C508A
 #define Hash_WRAP       0x8E29FF
-
 #define Hash_ONERROR    0xF9B72C
+#define Hash_SPRITE     0x5111FC
+#define Hash_SIZESPRITE 0xA06A97
+#define Hash_DEFSPRITE  0xC7998B
+#define Hash_AUTODRAW   0x2E172C
+#define Hash_DRAWSCREEN 0x000005
+#define Hash_DRAWBUFFER 0x3882ED
+#define Hash_SWAPDRAW   0x839D0E
+#define Hash_DRAW       0x83BED3
 
+#define Hash_VGF2P8AFFINEINVQB 0x888888
+
+#define Hash_SCALE      0x000C00 
 #define Hash_PEER       0x111111
 
 #define Hash_IFKEYUP    0x000009
@@ -116,20 +126,10 @@ typedef size_t      ProgramCounter;
 
 #define Hash_SPEED      0x000004
 
-#define Hash_AUTODRAW   0x2E172C
-#define Hash_DRAWSCREEN 0x000005
-#define Hash_DRAWBUFFER 0x3882ED
-#define Hash_SWAPDRAW   0x839D0E
-#define Hash_DRAW       0x83BED3
-
 #define Hash_BLITSCREEN 0x000007
 #define Hash_BLITBUFFER 0x000017
 
 #define Hash_ELLIPSE    0x000008
-
-#define Hash_SPRITE     0x5111FC
-#define Hash_DEFSPRITE  0xC7998B
-#define Hash_SIZESPRITE 0xA06A97
 
 typedef enum TugaOpCode {
     toc_UNKNOWN,
@@ -150,6 +150,7 @@ typedef enum TugaOpCode {
     toc_PUSH,
     toc_POP,
     toc_PEEK,
+    toc_PEER,
     toc_PUSHVEC,
     toc_POPVEC,
     toc_PEEKVEC,
