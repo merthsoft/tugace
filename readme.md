@@ -43,7 +43,7 @@ As of right now, the code does not verify the header, and it takes for granted t
 
 ## Commands
 
-Commands are typed in all caps and parameters are evaluated using the OS evaluation. Commands with `{` are expeting a list. Commands that don't accept lists can take a list, and only the first element will be used.
+Commands are typed in all caps and parameters are evaluated using the OS evaluation. Commands with `{` are expecting a list. Commands that don't accept lists can take a list, and only the first element will be used.
 
 Because TUGA uses the OS evaluation, your parameters can be formulas--and they can even be complex (imaginary value is truncated before passed on to the turtle itself). This means you can do `COLOR randInt(0, 255` to set the turtle to a random color. Additionally, the variables are the system variables. If you do `1->A` before running your program, and your program is `INC A`, then on the homescreen of TI-OS you check the value of `A`, it will be `2`.
 
