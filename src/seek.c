@@ -38,6 +38,10 @@ ProgramCounter Seek_ToLabel(size_t dataLength, const ProgramToken data[dataLengt
     while (index < dataLength) {
         do {
             ProgramToken c = data[index];
+            while (c == Token_Indent) {
+                c = data[++index];
+            }
+
             if (c == Token_Label || c == Token_LabelOs) {
                 index++;
                 break;

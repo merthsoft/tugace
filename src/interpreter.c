@@ -19,7 +19,7 @@
 
 #include <debug.h>
 #ifdef DEBUG
-#define DEBUG_PROCESSOR
+// #define DEBUG_PROCESSOR
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
@@ -104,13 +104,27 @@ void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]
         Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
         Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);    
     }
-    Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
-    if (programCounter > programSize) {
+
+    if (program[programCounter]       == OS_TOK_T
+        && program[programCounter+1]  == OS_TOK_U
+        && program[programCounter+2]  == OS_TOK_G
+        && program[programCounter+3]  == OS_TOK_A) {
+
+        Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+    }
+
+    ProgramToken* comment = NULL;
+    size_t commentLength = 0;
+    // Header comments can be skipped entirely
+    while (program[programCounter] == Token_Comment) {
+        comment = &program[programCounter];
+        commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+    }
+
+    if (programCounter >= programSize) {
         return;
     }
-    // Comment
-    ProgramToken* comment = &program[programCounter];
-    size_t commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+
     ProgramCounter programStart = programCounter;
     
     #ifdef DEBUG
@@ -125,8 +139,10 @@ void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]
     dbg_printf("labels:         0x%.6X\n", (uint24_t)Interpreter_labels);
     dbg_printf("palette:        0x%.6X\n", (uint24_t)Interpreter_paletteBuffer);
     dbg_printf("\n");
-    debug_print_tokens(comment, commentLength, NULL);
-    dbg_printf("\n");
+    if (commentLength != 0) {
+        debug_print_tokens(comment, commentLength, NULL);
+        dbg_printf("\n");
+    }
 
     ProgramCounter dbgPc = programCounter;
     while (dbgPc < programSize) {
@@ -227,10 +243,14 @@ program_start:
         opCode = toc_NOP;
         paramsStringLength = 0;
         
+        while (program[programCounter] == Token_Indent) {
+            programCounter++;
+        }
+        
         lineStartPc = programCounter;
         command = &program[programCounter];
         shortHand = program[programCounter];
-
+        
         switch (shortHand) {
             case Token_Label:
             case Token_Goto:
@@ -965,7 +985,7 @@ syntax_error:
 
         gfx_BlitScreen();
         gfx_SetTextFGColor(124);
-        gfx_PrintStringXY("ERROR - Check console. Paused.", 4, 4);
+        gfx_PrintStringXY("ERROR - Check console.", 4, 4);
         
         #if 0
         const char* messageBuffer = errorMessage;
@@ -983,8 +1003,10 @@ syntax_error:
         }
         #endif
 
-        if (!pauseOnError)
+        if (!pauseOnError) {
+            gfx_PrintString(" Paused.");
             goto end_eval;
+        }
 
         clear_key_buffer();
         do {

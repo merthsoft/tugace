@@ -38,6 +38,7 @@ typedef size_t      ProgramCounter;
 #define Token_NewLine    OS_TOK_NEWLINE
 #define Token_Space      OS_TOK_SPACE
 #define Token_Comment    OS_TOK_DOUBLE_QUOTE
+#define Token_Indent     OS_TOK_SPACE
 
 #define Token_Label      OS_TOK_COLON
 #define Token_Goto       OS_TOK_DECIMAL_POINT
