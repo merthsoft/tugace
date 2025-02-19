@@ -159,7 +159,7 @@ void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]
     clock_t time = clock();
     uint24_t framecount = 0;
     float fps = 0.0f;
-    char buffer[14] = "FPS: XXX     ";
+    char buffer[4] = "XXX";
 
     memset(Interpreter_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
     
@@ -1068,7 +1068,7 @@ end_eval:
             gfx_BlitBuffer();
         } else if (showFps) {
             gfx_SetTextFGColor(124);
-            snprintf(buffer, 14, "FPS: %d   ", (uint8_t)fps);
+            snprintf(buffer, 14, "%.3d", (uint8_t)fps);
             gfx_PrintStringXY(buffer, 4, 4);
         }
         
