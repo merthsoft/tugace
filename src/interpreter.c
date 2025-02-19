@@ -659,14 +659,8 @@ program_start:
                     retList[0] = eval;
                     retListPointer++;
                 } else {
-                    errNo = os_GetRealVar(param1Var, param1Real);
-                    if (!errNo) {
-                        *param1Real = os_FloatToReal(eval);
-                        os_SetRealVar(param1Var, param1Real);
-                    } else {
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);   
-                        goto syntax_error; 
-                    }
+                    *param1Real = os_FloatToReal(eval);
+                    os_SetRealVar(param1Var, param1Real);
                 }
                 break;
             case toc_PUSHVEC:

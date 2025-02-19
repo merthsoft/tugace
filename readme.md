@@ -123,7 +123,8 @@ Comments start with `"` and are skipped entirely.
 | POP | Pops off the stack into Ans |
 | POP [var] | Pops off the stack into [var] |
 | PEEK | Peeks at the stack into Ans without changing the stack pointer |
-| PUSHVEC | Pushes the entire turtle vector (x, y, angle, color, pen, wrap) onto the stack |
+| PEEK [var] | Peeks at the stack into [var] without changing the stack pointer |
+| PUSHVEC | Pushes the entire turtle vector (x, y, angle) onto the stack |
 | POPVEC | Pops the turtle vector off the stack, setting the current turtle's values to that |
 | PEEKVEC | Peeks the turtle vector from the stack, setting the current turtle's values to that without changing the stack pointer |
 
