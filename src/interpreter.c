@@ -1047,8 +1047,6 @@ end_eval:
             running = !running;
         }
 
-        //gfx_BlitScreen();
-
         if (autoDraw) {
             for (uint8_t i = 0; i < NumTurtles; i++) {
                 Turtle_Draw(&Interpreter_turtles[i], Interpreter_spriteDictionary);
@@ -1082,8 +1080,6 @@ end_eval:
             snprintf(buffer, 4, "%.3d", (uint8_t)fps);
             gfx_PrintStringXY(buffer, 4, 4);
         }
-        
-        //gfx_SwapDraw();
     }
 
     dbg_printf("Done. PC: %.8d\n", programCounter);

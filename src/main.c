@@ -44,12 +44,6 @@ int main(void) {
         return 2;    
     }
 
-    /*ProgramToken* program = malloc(programSize);
-    if (program == NULL) {
-        dbg_printf("Could not allocate program buffer!\n");
-        ti_Close(programHandle);
-        return 3;
-    }*/
     size_t readCount = ti_Read(main_programBuffer, 1, programSize, programHandle);
 
     #ifdef DEBUG
@@ -58,7 +52,6 @@ int main(void) {
     
     if (readCount != programSize) {
         dbg_printf("Size mismatch!\n");
-        //free(program);
         ti_Close(programHandle);
         return 4;
     }
@@ -66,7 +59,6 @@ int main(void) {
     Const_Initialize();
     Interpreter_Interpret(main_programBufferSize, main_programBuffer, programSize);
 
-    //free(program);
     ti_Close(programHandle);
 
     string_t* backupString = malloc(sizeof(string_t) + 10);
