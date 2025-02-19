@@ -6,7 +6,7 @@
 #include "interpreter.h"
 #include "static.h"
 
-#define main_programBufferSize 8192
+#define main_programBufferSize (65536/4-1)
 ProgramToken main_programBuffer[main_programBufferSize];
 
 int main(void) {
