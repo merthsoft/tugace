@@ -14,8 +14,6 @@ FADEIN 10
 {8
 *0
 PEN 0
-MOVE {9,11
-TEXT "Bush did 9/11
 :1
 PALSHIFT
 .1
