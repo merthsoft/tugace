@@ -88,16 +88,22 @@ Comments start with `"` and are skipped entirely.
 
 | Number | Palette |
 | - | - |
-| 0 | Default, takes direction |
-| 1 | Rainbow, takes direction |
+| 0 | Default |
+| 1 | Rainbow |
+| 2 | Monochrome |
 
 ### Control flow
 
+Label names should be all-caps.
+
 | Command | Description |
 | - | - |
+| LABEL [name] | Declares label [name] |
+| GOTO [name] | Goes to label named [name] |
 | LABEL [number] | Declares label [number] |
 | GOTO [number] | Goes to label number [number] |
 | IF [val] | Skips the next line if [val] is 0 |
+| GOSUB [name] | Goes to label named [name], pushing the the next line onto the system stack |
 | GOSUB [number] | Goes to label [number], pushing the the next line onto the system stack |
 | RET | Returns to where you jumped from, popping that value off the system stack |
 | STOP | Ends the program |
@@ -148,6 +154,8 @@ Comments start with `"` and are skipped entirely.
 | STO [var] | Stores Ans to [var] |
 | EVAL [code] | Evaluates arbitrary BASIC code in [code] |
 | SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
+| ASM [code] | Runs ASM [code] |
+| FORWARD {[X],[Y] | Disregards angle, and just moves to {x + [X], y + [Y]} |
 
 #### Control flow (propsed)
 
@@ -156,7 +164,7 @@ Comments start with `"` and are skipped entirely.
 | RESET | Reset the program |
 | JNZ {[val],[label] | Jumps to [label] is [val] isn't zero |
 | DJNZ {[var],[label] | Decrements [var] and jumps to [label] if the result is non-zero |
-| PROG [program] | Runs [program] as a TUGA program |
+| PROG [program] | Runs [program] as a Tuga program |
 
 #### Stack (propsed)
 
@@ -164,6 +172,13 @@ Comments start with `"` and are skipped entirely.
 | - | - |
 | STACK -1 | Select the system stack for stack commands |
 | PUSHPC | Pushes PC of the command after this one onto the system stack |
+| POP [list] | If [list] is a list of real vars, pops into those real vars, if it's a list var, pops into that list var |
+| PEEK [list] | If [list] is a list of real vars, pops into those real vars, if it's a list var, pops into that list var |
+| POP {[count] | Pops [count] items off the stack returned as a list in ans |
+| PEEK {[count] | Peeks at [count] items from the stack returned as a list in ans |
+| PEER [index] | Returns the stack value in [index] in ans |
+| PEER {[index],[count] | Returns the value in [index] through [index]+[count] |
+| PROD {[index],[val1],[val2]... | Writes [valx] to stack at [index + x] |
 
 #### Drawing commands
 

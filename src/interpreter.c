@@ -206,14 +206,14 @@ program_start:
     TurtleIndex currentTurtleIndex = 0;
     StackIndex currentStackIndex = 0;
         
-    real_t* param1Real = NULL;
+    real_t* paramReal = NULL;
     float eval;
     int24_t intEval;
-    char param1Var[4];
-    param1Var[0] = 0;
-    param1Var[1] = 0;
-    param1Var[2] = 0;
-    param1Var[3] = 0;
+    char paramVar[4];
+    paramVar[0] = 0;
+    paramVar[1] = 0;
+    paramVar[2] = 0;
+    paramVar[3] = 0;
 
     bool exit = false;
     bool running = true;
@@ -394,8 +394,9 @@ program_start:
         
         eval = 0.0f;
         intEval = 0;
-        param1Var[0] = params[0];
-        param1Real = NULL;
+        paramVar[0] = params[0];
+        // TODO: Get multi-token variables
+        paramReal = NULL;
         paramsList = NULL;
         paramsListCplx = NULL;
         retListPointer = 0;
@@ -420,25 +421,25 @@ program_start:
                 switch (type) {
                     case OS_TYPE_REAL:
                         paramsListLength = 1;
-                        param1Real = ans;
+                        paramReal = ans;
                         break;
                     case OS_TYPE_CPLX:
                         paramsListLength = 1;
-                        param1Real = ans;
+                        paramReal = ans;
                         break;
                     case OS_TYPE_REAL_LIST:
-                        param1Var[0] = (char)*(params + 1);
+                        paramVar[0] = (char)*(params + 1);
                         paramsList = (list_t*)ans;
                         paramsListLength = paramsList->dim;
                         if (paramsList->dim >= 1)
-                            param1Real = &paramsList->items[0];
+                            paramReal = &paramsList->items[0];
                         break;
                     case OS_TYPE_CPLX_LIST:
-                        param1Var[0] = (char)*(params + 1);
+                        paramVar[0] = (char)*(params + 1);
                         paramsListCplx = (cplx_list_t*)ans;
                         paramsListLength = paramsListCplx->dim;
                         if (paramsListCplx->dim >= 1)
-                            param1Real = &paramsListCplx->items[0].real;
+                            paramReal = &paramsListCplx->items[0].real;
                         break;
                     case OS_TYPE_STR:
                         ansString = ans;
@@ -452,9 +453,9 @@ program_start:
                 goto syntax_error;
             }
             
-            if (param1Real != NULL) {
-                eval = os_RealToFloat(param1Real);
-                intEval = os_RealToInt24(param1Real);
+            if (paramReal != NULL) {
+                eval = os_RealToFloat(paramReal);
+                intEval = os_RealToInt24(paramReal);
                 #ifdef DEBUG_PROCESSOR
                 dbg_printf(" param1: %f ", eval);
                 #endif
@@ -501,7 +502,7 @@ program_start:
                 Turtle_SetAngle(currentTurtle, &eval);
                 break;
             case toc_CIRCLE:
-                intEval = if_null_then_a_else_b(param1Real, 1, intEval);
+                intEval = if_null_then_a_else_b(paramReal, 1, intEval);
                 if (currentTurtle->Pen)
                     gfx_FillCircle(currentTurtle->X, currentTurtle->Y, intEval);
                 else
@@ -519,12 +520,12 @@ program_start:
                 exit = true;
                 break;
             case toc_CLEAR:
-                intEval = if_null_then_a_else_b(param1Real, 0, intEval);
+                intEval = if_null_then_a_else_b(paramReal, 0, intEval);
                 gfx_FillScreen(intEval % 256);
                 break;
             case toc_LABEL:
                 if (params[0] == Token_EvalParams || (params[0] >= OS_TOK_0 || params[0] <= OS_TOK_9) ) {
-                    if (param1Real == NULL) {
+                    if (paramReal == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
                     }
@@ -553,7 +554,7 @@ program_start:
             case toc_GOSUB:
             case toc_GOTO:
                 if (params[0] == Token_EvalParams || (params[0] >= OS_TOK_0 && params[0] <= OS_TOK_9) ) {
-                    if (param1Real == NULL) {
+                    if (paramReal == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
                     }
@@ -655,12 +656,12 @@ program_start:
                         dbg_printf(" sp: %d", Interpreter_stackPointers[currentStackIndex]);
                     #endif
                 }
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     retList[0] = eval;
                     retListPointer++;
                 } else {
-                    *param1Real = os_FloatToReal(eval);
-                    os_SetRealVar(param1Var, param1Real);
+                    *paramReal = os_FloatToReal(eval);
+                    os_SetRealVar(paramVar, paramReal);
                 }
                 break;
             case toc_PUSHVEC:
@@ -689,7 +690,7 @@ program_start:
                 #endif
                 break;                
             case toc_IF:
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No predicate.");
                     goto syntax_error;
                 }
@@ -698,51 +699,51 @@ program_start:
                 }
                 break;
             case toc_ZERO:
-                errNo = os_SetRealVar(param1Var, &Const_Real0);
+                errNo = os_SetRealVar(paramVar, &Const_Real0);
                 if (errNo) {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to zero out %c: %d.", param1Var[0], errNo);   
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to zero out %c: %d.", paramVar[0], errNo);   
                     goto syntax_error; 
                 }
                 break;
             case toc_INC:
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
                     goto syntax_error;
                 }
-                errNo = os_GetRealVar(param1Var, param1Real);
+                errNo = os_GetRealVar(paramVar, paramReal);
                 if (!errNo) {
-                    *param1Real = os_RealAdd(param1Real, getListElementPointerOrDefaultPointer(1, Const_Real1));
-                    os_SetRealVar(param1Var, param1Real);
+                    *paramReal = os_RealAdd(paramReal, getListElementPointerOrDefaultPointer(1, Const_Real1));
+                    os_SetRealVar(paramVar, paramReal);
                 } else {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo);
                     goto syntax_error;  
                 }
                 break;
             case toc_DEC:
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
                     goto syntax_error;
                 }
-                errNo = os_GetRealVar(param1Var, param1Real);
+                errNo = os_GetRealVar(paramVar, paramReal);
                 if (!errNo) {
-                    *param1Real = os_RealSub(param1Real, getListElementPointerOrDefaultPointer(1, Const_Real1));
-                    os_SetRealVar(param1Var, param1Real);
+                    *paramReal = os_RealSub(paramReal, getListElementPointerOrDefaultPointer(1, Const_Real1));
+                    os_SetRealVar(paramVar, paramReal);
                 } else {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo);
                     goto syntax_error;
                 }
                 break;
             case toc_STO:
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
                     goto syntax_error;
                 }
-                errNo = os_GetRealVar(param1Var, param1Real);
+                errNo = os_GetRealVar(paramVar, paramReal);
                 if (!errNo) {
-                    *param1Real = os_RealCopy(getListElementPointerOrDefaultPointer(1, Const_Real1));
-                    os_SetRealVar(param1Var, param1Real);
+                    *paramReal = os_RealCopy(getListElementPointerOrDefaultPointer(1, Const_Real1));
+                    os_SetRealVar(paramVar, paramReal);
                 } else {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", param1Var[0], errNo);
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo);
                     goto syntax_error;
                 }
                 break;
@@ -813,23 +814,23 @@ program_start:
                 break;
             case toc_GETKEY:
                 intEval = KeyHelper_GetKey();
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     retList[0] = (float)intEval;
                     retListPointer = 1;
                 } else {
-                    *param1Real = os_Int24ToReal(intEval);
-                    errNo = os_SetRealVar(param1Var, param1Real);
+                    *paramReal = os_Int24ToReal(intEval);
+                    errNo = os_SetRealVar(paramVar, paramReal);
                     #ifdef DEBUG_PROCESSOR
                     dbg_printf(" Wrote %d to %c ", intEval, param1Var[0]);
                     #endif
                     if (errNo) {
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to write %c: %d.", param1Var[0], errNo);
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to write %c: %d.", paramVar[0], errNo);
                         goto syntax_error;
                     }
                 }
                 break;
             case toc_KEYDOWN:
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No key value.");
                     goto syntax_error;
                 }
@@ -837,7 +838,7 @@ program_start:
                 retListPointer = 1;
                 break;
             case toc_IFKEYDOWN:
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No key value.");
                     goto syntax_error;
                 }
@@ -850,7 +851,7 @@ program_start:
                 retListPointer = 1;
                 break;
             case toc_IFKEYUP:
-                if (param1Real == NULL) {
+                if (paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No key value.");
                     goto syntax_error;
                 }
