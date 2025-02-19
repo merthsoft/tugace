@@ -39,11 +39,6 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 #endif
 
 __attribute__((hot))
-static inline void Interpreter_execAsmString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
-    return;
-}
-
-__attribute__((hot))
 static inline void Interpreter_printString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
     #ifdef DEBUG_PROCESSOR
     dbg_printf(" Ans text (%d): ", length);
@@ -67,11 +62,32 @@ static inline void Interpreter_printString(size_t length, const uint8_t buffer[l
 #define convert(buffer, i) ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
 
 __attribute__((hot))
-void Interpreter_copySprite(size_t dataLength, const unsigned char buffer[dataLength], gfx_sprite_t* sprite) {
+void Interpreter_copySprite(size_t dataLength, const unsigned char data[dataLength], gfx_sprite_t* sprite) {
     for (size_t i = 0; i < dataLength; i+=2) {
-        sprite->data[i/2] = convert(buffer, i);
+        sprite->data[i/2] = convert(data, i);
     }
 }
+
+#define Interpreter_asmProgramBufferSize 512
+uint8_t Interpreter_asmProgramBuffer[Interpreter_asmProgramBufferSize];
+typedef void (*TurtleFunction(const Turtle*));
+
+__attribute__((hot))
+static inline void Interpreter_execAsmString(size_t dataLength, const uint8_t data[dataLength], const Turtle* turtle) {
+    return;
+    // TODO: Fill in function header and offset
+    size_t i;
+    for (i = 0; i < dataLength && i < Interpreter_asmProgramBufferSize*2; i+=2) {
+        Interpreter_asmProgramBuffer[i/2] = convert(data, i);
+    }
+    if (i >= Interpreter_asmProgramBufferSize*2) {
+        return;
+    }
+    // TODO: Fill in function footer
+    TurtleFunction* asmProgram = (TurtleFunction*)Interpreter_asmProgramBuffer;
+    asmProgram(turtle);
+}
+
 
 typedef struct NamedLabel {
     ProgramCounter ProgramCounter;
@@ -92,7 +108,7 @@ char errorMessage[256];
 #define errorMessageLength 256
 
 __attribute__((hot))
-void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]) {
+void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], size_t programSize) {
     #ifdef DEBUG
     dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
     #endif
@@ -1068,7 +1084,7 @@ end_eval:
             gfx_BlitBuffer();
         } else if (showFps) {
             gfx_SetTextFGColor(124);
-            snprintf(buffer, 14, "%.3d", (uint8_t)fps);
+            snprintf(buffer, 4, "%.3d", (uint8_t)fps);
             gfx_PrintStringXY(buffer, 4, 4);
         }
         

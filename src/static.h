@@ -26,11 +26,11 @@ typedef size_t      ProgramCounter;
 
 #define NumTurtles       50
 #define NumDataFields    3
-#define NumStackPages    16
+#define NumStackPages    8
 #define MaxStackDepth    256
 #define NumLabels        1024
 #define SystemStackDepth 256
-#define NumSprites       256
+#define NumSprites       50
 
 #define Token_NoEvalParams    OS_TOK_DOUBLE_QUOTE
 #define Token_EvalParams      OS_TOK_ADD

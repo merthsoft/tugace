@@ -6,6 +6,9 @@
 #include "interpreter.h"
 #include "static.h"
 
+#define main_programBufferSize 8192
+ProgramToken main_programBuffer[main_programBufferSize];
+
 int main(void) {
     char filename[10];
     uint8_t ansType;
@@ -41,13 +44,13 @@ int main(void) {
         return 2;    
     }
 
-    ProgramToken* program = malloc(programSize);
+    /*ProgramToken* program = malloc(programSize);
     if (program == NULL) {
         dbg_printf("Could not allocate program buffer!\n");
         ti_Close(programHandle);
         return 3;
-    }
-    size_t readCount = ti_Read(program, 1, programSize, programHandle);
+    }*/
+    size_t readCount = ti_Read(main_programBuffer, 1, programSize, programHandle);
 
     #ifdef DEBUG
     dbg_printf("Size: %d read %d\n", programSize, readCount);
@@ -55,15 +58,15 @@ int main(void) {
     
     if (readCount != programSize) {
         dbg_printf("Size mismatch!\n");
-        free(program);
+        //free(program);
         ti_Close(programHandle);
         return 4;
     }
 
     Const_Initialize();
-    Interpreter_Interpret(programSize, program);
+    Interpreter_Interpret(main_programBufferSize, main_programBuffer, programSize);
 
-    free(program);
+    //free(program);
     ti_Close(programHandle);
 
     string_t* backupString = malloc(sizeof(string_t) + 10);

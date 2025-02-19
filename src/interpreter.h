@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void Interpreter_Interpret(size_t programSize, ProgramToken program[programSize]);
+void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], size_t programSize);
 
 #ifdef __cplusplus
 }
