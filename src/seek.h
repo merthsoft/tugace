@@ -8,9 +8,10 @@ extern "C" {
 #endif
 
 ProgramCounter Seek_ToLabel(
-    const ProgramToken* data, 
     size_t dataLength, 
-    ProgramCounter dataStart, 
+    const ProgramToken data[dataLength], 
+    ProgramCounter dataStart,
+    uint24_t labelHash,
     LabelIndex label);
 
 ProgramCounter Seek_ToNewLine(

@@ -39,7 +39,12 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
 #endif
 
 __attribute__((hot))
-void Interpreter_printString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
+static inline void Interpreter_execAsmString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
+    return;
+}
+
+__attribute__((hot))
+static inline void Interpreter_printString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
     #ifdef DEBUG_PROCESSOR
     dbg_printf(" Ans text (%d): ", length);
     debug_print_tokens(buffer, length, NULL);
@@ -68,9 +73,14 @@ void Interpreter_copySprite(size_t dataLength, const unsigned char buffer[dataLe
     }
 }
 
+typedef struct NamedLabel {
+    ProgramCounter ProgramCounter;
+    uint24_t Hash;
+} NamedLabel;
+
 // should be treated as private
 Turtle Interpreter_turtles[NumTurtles];
-ProgramCounter Interpreter_labels[NumLabels];
+NamedLabel Interpreter_labels[NumLabels];
 StackPointer Interpreter_stackPointers[NumStackPages];
 StackPointer Interpreter_systemStackPointer;
 float Interpreter_stacks[NumStackPages][MaxStackDepth];
@@ -151,8 +161,7 @@ program_start:
     gfx_SetTextTransparentColor(1);
     gfx_FillScreen(0);
 
-    memset(Interpreter_labels, 0, sizeof(ProgramCounter)*NumLabels);
-    Interpreter_labels[255] = 0xABCDEF;
+    memset(Interpreter_labels, 0, sizeof(NamedLabel)*NumLabels);
     memset(Interpreter_systemStack, 0, sizeof(float)*SystemStackDepth);
     memset(Interpreter_stackPointers, 0, sizeof(StackPointer)*NumStackPages);
     memset(Interpreter_stacks, 0, sizeof(float)*NumStackPages*MaxStackDepth);
@@ -176,17 +185,34 @@ program_start:
 
     bool exit = false;
     bool running = true;
-    bool showFps = false;
+    bool showFps = true;
     bool pauseOnError = true;
     bool autoDraw = true;
     bool skipFlag = false;
-
+    
     SpriteIndex currentSpriteIndex = 0;
+    Turtle* currentTurtle = &Interpreter_turtles[0];
+    uint8_t type;
+    void* ans;
+    string_t* ansString;
+    uint16_t paramsListLength;
+    list_t* paramsList;
+    cplx_list_t* paramsListCplx;
+    ProgramToken* params;
+    float retList[MaxStackDepth];
+
+    ProgramCounter lineStartPc;
+    ProgramToken* command;
+    uint16_t retListPointer;
+    size_t commandStringLength;
+    uint24_t commandHash;
+    TugaOpCode opCode;
+    size_t paramsStringLength;
+    ProgramToken shortHand;
 
     #ifdef DEBUG
     dbg_printf("Starting program exection.\n");
     #endif
-    Turtle* currentTurtle = &Interpreter_turtles[0];
     while (!exit) {
         if (!running)
             goto end_eval;
@@ -194,26 +220,17 @@ program_start:
         #ifdef DEBUG_PROCESSOR
         dbg_printf("%.8d: ", programCounter);
         #endif
-        ProgramCounter lineStartPc = programCounter;
+        
+        retListPointer = 0;
+        commandStringLength = 0;
+        commandHash = 0;
+        opCode = toc_NOP;
+        paramsStringLength = 0;
+        
+        lineStartPc = programCounter;
+        command = &program[programCounter];
+        shortHand = program[programCounter];
 
-        uint8_t type;
-        void* ans;
-        string_t* ansString;
-        uint16_t paramsListLength;
-        list_t* paramsList;
-        cplx_list_t* paramsListCplx;
-    
-        float retList[MaxStackDepth];
-        uint16_t retListPointer = 0;
-
-        ProgramToken* command = &program[programCounter];
-        size_t commandStringLength = 0;
-        uint24_t commandHash = 0;
-        TugaOpCode opCode = toc_NOP;
-        ProgramToken* params;
-        size_t paramsStringLength = 0;
-
-        ProgramToken shortHand = program[programCounter];
         switch (shortHand) {
             case Token_Label:
             case Token_Goto:
@@ -305,6 +322,7 @@ program_start:
             params = &program[programCounter];
             paramsStringLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
         }
+        ProgramCounter lineEndPc = programCounter;
 
         #ifdef DEBUG_PROCESSOR
         size_t outputTokenStringLength;
@@ -469,42 +487,86 @@ program_start:
                 gfx_FillScreen(intEval % 256);
                 break;
             case toc_LABEL:
-                if (param1Real == NULL) {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
-                    goto syntax_error;
+                if (params[0] == Token_EvalParams || (params[0] >= OS_TOK_0 || params[0] <= OS_TOK_9) ) {
+                    if (param1Real == NULL) {
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
+                        goto syntax_error;
+                    }
+                    if (intEval >= 0 && intEval < NumLabels)
+                       Interpreter_labels[intEval].ProgramCounter = programCounter;
+                } else {
+                    commandHash = Hash_InLine(params, paramsStringLength);
+                    LabelIndex lastEmpty = NumLabels;
+                    for (intEval = 0; intEval > NumLabels; intEval++) {
+                        if (Interpreter_labels[intEval].Hash == commandHash) {
+                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label hash conflict %X: %.*s. This error won't always exist.", commandHash, paramsStringLength, params);
+                            goto syntax_error;
+                        }
+                        if (Interpreter_labels[intEval].ProgramCounter == 0) {
+                            lastEmpty = intEval;
+                        }
+                    }
+                    if (lastEmpty == NumLabels) {
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ran out of labels.");
+                        goto syntax_error;
+                    }
+                    Interpreter_labels[lastEmpty].Hash = commandHash;
+                    Interpreter_labels[lastEmpty].ProgramCounter = programCounter;
                 }
-                if (intEval >= 0 && intEval < NumLabels)
-                    Interpreter_labels[intEval] = programCounter;
                 break;
             case toc_GOSUB:
             case toc_GOTO:
-                if (param1Real == NULL) {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
-                    goto syntax_error;
-                }
-                if (intEval >= NumLabels) {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid label: %d.", intEval);
-                    goto syntax_error;
-                }
-                size_t labelIndex = Interpreter_labels[intEval];
-                if (labelIndex <= programStart || labelIndex >= programSize) {
-                    labelIndex = Seek_ToLabel(program, programSize, programStart, intEval);
-                    if (labelIndex <= programStart || labelIndex >= programSize)
-                    {
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %d - %d.", intEval, labelIndex);
+                if (params[0] == Token_EvalParams || (params[0] >= OS_TOK_0 && params[0] <= OS_TOK_9) ) {
+                    if (param1Real == NULL) {
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
                     }
-                    Interpreter_labels[intEval] = labelIndex;
+                    if (intEval >= NumLabels) {
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid label: %d.", intEval);
+                        goto syntax_error;
+                    }
+                    ProgramCounter newPc = Interpreter_labels[intEval].ProgramCounter;
+                    if (newPc <= programStart || newPc >= programSize) {
+                        newPc = Seek_ToLabel(programSize, program, programStart, 0, intEval);
+                        if (newPc <= programStart || newPc >= programSize) {
+                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %d - %d.", intEval, newPc);
+                            goto syntax_error;
+                        }
+                        Interpreter_labels[intEval].ProgramCounter = newPc;
+                    }
+                    programCounter = newPc;
+                } else {
+                    commandHash = Hash_InLine(params, paramsStringLength);
+                    LabelIndex lastEmpty = NumLabels;
+                    for (intEval = 0; intEval < NumLabels; intEval++) {
+                        if (Interpreter_labels[intEval].Hash == commandHash) {
+                            programCounter = Interpreter_labels[intEval].ProgramCounter;
+                            break;
+                        }
+                        if (Interpreter_labels[intEval].ProgramCounter == 0) {
+                            lastEmpty = intEval;
+                        }
+                    }
+
+                    if (intEval == NumLabels) {
+                        ProgramCounter newPc = Seek_ToLabel(programSize, program, programStart, commandHash, 0);
+                        if (newPc <= programStart || newPc >= programSize) {
+                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %d - %d.", newPc, newPc);
+                            goto syntax_error;
+                        }
+                        Interpreter_labels[lastEmpty].ProgramCounter = newPc;
+                        Interpreter_labels[lastEmpty].Hash = commandHash;
+                        programCounter = newPc;
+                    }
                 }
 
                 if (opCode == toc_GOSUB) {
-                    float pc = (float)programCounter;
+                    float pc = (float)lineEndPc;
                     Push_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer, &pc);
                     #ifdef DEBUG_PROCESSOR
                         dbg_printf("pushing PC onto stack %f", pc);
                     #endif
                 }
-                programCounter = labelIndex;
                 break;
             case toc_PUSH:
                 if (paramsList == NULL) {
@@ -798,15 +860,26 @@ program_start:
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Sprite %d undefined. You must call SIZESPRITE first.", intEval);
                     goto syntax_error;
                 }
-                if (params[0] == OS_TOK_DOUBLE_QUOTE) {
+                if (params[0] == Token_NoEvalParams) {
                     Interpreter_copySprite(paramsStringLength - 1, &params[1], Interpreter_spriteDictionary[currentSpriteIndex]);
                 } else {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Only quoted strings are current supported.");
                     goto syntax_error;
                 }
                 break;
+            case toc_ASM:
+                if (params[0] != Token_NoEvalParams) {
+                    if (ansString == NULL) {
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ans wasn't a string. Type: %d.", type);
+                        goto syntax_error;
+                    }
+                    Interpreter_execAsmString(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
+                } else { 
+                    Interpreter_execAsmString(paramsStringLength - 1, &params[1], currentTurtle);
+                }
+                break;
             case toc_TEXT:
-                if (params[0] != OS_TOK_DOUBLE_QUOTE) {
+                if (params[0] != Token_NoEvalParams) {
                     if (ansString == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ans wasn't a string. Type: %d.", type);
                         goto syntax_error;
@@ -832,7 +905,7 @@ program_start:
                 #endif
                 break;
             case toc_DRAW:
-                Turtle_Draw_InLine(currentTurtle, Interpreter_spriteDictionary);
+                Turtle_Draw(currentTurtle, Interpreter_spriteDictionary);
                 break;
             case toc_UNKNOWN:
                 snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Unknown hash encountered 0x%.6lX command %.*s.", (uint32_t)commandHash, commandStringLength, command);
@@ -924,7 +997,7 @@ syntax_error:
         }
         clear_key_buffer();
         gfx_BlitBuffer();
-        
+
 end_eval:
         #ifdef DEBUG_PROCESSOR
         if (running)
@@ -945,7 +1018,7 @@ end_eval:
 
         if (autoDraw) {
             for (uint8_t i = 0; i < NumTurtles; i++) {
-                Turtle_Draw_InLine(&Interpreter_turtles[i], Interpreter_spriteDictionary);
+                Turtle_Draw(&Interpreter_turtles[i], Interpreter_spriteDictionary);
             }
         }
 

@@ -183,6 +183,8 @@ static inline TugaOpCode GetOpCodeFromHash_Inline(uint24_t hash)
             return toc_DRAW;
         case Hash_ONERROR:
             return toc_ONERROR;
+        case Hash_ASM:
+            return toc_ASM;
         default:
             return toc_UNKNOWN;
     }

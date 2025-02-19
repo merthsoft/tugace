@@ -5,14 +5,14 @@
 NAME = TUGA
 ICON = icon.png
 DESCRIPTION = "TUGA Interpreter"
-COMPRESSED = NO
+COMPRESSED = YES
 ARCHIVED = YES
-
-CFLAGS = -Wall -Wextra -Ofast -Rpass=inline -Rpass-missed=inline -v
+#-Rpass=inline -Rpass-missed=inline -v
+CFLAGS = -Wall -Wextra -Ofast
 CXXFLAGS = -Wall -Wextra -Oz
 
 PREFER_OS_CRT = NO
-PREFER_OS_LIBC = YES
+PREFER_OS_LIBC = NO
 
 DEBUGMODE = DEBUG
 

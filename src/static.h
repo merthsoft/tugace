@@ -28,9 +28,12 @@ typedef size_t      ProgramCounter;
 #define NumDataFields    3
 #define NumStackPages    16
 #define MaxStackDepth    256
-#define NumLabels        512
+#define NumLabels        1024
 #define SystemStackDepth 256
 #define NumSprites       256
+
+#define Token_NoEvalParams    OS_TOK_DOUBLE_QUOTE
+#define Token_EvalParams      OS_TOK_ADD
 
 #define Token_NewLine    OS_TOK_NEWLINE
 #define Token_Space      OS_TOK_SPACE
@@ -131,6 +134,8 @@ typedef size_t      ProgramCounter;
 
 #define Hash_ELLIPSE    0x000008
 
+#define Hash_ASM        0x0AAAA0
+
 typedef enum TugaOpCode {
     toc_UNKNOWN,
     toc_NOP,
@@ -191,6 +196,7 @@ typedef enum TugaOpCode {
     toc_DEFSPRITE,
     toc_SIZESPRITE,
     toc_PALSHIFT,
+    toc_ASM
 } TugaOpCode;
 
 #ifdef __cplusplus

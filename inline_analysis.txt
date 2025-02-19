@@ -1,116 +1,31 @@
-clang version 15.0.0 (https://github.com/CE-Programming/llvm-project c74f71c74529e6bb92fdcdb07204c889c5ac035e)
-Target: ez80
-Thread model: posix
-InstalledDir: C:\cedev\bin
- (in-process)
- "C:\\cedev\\bin\\ez80-clang.exe" -cc1 -triple ez80 -emit-llvm-bc -emit-llvm-uselists -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name interpreter.c -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fapprox-func -menable-unsafe-fp-math -fno-signed-zeros -mreassociate -freciprocal-math -ffp-contract=fast -fno-rounding-math -ffast-math -ffinite-math-only -fno-verbose-asm -no-integrated-as -mconstructor-aliases -target-cpu ez80 -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -fno-dwarf-directory-asm -v "-fcoverage-compilation-dir=C:\\code\\tugace" -nostdsysteminc -nobuiltininc -resource-dir "C:\\cedev\\lib\\clang\\15.0.0" -dependency-file obj/src/interpreter.c.d -MT obj/src/interpreter.c.bc -sys-header-deps -isystem "C:\\cedev\\include" -I src -D NDEBUG -Ofast -Rpass=inline -Rpass-missed=inline -Wall -Wextra "-fdebug-compilation-dir=C:\\code\\tugace" -ferror-limit 19 -fgnuc-version=4.2.1 -fno-threadsafe-statics -vectorize-loops -vectorize-slp -fforce-mangle-main-argc-argv -mllvm -profile-guided-section-prefix=false -o obj/src/interpreter.c.bc -x c src/interpreter.c
-clang -cc1 version 15.0.0 based upon LLVM 15.0.0git default target i686-pc-windows-msvc
-#include "..." search starts here:
-#include <...> search starts here:
- src
- C:\cedev\include
-End of search list.
 src/interpreter.c:201:24: warning: unused variable 'lineStartPc' [-Wunused-variable]
         ProgramCounter lineStartPc = programCounter;
                        ^
-src/interpreter.c:102:19: warning: unused variable 'comment' [-Wunused-variable]
+src/interpreter.c:107:19: warning: unused variable 'comment' [-Wunused-variable]
     ProgramToken* comment = &program[programCounter];
                   ^
-src/interpreter.c:103:12: warning: unused variable 'commentLength' [-Wunused-variable]
+src/interpreter.c:108:12: warning: unused variable 'commentLength' [-Wunused-variable]
     size_t commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
            ^
-src/interpreter.c:303:31: remark: 'Hash_InLine' inlined into 'Interpreter_Interpret' with (cost=-14995, threshold=325) at callsite Interpreter_Interpret:218:31; [-Rpass=inline]
-                commandHash = Hash_InLine(command, commandStringLength);
-                              ^
-src/interpreter.c:304:26: remark: 'GetOpCodeFromHash_Inline' inlined into 'Interpreter_Interpret' with (cost=-14190, threshold=325) at callsite Interpreter_Interpret:219:26; [-Rpass=inline]
-                opCode = GetOpCodeFromHash_Inline(commandHash);
-                         ^
-src/interpreter.c:506:21: remark: 'Push_InLine' inlined into 'Interpreter_Interpret' with (cost=-10, threshold=487) at callsite Interpreter_Interpret:421:21; [-Rpass=inline]
-                    Push_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer, &pc);
-                    ^
-src/interpreter.c:519:21: remark: 'Push_InLine' inlined into 'Interpreter_Interpret' with (cost=-10, threshold=487) at callsite Interpreter_Interpret:434:21; [-Rpass=inline]
-                    Push_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], &paramsListFloats[0]);
-                    ^
-src/interpreter.c:527:25: remark: 'Push_InLine' inlined into 'Interpreter_Interpret' with (cost=-15010, threshold=487) at callsite Interpreter_Interpret:442:25; [-Rpass=inline]
-                        Push_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], &paramsListFloats[0]);
-                        ^
-src/interpreter.c:539:24: remark: 'Pop_InLine' inlined into 'Interpreter_Interpret' with (cost=-10, threshold=487) at callsite Interpreter_Interpret:454:24; [-Rpass=inline]
-                eval = Pop_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer);
-                       ^
-src/interpreter.c:552:28: remark: 'Peek_InLine' inlined into 'Interpreter_Interpret' with (cost=-15020, threshold=487) at callsite Interpreter_Interpret:467:28; [-Rpass=inline]
-                    eval = Peek_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
-                           ^
-src/interpreter.c:558:28: remark: 'Pop_InLine' inlined into 'Interpreter_Interpret' with (cost=-15010, threshold=487) at callsite Interpreter_Interpret:473:28; [-Rpass=inline]
-                    eval = Pop_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
-                           ^
-src/interpreter.c:583:17: remark: 'PushTurtle_Inline' inlined into 'Interpreter_Interpret' with (cost=-15010, threshold=487) at callsite Interpreter_Interpret:498:17; [-Rpass=inline]
-                PushTurtle_Inline(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
-                ^
-src/interpreter.c:595:21: remark: 'PeekTurtle_InLine' inlined into 'Interpreter_Interpret' with (cost=-15025, threshold=487) at callsite Interpreter_Interpret:510:21; [-Rpass=inline]
-                    PeekTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
-                    ^
-src/interpreter.c:597:21: remark: 'PopTurtle_InLine' inlined into 'Interpreter_Interpret' with (cost=-15015, threshold=487) at callsite Interpreter_Interpret:512:21; [-Rpass=inline]
-                    PopTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
-                    ^
-src/interpreter.c:806:21: remark: 'Interpreter_copySprite' inlined into 'Interpreter_Interpret' with (cost=60, threshold=250) at callsite Interpreter_Interpret:721:21; [-Rpass=inline]
-                    Interpreter_copySprite(paramsStringLength - 1, &params[1], Interpreter_spriteDictionary[currentSpriteIndex]);
-                    ^
-src/interpreter.c:818:21: remark: 'Interpreter_printString' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=255, threshold=250) [-Rpass-missed=inline]
-                    Interpreter_printString(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
-                    ^
-src/interpreter.c:820:21: remark: 'Interpreter_printString' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=255, threshold=250) [-Rpass-missed=inline]
-                    Interpreter_printString(paramsStringLength - 1, &params[1], currentTurtle);
-                    ^
-src/interpreter.c:839:17: remark: 'Turtle_Draw_InLine' inlined into 'Interpreter_Interpret' with (cost=245, threshold=325) at callsite Interpreter_Interpret:754:17; [-Rpass=inline]
-                Turtle_Draw_InLine(currentTurtle, Interpreter_spriteDictionary);
-                ^
-src/interpreter.c:951:17: remark: 'Turtle_Draw_InLine' inlined into 'Interpreter_Interpret' with (cost=-14755, threshold=525) at callsite Interpreter_Interpret:866:17; [-Rpass=inline]
-                Turtle_Draw_InLine(&Interpreter_turtles[i], Interpreter_spriteDictionary);
-                ^
 3 warnings generated.
-clang version 15.0.0 (https://github.com/CE-Programming/llvm-project c74f71c74529e6bb92fdcdb07204c889c5ac035e)
-Target: ez80
-Thread model: posix
-InstalledDir: C:\cedev\bin
- (in-process)
- "C:\\cedev\\bin\\ez80-clang.exe" -cc1 -triple ez80 -S -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name lto.bc -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fapprox-func -menable-unsafe-fp-math -fno-signed-zeros -mreassociate -freciprocal-math -ffp-contract=fast -fno-rounding-math -ffast-math -ffinite-math-only -fno-verbose-asm -no-integrated-as -mconstructor-aliases -target-cpu ez80 -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -fno-dwarf-directory-asm -v "-fcoverage-compilation-dir=C:\\code\\tugace" -resource-dir "C:\\cedev\\lib\\clang\\15.0.0" -Ofast -Rpass=inline -Rpass-missed=inline -Wall -Wextra "-fdebug-compilation-dir=C:\\code\\tugace" -ferror-limit 19 -fgnuc-version=4.2.1 -vectorize-loops -vectorize-slp -mllvm -profile-guided-section-prefix=false -o C:/code/tugace/obj/lto.src -x ir C:/code/tugace/obj/lto.bc
-clang -cc1 version 15.0.0 based upon LLVM 15.0.0git default target i686-pc-windows-msvc
+src/turtle.c:16:16: remark: fwrap has uninlinable pattern (recursive) and cost is not fully computed [-Rpass-missed=inline-cost]
+        return fwrap(x, max, min);
+               ^
+src/turtle.c:16:16: remark: 'fwrap' not inlined into 'fwrap' because it should never be inlined (cost=never): recursive [-Rpass-missed=inline]
+src/turtle.c:74:5: remark: 'move' not inlined into 'Turtle_Forward' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
+    move(t, &newX, &newY, autoDraw);
+    ^
+src/turtle.c:102:5: remark: 'move' not inlined into 'Turtle_Goto' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]
+    move(t, x, y, autoDraw);
+    ^
+src/turtle.c:109:5: remark: 'move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]
+    move(t, x, y, autoDraw);
+    ^
 remark: src/turtle.c:74:5: 'move' not inlined into 'Turtle_Forward' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
 remark: src/turtle.c:102:5: 'move' not inlined into 'Turtle_Goto' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]
-remark: src/interpreter.c:94:9: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:9:9; [-Rpass=inline]
-remark: src/interpreter.c:95:9: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:10:9; [-Rpass=inline]
-remark: src/interpreter.c:97:5: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:12:5; [-Rpass=inline]
-remark: src/interpreter.c:103:28: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:18:28; [-Rpass=inline]
-remark: src/interpreter.c:140:5: 'Palette_Default' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:55:5; [-Rpass=inline]
-remark: src/interpreter.c:161:5: 'Turtle_Initialize' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:76:5; [-Rpass=inline]
-remark: src/interpreter.c:302:39: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:217:39; [-Rpass=inline]
-remark: src/interpreter.c:310:34: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=525) at callsite Interpreter_Interpret:225:34; [-Rpass=inline]
-remark: src/interpreter.c:425:17: 'Turtle_SetColor' inlined into 'Interpreter_Interpret' with (cost=35, threshold=375) at callsite Interpreter_Interpret:340:17; [-Rpass=inline]
-remark: src/interpreter.c:428:17: 'Turtle_SetPen' inlined into 'Interpreter_Interpret' with (cost=-35, threshold=375) at callsite Interpreter_Interpret:343:17; [-Rpass=inline]
-remark: src/interpreter.c:431:17: 'Turtle_SetWrap' inlined into 'Interpreter_Interpret' with (cost=-35, threshold=375) at callsite Interpreter_Interpret:346:17; [-Rpass=inline]
-remark: src/interpreter.c:434:17: 'Turtle_Forward' inlined into 'Interpreter_Interpret' with (cost=200, threshold=375) at callsite Interpreter_Interpret:349:17; [-Rpass=inline]
-remark: src/interpreter.c:437:17: 'Turtle_Left' inlined into 'Interpreter_Interpret' with (cost=70, threshold=375) at callsite Interpreter_Interpret:352:17; [-Rpass=inline]
-remark: src/interpreter.c:440:17: 'Turtle_Right' inlined into 'Interpreter_Interpret' with (cost=70, threshold=375) at callsite Interpreter_Interpret:355:17; [-Rpass=inline]
-remark: src/interpreter.c:448:17: 'Turtle_Goto' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:363:17; [-Rpass=inline]
-remark: src/interpreter.c:451:17: 'Turtle_SetAngle' inlined into 'Interpreter_Interpret' with (cost=35, threshold=375) at callsite Interpreter_Interpret:366:17; [-Rpass=inline]
-remark: src/interpreter.c:495:34: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=395, threshold=250) [-Rpass-missed=inline]
-remark: src/interpreter.c:669:21: 'Turtle_Initialize' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:584:21; [-Rpass=inline]
-remark: src/interpreter.c:679:17: 'Palette_FadeOut' inlined into 'Interpreter_Interpret' with (cost=55, threshold=250) at callsite Interpreter_Interpret:594:17; [-Rpass=inline]
-remark: src/interpreter.c:682:17: 'Pallete_FadeIn' inlined into 'Interpreter_Interpret' with (cost=55, threshold=250) at callsite Interpreter_Interpret:597:17; [-Rpass=inline]
-remark: src/interpreter.c:687:25: 'Palette_Default' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:602:25; [-Rpass=inline]
-remark: src/interpreter.c:690:25: 'Palette_Rainbow' inlined into 'Interpreter_Interpret' with (cost=185, threshold=250) at callsite Interpreter_Interpret:605:25; [-Rpass=inline]
-remark: src/interpreter.c:693:25: 'Palette_Gray' inlined into 'Interpreter_Interpret' with (cost=15, threshold=250) at callsite Interpreter_Interpret:608:25; [-Rpass=inline]
-remark: src/interpreter.c:702:17: 'Palette_Shift' inlined into 'Interpreter_Interpret' with (cost=-20, threshold=375) at callsite Interpreter_Interpret:617:17; [-Rpass=inline]
-remark: src/interpreter.c:724:17: 'Turtle_Initialize' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:639:17; [-Rpass=inline]
-remark: src/interpreter.c:727:27: 'keyhelper_GetKey' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=1130, threshold=250) [-Rpass-missed=inline]
-remark: src/interpreter.c:748:30: 'keyhelper_IsDown' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:663:30; [-Rpass=inline]
-remark: src/interpreter.c:756:22: 'keyhelper_IsDown' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:671:22; [-Rpass=inline]
-remark: src/interpreter.c:761:30: 'keyhelper_IsUp' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:676:30; [-Rpass=inline]
-remark: src/interpreter.c:769:22: 'keyhelper_IsUp' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:684:22; [-Rpass=inline]
-remark: src/interpreter.c:818:21: 'Interpreter_printString' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=255, threshold=250) [-Rpass-missed=inline]
-remark: src/interpreter.c:820:21: 'Interpreter_printString' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=255, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:516:33: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=465, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:538:48: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=475, threshold=250) [-Rpass-missed=inline]
 remark: src/turtle.c:74:5: 'move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
 remark: src/turtle.c:102:5: 'move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
-remark: src/main.c:63:5: 'Const_Initialize' inlined into 'main' with (cost=70, threshold=375) at callsite main:54:5; [-Rpass=inline]
-remark: src/main.c:64:5: 'Interpreter_Interpret' not inlined into 'main' because too costly to inline (cost=12410, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:64:5: 'Interpreter_Interpret' not inlined into 'main' because too costly to inline (cost=28280, threshold=250) [-Rpass-missed=inline]
 remark: src/turtle.c:109:5: 'move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]

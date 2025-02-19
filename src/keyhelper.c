@@ -3,9 +3,7 @@
 #include <debug.h>
 #include <keypadc.h>
 
-#define keyhelper_scanCodeToGetKeyLutOffset 1
-#define keyhelper_scanCodeToGetKeyLutSize   56
-static const uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
+const uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
     34,     // skDown		equ 01h
     24,     // skLeft		equ 02h
     26,     // skRight		equ 03h
@@ -164,19 +162,7 @@ static const kb_lkey_t keyhelper_getKeyToKbKeyLut[keyhelper_getKeyToKbKeyLutSize
     kb_KeyEnter,
 };
 
-uint8_t KeyHelper_GetKey(void) {
-    kb_Scan();
-    for (uint8_t key = 1, group = 7; group; --group) {
-        for (uint8_t mask = 1; mask; mask <<= 1, ++key) {
-            if (kb_Data[group] & mask) {
-                return keyhelper_scanCodeToGetKeyLut[key - keyhelper_scanCodeToGetKeyLutOffset];
-            }
-        }
-    }
-
-    return 0;
-}
-
+__attribute__((hot))
 bool KeyHelper_IsDown(int24_t getKey) {
     getKey -= keyhelper_getKeyToKbKeyLutOffset;
     if (getKey < 0 || getKey > keyhelper_getKeyToKbKeyLutSize)
@@ -184,6 +170,7 @@ bool KeyHelper_IsDown(int24_t getKey) {
     return kb_IsDown(keyhelper_getKeyToKbKeyLut[getKey]);
 }
 
+__attribute__((hot))
 bool KeyHelper_IsUp(int24_t getKey) {
     getKey -= keyhelper_getKeyToKbKeyLutOffset;
     if (getKey < 0 || getKey > keyhelper_getKeyToKbKeyLutSize)

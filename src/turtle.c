@@ -129,3 +129,22 @@ __attribute__((hot))
 void Turtle_SetWrap(Turtle *t, const float* wrap) {
     t->Wrap = *wrap;
 }
+
+__attribute__((hot))
+void Turtle_Draw(Turtle* t, gfx_sprite_t** spriteDictionary) {
+    if (!t->Initialized || !t->Pen)
+        return;
+
+    uint24_t x = (uint24_t)t->X;
+    uint24_t y = (uint24_t)t->Y;
+    
+    if (t->Pen < 0) {
+        gfx_Sprite(spriteDictionary[t->SpriteNumber], x, y);
+    } else {
+        if (x >= 0 && x < GFX_LCD_WIDTH
+            && y >= 0 && y < GFX_LCD_HEIGHT) {
+            gfx_SetColor(t->Color);
+            gfx_SetPixel(x, y);
+        }
+    }
+}

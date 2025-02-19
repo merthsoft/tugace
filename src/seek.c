@@ -4,6 +4,7 @@
 #include <ti/real.h>
 #include <ti/vars.h>
 
+#include "inline.h"
 #include "static.h"
 
 __attribute__((hot))
@@ -32,27 +33,22 @@ ProgramCounter Seek_ToNewLine(const ProgramToken* data, size_t dataLength, Progr
 }
 
 __attribute__((hot))
-ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, ProgramCounter dataStart, LabelIndex label) {
-    if (dataLength == 0) {
-        return 0;
-    }
-    
+ProgramCounter Seek_ToLabel(size_t dataLength, const ProgramToken data[dataLength], ProgramCounter dataStart, uint24_t labelHash, LabelIndex label) {
     size_t index = dataStart;
     while (index < dataLength) {
         do {
             ProgramToken c = data[index];
-            if (c == Token_Label || c == Token_LabelOs)
-            {
+            if (c == Token_Label || c == Token_LabelOs) {
                 index++;
                 break;
             }
-            if (data[index]        == 'L'
-                && data[index + 1] == 'A'
-                && data[index + 2] == 'B'
-                && data[index + 3] == 'E'
-                && data[index + 4] == 'L'
-                && data[index + 5] == OS_TOK_SPACE)
-            {
+
+            if (data[index]        == OS_TOK_L
+                && data[index + 1] == OS_TOK_A
+                && data[index + 2] == OS_TOK_B
+                && data[index + 3] == OS_TOK_E
+                && data[index + 4] == OS_TOK_L
+                && data[index + 5] == OS_TOK_SPACE) {
                 index += 6;
                 break;
             }
@@ -71,6 +67,16 @@ ProgramCounter Seek_ToLabel(const ProgramToken* data, size_t dataLength, Program
             continue;
         }
         
+        if (params[0] != OS_TOK_EVAL && !(params[0] >= OS_TOK_0 && params[0] <= OS_TOK_9)) {
+            uint24_t hash = Hash_InLine(params, paramsLength);
+            if (hash == labelHash)
+                return index;
+            continue;
+        } 
+
+        if (labelHash != 0)
+            continue;
+
         if (os_Eval(params, paramsLength)) {
             continue;
         }
