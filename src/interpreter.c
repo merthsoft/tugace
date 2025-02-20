@@ -88,7 +88,6 @@ static inline void Interpreter_execAsmString(size_t dataLength, const uint8_t da
     asmProgram(turtle);
 }
 
-
 typedef struct NamedLabel {
     ProgramCounter ProgramCounter;
     uint24_t Hash;

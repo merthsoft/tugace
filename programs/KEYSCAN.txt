@@ -1,4 +1,4 @@
-TUGA:Return
+TUGA:"KEYSCAN":Asm(prgmTUGA:Return
 "KEYSCAN test
 CLEAR 0
 COLOR 128

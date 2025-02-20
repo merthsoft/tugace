@@ -1,4 +1,4 @@
-TURT:Return
+TUGA:"TREEFRAC":Asm(prgmTUGA:Return
 "Draws a tree fractal, by Shaun McFall
 FADEOUT 2
 COLOR 0
@@ -32,7 +32,7 @@ RIGHT 60
 COLOR randInt(1,255
 FORWARD I
 DEC G
-IF G<=0
+IF G≤0
 GOSUB 1
 .0
 :1
