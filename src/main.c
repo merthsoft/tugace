@@ -65,6 +65,7 @@ int main(void) {
     backupString->len = size;
     strncpy(backupString->data, filename, size);
     os_CreateString(OS_VAR_ANS, backupString);
+    free(backupString);
 
     return 0;
 }

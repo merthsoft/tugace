@@ -103,7 +103,7 @@ static float Interpreter_systemStack[SystemStackDepth];
 static uint16_t Interpreter_paletteBuffer[256];
 static gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
 
-char errorMessage[256];
+static char errorMessage[256];
 #define errorMessageLength 256
 
 __attribute__((hot))
@@ -1098,6 +1098,13 @@ end_eval:
         clear_key_buffer();
         gfx_BlitBuffer();
         goto program_start;
+    }
+
+    for (SpriteIndex i = 0; i < NumSprites; i++) {
+        if (Interpreter_spriteDictionary[i]) {
+            free(Interpreter_spriteDictionary[i]);
+            Interpreter_spriteDictionary[i] = NULL;
+        }
     }
 
     gfx_End();
