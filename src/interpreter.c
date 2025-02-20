@@ -94,14 +94,14 @@ typedef struct NamedLabel {
 } NamedLabel;
 
 // should be treated as private
-Turtle Interpreter_turtles[NumTurtles];
-NamedLabel Interpreter_labels[NumLabels];
-StackPointer Interpreter_stackPointers[NumStackPages];
-StackPointer Interpreter_systemStackPointer;
-float Interpreter_stacks[NumStackPages][MaxStackDepth];
-float Interpreter_systemStack[SystemStackDepth];
-uint16_t Interpreter_paletteBuffer[256];
-gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
+static Turtle Interpreter_turtles[NumTurtles];
+static NamedLabel Interpreter_labels[NumLabels];
+static StackPointer Interpreter_stackPointers[NumStackPages];
+static StackPointer Interpreter_systemStackPointer;
+static float Interpreter_stacks[NumStackPages][MaxStackDepth];
+static float Interpreter_systemStack[SystemStackDepth];
+static uint16_t Interpreter_paletteBuffer[256];
+static gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
 
 char errorMessage[256];
 #define errorMessageLength 256
