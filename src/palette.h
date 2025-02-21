@@ -11,10 +11,12 @@ extern "C" {
 
 #define DevicePaletteLocation gfx_palette
 
-uint16_t Pallete_HsvToRgb(uint8_t h, uint8_t s, uint8_t v);
+extern uint16_t Palette_PaletteBuffer[256];
+
+uint16_t Palette_HsvToRgb(uint8_t h, uint8_t s, uint8_t v);
 
 void Palette_FadeOut(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step);
-void Pallete_FadeIn(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step);
+void Palette_FadeIn(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step);
 
 void Palette_Shift(uint16_t* palette);
 void Palette_Default(uint16_t* palette);

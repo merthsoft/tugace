@@ -12,9 +12,12 @@
 extern "C" {
 #endif
 
-#define clear_key_buffer() while(kb_AnyKey())
-#define null_coalesce(this, orThat) (this ? this : orThat)
-#define if_null_then_a_else_b(x, a, b) (!x ? a : b)
+#define clear_key_buffer()                  while(kb_AnyKey())
+#define null_coalesce(this, orThat)         (this ? this : orThat)
+#define if_null_then_a_else_b(x, a, b)      (!x ? a : b)
+
+#define hexCharToVal(c)                     ((c >= '0' && c <= '9') ? (c - '0') : (c - 'A' + 10))
+#define convertHexPairToByte(buffer, i)     ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
 
 typedef uint24_t    LabelIndex;
 typedef uint8_t     SpriteIndex;

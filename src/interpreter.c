@@ -58,13 +58,10 @@ static inline void Interpreter_printString(size_t length, const uint8_t buffer[l
     }
 }
 
-#define hexCharToVal(c) ((c >= '0' && c <= '9') ? (c - '0') : (c - 'A' + 10))
-#define convert(buffer, i) ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
-
 __attribute__((hot))
 void Interpreter_copySprite(size_t dataLength, const unsigned char data[dataLength], gfx_sprite_t* sprite) {
     for (size_t i = 0; i < dataLength; i+=2) {
-        sprite->data[i/2] = convert(data, i);
+        sprite->data[i/2] = convertHexPairToByte(data, i);
     }
 }
 
@@ -78,7 +75,7 @@ static inline void Interpreter_execAsmString(size_t dataLength, const uint8_t da
     // TODO: Fill in function header and offset
     size_t i;
     for (i = 0; i < dataLength && i < Interpreter_asmProgramBufferSize*2; i+=2) {
-        Interpreter_asmProgramBuffer[i/2] = convert(data, i);
+        Interpreter_asmProgramBuffer[i/2] = convertHexPairToByte(data, i);
     }
     if (i >= Interpreter_asmProgramBufferSize*2) {
         return;
@@ -100,7 +97,6 @@ static StackPointer Interpreter_stackPointers[NumStackPages];
 static StackPointer Interpreter_systemStackPointer;
 static float Interpreter_stacks[NumStackPages][MaxStackDepth];
 static float Interpreter_systemStack[SystemStackDepth];
-static uint16_t Interpreter_paletteBuffer[256];
 static gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
 
 static char errorMessage[256];
@@ -111,6 +107,9 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     #ifdef DEBUG
     dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
     #endif
+
+    if (programSize == 0)
+        return;
     
     ProgramCounter programCounter = 0;
     // Header
@@ -152,7 +151,7 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     dbg_printf("stacks:         0x%.6X\n", (uint24_t)Interpreter_stacks);
     dbg_printf("sp:             0x%.6X\n", (uint24_t)Interpreter_stackPointers);
     dbg_printf("labels:         0x%.6X\n", (uint24_t)Interpreter_labels);
-    dbg_printf("palette:        0x%.6X\n", (uint24_t)Interpreter_paletteBuffer);
+    dbg_printf("palette:        0x%.6X\n", (uint24_t)Palette_PaletteBuffer);
     dbg_printf("\n");
     if (commentLength != 0) {
         debug_print_tokens(comment, commentLength, NULL);
@@ -169,7 +168,6 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     }
     #endif
 
-    gfx_Begin();
     srand(rtc_Time());
     clock_t time = clock();
     uint24_t framecount = 0;
@@ -177,14 +175,10 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     char buffer[4] = "XXX";
 
     memset(Interpreter_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
-    
-    Palette_Default(Interpreter_paletteBuffer); 
-    #ifdef DEBUG
-    Interpreter_paletteBuffer[1] = gfx_RGBTo1555(0, 125, 0);
-    #endif  
-
+        
 program_start:
-    gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+    Palette_Default(Palette_PaletteBuffer);
+    gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
     gfx_SetTextConfig(gfx_text_clip);
     
     gfx_SetDrawScreen();
@@ -784,31 +778,31 @@ program_start:
                 currentStackIndex = intEval;
                 break;
             case toc_FADEOUT:
-                Palette_FadeOut(Interpreter_paletteBuffer, 0, 255, intEval);
+                Palette_FadeOut(Palette_PaletteBuffer, 0, 255, intEval);
                 break;
             case toc_FADEIN:
-                Pallete_FadeIn(Interpreter_paletteBuffer, 0, 255, intEval);
+                Palette_FadeIn(Palette_PaletteBuffer, 0, 255, intEval);
                 break;
             case toc_PALETTE:
                 switch (intEval) {
                     case 0:
-                        Palette_Default(Interpreter_paletteBuffer);
+                        Palette_Default(Palette_PaletteBuffer);
                         break;
                     case 1:
-                        Palette_Rainbow(Interpreter_paletteBuffer);
+                        Palette_Rainbow(Palette_PaletteBuffer);
                         break;
                     case 2:
-                        Palette_Gray(Interpreter_paletteBuffer, intEval);
+                        Palette_Gray(Palette_PaletteBuffer, intEval);
                         break;
                     default:
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid palette %d.", intEval);
                         goto syntax_error;
                 }
-                gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+                gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
                 break;
             case toc_PALSHIFT:
-                Palette_Shift(Interpreter_paletteBuffer);
-                gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+                Palette_Shift(Palette_PaletteBuffer);
+                gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
                 break;
             case toc_FILL:
                 gfx_FloodFill(currentTurtle->X, currentTurtle->Y, currentTurtle->Color);
@@ -1125,6 +1119,4 @@ end_eval:
             Interpreter_spriteDictionary[i] = NULL;
         }
     }
-
-    gfx_End();
 }

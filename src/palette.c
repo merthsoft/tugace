@@ -2,6 +2,8 @@
 
 #include "palette.h"
 
+uint16_t Palette_PaletteBuffer[256];
+
 void Palette_FadeOut(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step) {
     if (step == 0)
         step = 1;
@@ -11,7 +13,7 @@ void Palette_FadeOut(uint16_t* base_palette, uint8_t start, uint8_t length, uint
     }
 }
 
-void Pallete_FadeIn(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step) {
+void Palette_FadeIn(uint16_t* base_palette, uint8_t start, uint8_t length, uint8_t step) {
     if (step == 0)
         step = 1;
     for (int amount = 0; amount < 256; amount += step) {
@@ -70,8 +72,7 @@ void Palette_Shift(uint16_t* palette) {
 }
 
 void Palette_Default(uint16_t* palette) {
-    for (uint16_t i = 0; i <= 255; i++)
-    {       
+    for (uint16_t i = 0; i <= 255; i++) {       
         uint16_t c = (i << 8) | i;
         
         uint8_t  r = (c >> 11) & 0b11111;
