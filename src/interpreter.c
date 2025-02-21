@@ -19,7 +19,7 @@
 
 #include <debug.h>
 #ifdef DEBUG
-// #define DEBUG_PROCESSOR
+//#define DEBUG_PROCESSOR
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
@@ -393,6 +393,7 @@ program_start:
         
         eval = 0.0f;
         intEval = 0;
+        
         paramVar[0] = params[0];
         // TODO: Get multi-token variables
         paramReal = NULL;
@@ -414,6 +415,7 @@ program_start:
                 #endif
                 goto end_eval;
             }
+
             ans = os_GetAnsData(&type);
 
             if (ans) {
@@ -712,6 +714,10 @@ program_start:
                 }
                 break;
             case toc_ZERO:
+                if (paramReal == NULL) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
+                    goto syntax_error;
+                }
                 errNo = os_SetRealVar(paramVar, &Const_Real0);
                 if (errNo) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to zero out %c: %d.", paramVar[0], errNo);   
@@ -834,7 +840,7 @@ program_start:
                     *paramReal = os_Int24ToReal(intEval);
                     errNo = os_SetRealVar(paramVar, paramReal);
                     #ifdef DEBUG_PROCESSOR
-                    dbg_printf(" Wrote %d to %c ", intEval, param1Var[0]);
+                    dbg_printf(" Wrote %d to %c ", intEval, paramVar[0]);
                     #endif
                     if (errNo) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to write %c: %d.", paramVar[0], errNo);

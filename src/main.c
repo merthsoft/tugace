@@ -41,7 +41,13 @@ int main(void) {
     if (programSize == 0) {
         dbg_printf("Program size 0!\n");
         ti_Close(programHandle);
-        return 2;    
+        return 2;
+    }
+
+    if (programSize > main_programBufferSize) {
+        dbg_printf("Program too big. Size: %d max: %d.\n", programSize, main_programBufferSize);
+        ti_Close(programHandle);
+        return 3;
     }
 
     size_t readCount = ti_Read(main_programBuffer, 1, programSize, programHandle);
