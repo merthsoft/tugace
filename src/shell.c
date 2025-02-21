@@ -63,7 +63,7 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
     varNameBuffer[0] = 0;
     *selectedItemNumber = 0;
     
-    Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 5);
+    Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
     gfx_SetDrawBuffer();
 
     gfx_FillScreen(2);
@@ -71,44 +71,133 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
     gfx_SetTextFGColor(23);
     gfx_PrintStringXY("TUGA CE v0.2a", 2, 2);
 
-    #define ShellRectStartX 2
-    #define ShellRectStartY 28
-    #define ShellRectWidth GFX_LCD_WIDTH - (ShellRectStartX + 2)
-    #define ShellRectHeight GFX_LCD_HEIGHT - (28 + 2)
-
-    #define ShellIconSize 70
+    #define ShellIconSize 79
     #define ShellIconLabelOffet 62
 
-    #define ShellIconStartX 4
+    #define ShellRectStartX 1
+    #define ShellRectStartY 28
+    #define ShellRectWidth (GFX_LCD_WIDTH - ShellRectStartX)
+    #define ShellRectHeight (ShellIconSize*2+3)
+
+    #define ShellIconStartX 2
     #define ShellIconStartY 30
+
+    #define ShellDescriptionStartX 1
+    #define ShellDescriptionStartY (ShellRectStartY + ShellRectHeight + 1)
 
     gfx_SetColor(0);
     gfx_Rectangle(ShellRectStartX, ShellRectStartY, ShellRectWidth, ShellRectHeight);
     gfx_SwapDraw();
     
-    Palette_FadeIn(Palette_PaletteBuffer, 0, 255, 5);
+    Palette_FadeIn(Palette_PaletteBuffer, 0, 255, 20);
     
     bool exit = false;
+    if (*selectedItemNumber > 8 || *selectedItemNumber == 0) {
+        *selectedItemNumber = 1;
+    }
+    
+    kb_lkey_t keyDown = 0;
+    uint8_t maxItems = 0;
     while (!exit) {
         kb_Scan();
         exit |= kb_IsDown(kb_KeyDel) | kb_IsDown(kb_KeyClear) | kb_IsDown(kb_KeyMode);
 
+        if (!keyDown) {
+            if (kb_IsDown(kb_KeyLeft)) {
+                keyDown = kb_KeyLeft;
+                *selectedItemNumber -= 1;
+            } else if (kb_IsDown(kb_KeyRight)) {
+                keyDown = kb_KeyRight;
+                *selectedItemNumber += 1;
+            } else if (kb_IsDown(kb_KeyUp)) {
+                keyDown = kb_KeyUp;
+                *selectedItemNumber -= 4;
+            } else if (kb_IsDown(kb_KeyDown)) {
+                keyDown = kb_KeyDown;
+                *selectedItemNumber += 4;
+            }
+        } else {
+            if (!kb_IsDown(keyDown))
+                keyDown = 0;
+        }
+
+        if (*selectedItemNumber == 0)
+            *selectedItemNumber = maxItems;
+        if (*selectedItemNumber > maxItems)
+            *selectedItemNumber = 1;
+        
         gfx_BlitScreen();
         gfx_SetColor(2);
         gfx_FillRectangle_NoClip(ShellRectStartX + 1, ShellRectStartY + 1, ShellRectWidth - 2, ShellRectHeight - 2);
+        gfx_SetColor(170);
+        gfx_FillRectangle_NoClip(ShellDescriptionStartX, ShellDescriptionStartY, GFX_LCD_WIDTH, GFX_LCD_HEIGHT - ShellDescriptionStartY);
 
         uint24_t textX = ShellIconStartX;
         uint24_t textY = ShellIconStartY;
         gfx_SetTextFGColor(0);
         gfx_SetTextScale(1, 2);
-        
+        gfx_SetColor(170);
+
         void* trackingPointer = varVatPointer;
-        while ((varName = ti_DetectAny(&trackingPointer, "TUGA", varType)) && textY < GFX_LCD_HEIGHT - 10) {
+        uint8_t keyIndex = 1;
+        maxItems = 0;
+        while ((varName = ti_DetectAny(&trackingPointer, "TUGA", varType)) && maxItems < 8) {
             if (*varType == OS_TYPE_PRGM || *varType == OS_TYPE_PROT_PRGM || *varType == OS_TYPE_APPVAR) {
+                maxItems++;
+                if (keyIndex == *selectedItemNumber) {
+                    strncpy(varNameBuffer, varName, varNameBufferSize);
+                    if (kb_IsDown(kb_KeyEnter) || kb_IsDown(kb_2nd)) {
+                        return sec_Success;
+                    }
+
+                    gfx_FillRectangle_NoClip(textX, textY, ShellIconSize, ShellIconSize);
+
+                    uint8_t handle = ti_OpenVar(varName, "r", *varType);
+                    unsigned char c[2] = {0, 0};
+                    if (handle) {
+                        bool lineFlag = false;
+                        while (lineFlag < 1 && ti_Read(c, 1, 1, handle)) {
+                            if (c[0] == Token_NewLine)
+                                lineFlag = true;
+                        }
+
+                        if (lineFlag) {
+                            if (ti_Read(c, 1, 1, handle) && c[0] == Token_Header_SpritePrefix) {
+                                lineFlag = false;
+                                while (!lineFlag && ti_Read(c, 1, 1, handle)) {
+                                    if (c[0] == Token_NewLine)
+                                        lineFlag = true;
+                                }
+                            }
+                            
+                            if (c[0] == Token_Header_DescPrefix) {
+                                gfx_SetTextXY(ShellDescriptionStartX + 1, ShellDescriptionStartY + 1);
+                                lineFlag = false;
+                                while (!lineFlag && ti_Read(c, 1, 1, handle)) {
+                                    if (*c == OS_TOK_2BYTE || *c == OS_TOK_2BYTE_EXT)
+                                        ti_Read(&c[1], 1, 1, handle);
+                                    void* ptr = &c;
+                                    
+                                    if (c[0] == Token_NewLine)
+                                        lineFlag = true;
+                                    else if (gfx_GetTextY() >= GFX_LCD_WIDTH - 8)
+                                        lineFlag = true;
+                                    else
+                                        gfx_PrintString(ti_GetTokenString(&ptr, NULL, NULL));
+                                }
+                            }
+                        }
+
+                        ti_Close(handle);
+                    }
+                }
+
                 gfx_SetTextXY(textX, textY + ShellIconLabelOffet);
+                gfx_PrintInt(keyIndex++, 1);
+                gfx_PrintString(" ");
                 gfx_PrintString(varName);
                 textX += ShellIconSize;
-                if (textX >= ShellIconSize * 3) {
+                if (textX >= ShellIconSize * 4) {
                     textX = ShellIconStartX;
                     textY += ShellIconSize;
                 }

@@ -32,7 +32,6 @@ int main(void) {
     
     gfx_Begin();
     Palette_Default(Palette_PaletteBuffer);
-    dbg_printf("Pal: %p\n", Palette_PaletteBuffer);
 
     do {
         if (showShell) {
@@ -44,7 +43,7 @@ int main(void) {
         }
 
         if (shellErrorCode == sec_Success) {
-            Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 5);
+            Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
             gfx_SetDrawScreen();
             Palette_Default(Palette_PaletteBuffer);
             gfx_FillScreen(0);
@@ -55,7 +54,7 @@ int main(void) {
     } while (showShell);
         
 
-    Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 5);
+    Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
     gfx_SetDrawScreen();
     Palette_Default(Palette_PaletteBuffer);
     gfx_FillScreen(255);
