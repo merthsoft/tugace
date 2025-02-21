@@ -45,6 +45,7 @@ int main(void) {
     }
 
     size_t readCount = ti_Read(main_programBuffer, 1, programSize, programHandle);
+    ti_Close(programHandle);
 
     #ifdef DEBUG
     dbg_printf("Size: %d read %d\n", programSize, readCount);
@@ -52,14 +53,11 @@ int main(void) {
     
     if (readCount != programSize) {
         dbg_printf("Size mismatch!\n");
-        ti_Close(programHandle);
         return 4;
     }
 
     Const_Initialize();
     Interpreter_Interpret(main_programBufferSize, main_programBuffer, programSize);
-
-    ti_Close(programHandle);
 
     string_t* backupString = malloc(sizeof(string_t) + 10);
     backupString->len = size;

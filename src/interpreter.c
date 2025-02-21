@@ -481,7 +481,13 @@ program_start:
                 Turtle_SetWrap(currentTurtle, &eval);
                 break;
             case toc_FORWARD:
-                Turtle_Forward(currentTurtle, &eval, autoDraw);
+                if (paramsListLength == 1) {
+                    Turtle_Forward(currentTurtle, &eval, autoDraw);
+                } else if (paramsListLength == 2) {
+                    eval += currentTurtle->X;
+                    float y = currentTurtle->Y + getListElementFloatOrDefault(1, 0);
+                    Turtle_Goto(currentTurtle, &eval, &y, autoDraw);
+                }
                 break;
             case toc_LEFT:
                 Turtle_Left(currentTurtle, &eval);
@@ -507,6 +513,14 @@ program_start:
                 else
                     gfx_Circle(currentTurtle->X, currentTurtle->Y, intEval);
                 break;
+            case toc_ELLIPSE:{
+                uint24_t w = getListElementIntOrDefault(0, 1);
+                uint24_t h = getListElementIntOrDefault(1, 1);
+                if (currentTurtle->Pen)
+                    gfx_FillEllipse(currentTurtle->X, currentTurtle->Y, w, h);
+                else
+                    gfx_Ellipse(currentTurtle->X, currentTurtle->Y, w, h);
+                break;}
             case toc_RECT: {
                 uint24_t w = getListElementIntOrDefault(0, 1);
                 uint24_t h = getListElementIntOrDefault(1, 1);
@@ -557,7 +571,7 @@ program_start:
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
                     }
-                    if (intEval >= NumLabels) {
+                    if (intEval >= NumLabels || intEval < 0) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid label: %d.", intEval);
                         goto syntax_error;
                     }
@@ -970,8 +984,7 @@ program_start:
             goto syntax_error;
         }
 
-        for (uint16_t retListIndex = 0; retListIndex < retListPointer; retListIndex++)
-        {
+        for (uint16_t retListIndex = 0; retListIndex < retListPointer; retListIndex++) {
             #ifdef DEBUG_PROCESSOR
             dbg_printf("%.2f ", retList[retListIndex]);
             #endif

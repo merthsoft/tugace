@@ -76,6 +76,16 @@ Comments start with `"` and are skipped entirely.
 | FADEIN [step] | Fades in at the rate of [step] |
 | INIT | Resets the current turtle to the initial conditions |
 | RECT {[w],[h] | Draws a rectangle with upper-left corner at the turtle's location that's [w] by [h] |
+| CIRCLE [radius] | Draws a circle of radius [radius] centered around the turtle |
+| ELLIPSE {[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around the turtle |
+| ELLIPSE {[x],[y],[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around (x, 1) |
+| TEXT [str] | Writes [str] to the screen at turtle position |
+| DRAWSCREEN | Draws to the screen |
+| DRAWBUFFER | Draws to the buffer |
+| SWAPDRAW   | Swaps the screen and buffer |
+| SIZESPRITE {[num],[width],[height] | Sets the size of a sprite in the sprite dictionary. This should be called first as it initializes the sprite. |
+| DEFSPRITE "HEX SPRITE DATA" | Defines the most-recently-sized sprite in the sprite dictionary with the hex sprite string |
+| SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
 
 #### Palettes
 
@@ -162,7 +172,7 @@ Label names should be all-caps.
 | Command | Description |
 | - | - |
 | RESET | Reset the program |
-| JNZ {[val],[label] | Jumps to [label] is [val] isn't zero |
+| JNZ {[val],[label] | Jumps to [label] if [val] isn't zero |
 | DJNZ {[var],[label] | Decrements [var] and jumps to [label] if the result is non-zero |
 | PROG [program] | Runs [program] as a Tuga program |
 
@@ -178,29 +188,20 @@ Label names should be all-caps.
 | PEEK {[count] | Peeks at [count] items from the stack returned as a list in ans |
 | PEER [index] | Returns the stack value in [index] in ans |
 | PEER {[index],[count] | Returns the value in [index] through [index]+[count] |
-| PROD {[index],[val1],[val2]... | Writes [valx] to stack at [index + x] |
+| PROD {[index],[val0],[val1]... | Writes [valx] to stack at [index + x] |
 
 #### Drawing commands
 
 | Command | Description |
 | - | - |
-| CIRCLE [radius] | Draws a circle of radius [radius] centered around the turtle |
-| ELLIPSE {[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around the turtle |
-| ELLIPSE {[x],[y],[radiusX],[radiusY] | Draws an ellipse of radius [radiusX],[radiusY] centered around (x, 1) |
 | LINE {[x1],[y1],[x2],[y2] | Draws a line from (x1, y1) to (x2, y2) |
 | RECT {[x1],[y1],[w],[h] | Draws a rectangle at (x1, y1) that's w by h |
 | FPS [val] | Turns off the FPS counter if [val] is 0 |
-| TEXT [str] | Writes [str] to the screen at turtle position |
-
-There're no text or string mechanisms right now. `TEXT` will require that.
 
 #### Screen commands
 
 | Command | Description |
 | - | - |
-| DRAWSCREEN | Draws to the screen |
-| DRAWBUFFER | Draws to the buffer |
-| SWAPDRAW   | Swaps the screen and buffer |
 | BLITSCREEN | Blits the screen to the buffer |
 | BLITBUFFER | Blits the buffer to the screen |
 
@@ -208,10 +209,7 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 
 | Command | Description |
 | - | - |
-| SIZESPRITE {[num],[width],[height] | Sets the size of a sprite in the sprite dictionary. This should be called first as it initializes the sprite. |
-| DEFSPRITE "HEX SPRITE DATA" | Defines the most-recently-sized sprite in the sprite dictionary with the hex sprite string |
 | LOADSPRITES "APPVAR | Loads a sprite dictionary from APPVAR |
-| SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
 | SPRITE {[num],[x],[y] | Draws sprite [num] at [x],[y] |
 
 #### Tilemaps
@@ -226,8 +224,6 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 
 | Command | Description |
 | - | - |
-| PALETTE {[num],[param1],[param2] | Sets the palette. Currently supports 0 for default |
-| PALSHIFT [amount] | Shifts the palette by [amount] |
 | DEFPAL [list] | Sets the palette to [list] |
 | PALSHIFT {[start], [amount], [length] | Shifts the palette starting at [start] ending at [start] + [length] by [amount], [amount] and [length] are optional and default to 1 and the full palette length |
 
@@ -235,9 +231,8 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 
 | Number | Palette |
 | - | - |
-| 2 | Monochromatic HSV saturation-spectrum, takes two additional params, color and direction |
-| 3 | Monochromatic HSV value-spectrum, takes two additional params, color and direction |
-| 4 | Grayscale, takes direction |
+| 3 | Monochromatic HSV saturation-spectrum, takes two additional params, color and direction |
+| 4 | Monochromatic HSV value-spectrum, takes two additional params, color and direction |
 | 5 | Random, takes direction |
 | 6 | Spectrum, takes direction and hue skip |
 
@@ -252,6 +247,9 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | { | PUSH |
 | } | POP |
 | small E | PEEK |
+| [u] | PEER |
+| [v] | PROD |
+| e | EVAL |
 | -> | STO |
 | : | LABEL |
 | . | GOTO |
@@ -259,24 +257,49 @@ There're no text or string mechanisms right now. `TEXT` will require that.
 | / | RET |
 | ^ | FORWARD |
 | pi | MOVE |
-| e | pen |
 | ( | LEFT |
 | ) | RIGHT |
 | [ | PUSHVEC |
 | ] | POPVEC |
-| < | FADEOUT |
-| > | FADEIN |
 | = | PEEKVEC |
 | ? | IF |
-| imaginary i | INIT |
+| imaginary i | COLOR |
 | angle | ANGLE |
-| ^2 | SPEED |
+| single-quote | SPEED |
 | X | TURTLE |
-| W | WRAP |
-| C | COLOR |
-| M | MOVE |
 | 0 | ZERO |
 | theta | STACK |
+| < | FADEOUT |
+| > | FADEIN |
+
+#### Unassigned (Main keys)
+
+| Symbol | Command |
+| - | - |
+| ^2 | |
+| ^-1 | |
+| sin( | |
+| cos( | |
+| tan( | |
+| log( | |
+| ln( | |
+| sin^-1( | |
+| cos^-1( | |
+| tan^-1( | |
+| sqrt( | |
+| 10^x | |
+| [w] | |
+| e^( | |
+
+#### Unassigned (Test)
+
+| Symbol | Command |
+| - | - |
+| = | |
+| != | |
+| <= | |
+| >= | |
+
 
 #### OS
 
