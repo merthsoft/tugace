@@ -19,29 +19,29 @@
 
 #include <debug.h>
 #ifdef DEBUG
-#define DEBUG_PROCESSOR
+//#define DEBUG_PROCESSOR
 
-void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
+void debug_print_tokens(const void* buffer, size_t bufferLength, size_t* stringLength) {
+    size_t runningStringLength = 0;
+    if (stringLength == NULL)
+        stringLength = &runningStringLength;
     uint8_t tokenLength = 0;
-    size_t tokenStringLength = 0;
+    size_t returnedStringLength = 0;
     size_t i = 0;
     if (stringLength)
         *stringLength = 0;
         
     void** readPointer = (void**)&buffer;
-    char printBuffer[50];
-    while(i < length && i < 50) {
-        char* retStr = ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength);
-        while(tokenLength-- >= 0) {
-            printBuffer[i++] = *retStr;
-            retStr++;
-            i++;
-        }
-        if (stringLength)
-            *stringLength = i;
+    char printBuffer[51];
+    while(i < bufferLength && *stringLength < 50) {
+        char* retStr = ti_GetTokenString(readPointer, &tokenLength, &returnedStringLength);
+        strncpy(&printBuffer[*stringLength], retStr, returnedStringLength);
+        i += tokenLength;
+        *stringLength += returnedStringLength;
     }
-    dbg_printf("%.*s", 50, printBuffer);
-    if (i < length)
+    printBuffer[*stringLength] = 0;
+    dbg_printf("%.*s", *stringLength, printBuffer);
+    if (i < bufferLength)
         dbg_printf("...");
 }
 #endif
@@ -134,7 +134,9 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     // Header comments can be skipped entirely
     while (program[programCounter] == Token_Comment) {
         comment = &program[programCounter];
-        commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+        size_t lineLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+        if (commentLength == 0)
+            commentLength = lineLength;
     }
 
     if (programCounter >= programSize) {
@@ -160,6 +162,7 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
         dbg_printf("\n");
     }
 
+    #ifdef DEBUG_PROCESSOR
     ProgramCounter dbgPc = programCounter;
     while (dbgPc < programSize) {
         dbg_printf("%.8d: ", dbgPc);
@@ -168,6 +171,7 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
         debug_print_tokens(&program[start], lineLength, NULL);
         dbg_printf("\n");
     }
+    #endif
     #endif
 
     srand(rtc_Time());

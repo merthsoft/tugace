@@ -64,10 +64,13 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
     *selectedItemNumber = 0;
     
     Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
+    Palette_Default(Palette_PaletteBuffer);
     gfx_SetDrawBuffer();
 
     gfx_FillScreen(2);
     gfx_SetTextScale(3, 3);
+    gfx_SetTextTransparentColor(255);
+    gfx_SetTextBGColor(255);
     gfx_SetTextFGColor(23);
     gfx_PrintStringXY("TUGA CE v0.2a", 2, 2);
 

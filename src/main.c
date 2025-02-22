@@ -27,11 +27,13 @@ int main(void) {
     ShellErrorCode shellErrorCode = Shell_GetNameFromAns(varNameBufferSize, varNameBuffer, &ansStringLength);
     if (shellErrorCode == sec_Success) {
         shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, main_programBufferSize, main_programBuffer, &programSize);
-        showShell = shellErrorCode == sec_Success;
+        showShell = shellErrorCode != sec_Success;
     }
+
+    if (!showShell)
+        ansStringLength = 0;
     
     gfx_Begin();
-    Palette_Default(Palette_PaletteBuffer);
 
     do {
         if (showShell) {
