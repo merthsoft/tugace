@@ -12,29 +12,38 @@ The only constant is change. But right now, especially, things can change very q
 
 ## Header
 
-There are two headers the are designed:
+### Minimal
+Programs should start with `0TUGA` to be recognized by the shell. It's recommended that you at the very least include `:Return` after `0TUGA`, so it doesn't function as a TI-BASIC program. Additionally, it supports self-launching, so you can still do:
 
+### Self-launching
 ```TUGA
-TUGA:Return
+0TUGA:"PROGNAME":Asm(prgmPROGNAME:Return
 ```
 
-This header is the most basic. This marks the program as a TUGA program, and tells TI-BASIC not to execute anything.
+Or any amount of BASIC code on the first line that you want, really.
+
+#### Shell
+
+##### Iconless
 
 ```TUGA
-TUGA:"PROGRAM":prgmTUGA:Return
-Description of the program
+0TUGA:"PROGNAME":Asm(prgmTUGA:Return
+"Description
 ```
 
-`PROGRAM` should be replaced with the name of your TUGA program. This tells TI-BASIC to launch TUGA with the program name in Ans, so it knows what to launch. The first line is a comment that can be optionally used by shells to display a description.
-
-Additionally, the DCS header is supported, to give your programs a nice icon. A full TUGA+DCS header looks as follows:
+##### Icon
 
 ```TUGA
-:DCS
-"33333333333333333333333BB33333333333B3B33B3B3333333B3B3333B3B33333B3333333333B33333B33333333B33333B3333333333B333B333333333333B33B333333333333B333B3333333333B33333B33333333B33333B3333333333B33333B3B3333B3B3333333B3B33B3B33333333333BB33333333333333333333333
-TUGA:"SNOW":Asm(prgmTUGA:Return
-"Draws a Koch snowflake
+TUGA:"PROGNAME":Asm(prgmTUGA:Return
+:HEX ICON
+"Description
 ```
+
+Icon is a 16x16 BASIC palette sprite (similar to DCS header).
+
+### Sub-programs
+
+For sub-programs, just leave out "0TUGA", and make the first line just "Return" (so it doesn't work as a BASIC program).
 
 
 ### Current implementation
