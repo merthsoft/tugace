@@ -9,20 +9,20 @@
 #include "shell.h"
 #include "static.h"
 
-#define main_programBufferSize (65532)
+#define programBufferSize (65532)
 #define varNameBufferSize 10
-#define TempVarName "TugaTemp"
+#define tempVarName "TugaTemp"
 
 int main(void) {
     Const_Initialize();
 
-    uint8_t tempHandle = ti_Open(TempVarName, "r");
+    uint8_t tempHandle = ti_Open(tempVarName, "r");
     if (tempHandle) {
         ti_Close(tempHandle);
-        ti_Delete(TempVarName);
+        ti_Delete(tempVarName);
     }
 
-    ProgramToken* main_programBuffer = (ProgramToken*)os_CreateAppVar(TempVarName, main_programBufferSize);
+    ProgramToken* main_programBuffer = (ProgramToken*)os_CreateAppVar(tempVarName, programBufferSize);
     if (main_programBuffer == NULL) {
         dbg_printf("Failed to allocate program buffer.\n");
         return 1;
@@ -38,7 +38,7 @@ int main(void) {
 
     ShellErrorCode shellErrorCode = Shell_GetNameFromAns(varNameBufferSize, varNameBuffer, &ansStringLength);
     if (shellErrorCode == sec_Success) {
-        shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, main_programBufferSize, main_programBuffer, &programSize);
+        shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, programBufferSize, main_programBuffer, &programSize);
         showShell = shellErrorCode != sec_Success;
     }
 
@@ -52,7 +52,7 @@ int main(void) {
             clear_key_buffer();
             shellErrorCode = Shell_SelectVariable(vatPointer, varNameBufferSize, varNameBuffer, &varType, &selectedItemNumber);
             if (shellErrorCode == sec_Success) {
-                shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, main_programBufferSize, main_programBuffer, &programSize);
+                shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, programBufferSize, main_programBuffer, &programSize);
             }
         }
 
@@ -61,7 +61,7 @@ int main(void) {
             gfx_SetDrawScreen();
             Palette_Default(Palette_PaletteBuffer);
             gfx_FillScreen(0);
-            Interpreter_Interpret(main_programBufferSize, main_programBuffer, programSize);
+            Interpreter_Interpret(programBufferSize, main_programBuffer, programSize);
         } else {
             showShell = false;
         }
@@ -81,7 +81,7 @@ int main(void) {
         free(backupString);
     }
 
-    ti_Delete(TempVarName);
+    ti_Delete(tempVarName);
     Palette_FadeIn(Palette_PaletteBuffer, 0, 255, 5);
 
     gfx_End();
