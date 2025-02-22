@@ -105,7 +105,7 @@ static char errorMessage[256];
 __attribute__((hot))
 void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], size_t programSize) {
     #ifdef DEBUG
-    dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
+    dbg_printf("Interpreter_Interpret: program[%d]: %p - free bytes %d.\n", programSize, program, os_MemChk(NULL));
     #endif
 
     if (programSize == 0)

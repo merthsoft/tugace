@@ -9,11 +9,11 @@
 #include "shell.h"
 #include "static.h"
 
-#define main_programBufferSize (65536/4-1)
-ProgramToken main_programBuffer[main_programBufferSize];
+#define main_programBufferSize (65536)
 
 #define varNameBufferSize 10
 int main(void) {
+    ProgramToken main_programBuffer[main_programBufferSize];
     Const_Initialize();
 
     char varNameBuffer[varNameBufferSize];
