@@ -58,7 +58,7 @@ ShellErrorCode Shell_LoadVariable(uint8_t varNameBufferSize, char varNameBuffer[
     return sec_Success;
 }
 
-ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSize, char varNameBuffer[varNameBufferSize], uint8_t *varType, uint8_t *selectedItemNumber) {
+ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSize, char varNameBuffer[varNameBufferSize], uint8_t *varType, int8_t *selectedItemNumber) {
     char* varName;
     varNameBuffer[0] = 0;
     *selectedItemNumber = 0;
@@ -123,8 +123,8 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
 
         if (*selectedItemNumber == 0)
             *selectedItemNumber = maxItems;
-        if (*selectedItemNumber > maxItems)
-            *selectedItemNumber = 1;
+        if (*selectedItemNumber > maxItems || *selectedItemNumber < 0)
+            *selectedItemNumber = *selectedItemNumber % maxItems;
         
         gfx_BlitScreen();
         gfx_SetColor(2);
@@ -141,7 +141,7 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
         void* trackingPointer = varVatPointer;
         uint8_t keyIndex = 1;
         maxItems = 0;
-        while ((varName = ti_DetectAny(&trackingPointer, "TUGA", varType)) && maxItems < 8) {
+        while ((varName = ti_DetectAny(&trackingPointer, "0TUGA", varType)) && maxItems < 8) {
             if (*varType == OS_TYPE_PRGM || *varType == OS_TYPE_PROT_PRGM || *varType == OS_TYPE_APPVAR) {
                 maxItems++;
                 if (keyIndex == *selectedItemNumber) {
@@ -168,6 +168,8 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
                                     if (c[0] == Token_NewLine)
                                         lineFlag = true;
                                 }
+                                if (!ti_Read(c, 1, 1, handle))
+                                    c[0] = 0;
                             }
                             
                             if (c[0] == Token_Header_DescPrefix) {

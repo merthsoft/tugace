@@ -1,31 +1,238 @@
-src/interpreter.c:201:24: warning: unused variable 'lineStartPc' [-Wunused-variable]
-        ProgramCounter lineStartPc = programCounter;
-                       ^
-src/interpreter.c:107:19: warning: unused variable 'comment' [-Wunused-variable]
-    ProgramToken* comment = &program[programCounter];
+src/interpreter.c:229:20: warning: variable 'lineStartPc' set but not used [-Wunused-but-set-variable]
+    ProgramCounter lineStartPc;
+                   ^
+src/interpreter.c:130:19: warning: variable 'comment' set but not used [-Wunused-but-set-variable]
+    ProgramToken* comment = NULL;
                   ^
-src/interpreter.c:108:12: warning: unused variable 'commentLength' [-Wunused-variable]
-    size_t commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+src/interpreter.c:131:12: warning: variable 'commentLength' set but not used [-Wunused-but-set-variable]
+    size_t commentLength = 0;
            ^
+src/interpreter.c:345:31: remark: 'Hash_InLine' inlined into 'Interpreter_Interpret' with (cost=5, threshold=325) at callsite Interpreter_Interpret:239:31; [-Rpass=inline]
+                commandHash = Hash_InLine(command, commandStringLength);
+                              ^
+src/interpreter.c:346:26: remark: 'GetOpCodeFromHash_Inline' inlined into 'Interpreter_Interpret' with (cost=-14170, threshold=325) at callsite Interpreter_Interpret:240:26; [-Rpass=inline]
+                opCode = GetOpCodeFromHash_Inline(commandHash);
+                         ^
+src/interpreter.c:585:35: remark: 'Hash_InLine' inlined into 'Interpreter_Interpret' with (cost=-14995, threshold=325) at callsite Interpreter_Interpret:479:35; [-Rpass=inline]
+                    commandHash = Hash_InLine(params, paramsStringLength);
+                                  ^
+src/interpreter.c:611:21: remark: 'Push_InLine' inlined into 'Interpreter_Interpret' with (cost=-10, threshold=487) at callsite Interpreter_Interpret:505:21; [-Rpass=inline]
+                    Push_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer, &pc);
+                    ^
+src/interpreter.c:623:21: remark: 'Push_InLine' inlined into 'Interpreter_Interpret' with (cost=-10, threshold=487) at callsite Interpreter_Interpret:517:21; [-Rpass=inline]
+                    Push_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], &eval);
+                    ^
+src/interpreter.c:631:25: remark: 'Push_InLine' inlined into 'Interpreter_Interpret' with (cost=-15010, threshold=487) at callsite Interpreter_Interpret:525:25; [-Rpass=inline]
+                        Push_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], &eval);
+                        ^
+src/interpreter.c:643:24: remark: 'Pop_InLine' inlined into 'Interpreter_Interpret' with (cost=-10, threshold=487) at callsite Interpreter_Interpret:537:24; [-Rpass=inline]
+                eval = Pop_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer);
+                       ^
+src/interpreter.c:656:28: remark: 'Peek_InLine' inlined into 'Interpreter_Interpret' with (cost=-15020, threshold=487) at callsite Interpreter_Interpret:550:28; [-Rpass=inline]
+                    eval = Peek_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
+                           ^
+src/interpreter.c:662:28: remark: 'Pop_InLine' inlined into 'Interpreter_Interpret' with (cost=-15010, threshold=487) at callsite Interpreter_Interpret:556:28; [-Rpass=inline]
+                    eval = Pop_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex]);
+                           ^
+src/interpreter.c:681:17: remark: 'PushTurtle_Inline' inlined into 'Interpreter_Interpret' with (cost=-15010, threshold=487) at callsite Interpreter_Interpret:575:17; [-Rpass=inline]
+                PushTurtle_Inline(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
+                ^
+src/interpreter.c:693:21: remark: 'PeekTurtle_InLine' inlined into 'Interpreter_Interpret' with (cost=-15025, threshold=487) at callsite Interpreter_Interpret:587:21; [-Rpass=inline]
+                    PeekTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
+                    ^
+src/interpreter.c:695:21: remark: 'PopTurtle_InLine' inlined into 'Interpreter_Interpret' with (cost=-15015, threshold=487) at callsite Interpreter_Interpret:589:21; [-Rpass=inline]
+                    PopTurtle_InLine(Interpreter_stacks[currentStackIndex], &Interpreter_stackPointers[currentStackIndex], currentTurtle);
+                    ^
+src/interpreter.c:829:27: remark: 'KeyHelper_GetKey' inlined into 'Interpreter_Interpret' with (cost=-14755, threshold=325) at callsite Interpreter_Interpret:723:27; [-Rpass=inline]
+                intEval = KeyHelper_GetKey();
+                          ^
+src/interpreter.c:908:21: remark: 'Interpreter_copySprite' inlined into 'Interpreter_Interpret' with (cost=60, threshold=250) at callsite Interpreter_Interpret:802:21; [-Rpass=inline]
+                    Interpreter_copySprite(paramsStringLength - 1, &params[1], Interpreter_spriteDictionary[currentSpriteIndex]);
+                    ^
+src/interpreter.c:920:21: remark: 'Interpreter_execAsmString' inlined into 'Interpreter_Interpret' with (cost=-30, threshold=487) at callsite Interpreter_Interpret:814:21; [-Rpass=inline]
+                    Interpreter_execAsmString(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
+                    ^
+src/interpreter.c:922:21: remark: 'Interpreter_execAsmString' inlined into 'Interpreter_Interpret' with (cost=-15030, threshold=487) at callsite Interpreter_Interpret:816:21; [-Rpass=inline]
+                    Interpreter_execAsmString(paramsStringLength - 1, &params[1], currentTurtle);
+                    ^
+src/interpreter.c:931:21: remark: 'Interpreter_printString' inlined into 'Interpreter_Interpret' with (cost=255, threshold=325) at callsite Interpreter_Interpret:825:21; [-Rpass=inline]
+                    Interpreter_printString(ansString->len, (const uint8_t*)&ansString->data[0], currentTurtle);
+                    ^
+src/interpreter.c:933:21: remark: 'Interpreter_printString' inlined into 'Interpreter_Interpret' with (cost=-14745, threshold=325) at callsite Interpreter_Interpret:827:21; [-Rpass=inline]
+                    Interpreter_printString(paramsStringLength - 1, &params[1], currentTurtle);
+                    ^
 3 warnings generated.
-src/turtle.c:16:16: remark: fwrap has uninlinable pattern (recursive) and cost is not fully computed [-Rpass-missed=inline-cost]
-        return fwrap(x, max, min);
+src/palette.c:88:22: remark: 'Palette_HsvToRgb' inlined into 'Palette_Rainbow' with (cost=140, threshold=250) at callsite Palette_Rainbow:2:22; [-Rpass=inline]
+        palette[i] = Palette_HsvToRgb(i - 1, 255, 255);
+                     ^
+src/palette.c:96:26: remark: 'Palette_HsvToRgb' inlined into 'Palette_Value' with (cost=145, threshold=525) at callsite Palette_Value:5:26; [-Rpass=inline]
+        palette[index] = Palette_HsvToRgb(color, 255, i - 1);
+                         ^
+src/palette.c:106:26: remark: 'Palette_HsvToRgb' inlined into 'Palette_Saturation' with (cost=170, threshold=525) at callsite Palette_Saturation:5:26; [-Rpass=inline]
+        palette[index] = Palette_HsvToRgb(color, i - 1, 255);
+                         ^
+src/palette.c:123:22: remark: 'Palette_HsvToRgb' inlined into 'Palette_Random' with (cost=140, threshold=250) at callsite Palette_Random:2:22; [-Rpass=inline]
+        palette[i] = Palette_HsvToRgb(random() % 256, 255, 255);
+                     ^
+src/palette.c:131:24: remark: 'Palette_HsvToRgb' inlined into 'Palette_Spectrum' with (cost=145, threshold=525) at callsite Palette_Spectrum:5:24; [-Rpass=inline]
+        palette[i++] = Palette_HsvToRgb(hue, 255, val);
+                       ^
+src/seek.c:60:13: remark: 'Seek_ToNewLine' inlined into 'Seek_ToLabel' with (cost=25, threshold=525) at callsite Seek_ToLabel:24:13; [-Rpass=inline]
+            Seek_ToNewLine(data, dataLength, Token_NewLine, &index);
+            ^
+src/seek.c:68:31: remark: 'Seek_ToNewLine' inlined into 'Seek_ToLabel' with (cost=25, threshold=250) at callsite Seek_ToLabel:32:31; [-Rpass=inline]
+        size_t paramsLength = Seek_ToNewLine(data, dataLength, Token_NewLine, &index);
+                              ^
+src/seek.c:75:29: remark: 'Hash_InLine' inlined into 'Seek_ToLabel' with (cost=-14995, threshold=325) at callsite Seek_ToLabel:39:29; [-Rpass=inline]
+            uint24_t hash = Hash_InLine(params, paramsLength);
+                            ^
+src/turtle.c:23:16: remark: 'Turtle_fwrapZeroMin' inlined into 'drawWrappedLine' with (cost=40, threshold=250) at callsite drawWrappedLine:2:16; [-Rpass=inline]
+        oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) - GFX_LCD_WIDTH;
                ^
-src/turtle.c:16:16: remark: 'fwrap' not inlined into 'fwrap' because it should never be inlined (cost=never): recursive [-Rpass-missed=inline]
-src/turtle.c:74:5: remark: 'move' not inlined into 'Turtle_Forward' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
+src/turtle.c:25:16: remark: 'Turtle_fwrapZeroMin' inlined into 'drawWrappedLine' with (cost=40, threshold=250) at callsite drawWrappedLine:4:16; [-Rpass=inline]
+        oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) + GFX_LCD_WIDTH;
+               ^
+src/turtle.c:28:16: remark: 'Turtle_fwrapZeroMin' inlined into 'drawWrappedLine' with (cost=40, threshold=250) at callsite drawWrappedLine:7:16; [-Rpass=inline]
+        oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) - GFX_LCD_HEIGHT;
+               ^
+src/turtle.c:30:16: remark: 'Turtle_fwrapZeroMin' inlined into 'drawWrappedLine' with (cost=40, threshold=250) at callsite drawWrappedLine:9:16; [-Rpass=inline]
+        oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) + GFX_LCD_HEIGHT;
+               ^
+src/turtle.c:52:16: remark: 'Turtle_fwrapZeroMin' inlined into 'move' with (cost=40, threshold=250) at callsite move:16:16; [-Rpass=inline]
+        t->X = Turtle_fwrapZeroMin(newX, GFX_LCD_WIDTH);
+               ^
+src/turtle.c:53:16: remark: 'Turtle_fwrapZeroMin' inlined into 'move' with (cost=40, threshold=250) at callsite move:17:16; [-Rpass=inline]
+        t->Y = Turtle_fwrapZeroMin(newY, GFX_LCD_HEIGHT);
+               ^
+src/turtle.c:56:13: remark: 'drawWrappedLine' inlined into 'move' with (cost=-14395, threshold=325) at callsite move:20:13; [-Rpass=inline]
+            drawWrappedLine(t, oldX, oldY, newX, newY);
+            ^
+src/turtle.c:79:5: remark: 'move' not inlined into 'Turtle_Forward' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
     move(t, &newX, &newY, autoDraw);
     ^
-src/turtle.c:102:5: remark: 'move' not inlined into 'Turtle_Goto' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]
+src/turtle.c:84:16: remark: 'Turtle_fwrapZeroMin' inlined into 'clip_angle' with (cost=40, threshold=250) at callsite clip_angle:1:16; [-Rpass=inline]
+    t->Angle = Turtle_fwrapZeroMin(t->Angle, 360);
+               ^
+src/turtle.c:90:5: remark: 'clip_angle' inlined into 'Turtle_Right' with (cost=55, threshold=325) at callsite Turtle_Right:2:5; [-Rpass=inline]
+    clip_angle(t);
+    ^
+src/turtle.c:96:5: remark: 'clip_angle' inlined into 'Turtle_Left' with (cost=55, threshold=325) at callsite Turtle_Left:2:5; [-Rpass=inline]
+    clip_angle(t);
+    ^
+src/turtle.c:102:5: remark: 'clip_angle' inlined into 'Turtle_SetAngle' with (cost=-14945, threshold=325) at callsite Turtle_SetAngle:2:5; [-Rpass=inline]
+    clip_angle(t);
+    ^
+src/turtle.c:107:5: remark: 'move' not inlined into 'Turtle_Goto' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]
     move(t, x, y, autoDraw);
     ^
-src/turtle.c:109:5: remark: 'move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]
+src/turtle.c:114:5: remark: 'move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]
     move(t, x, y, autoDraw);
     ^
-remark: src/turtle.c:74:5: 'move' not inlined into 'Turtle_Forward' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
-remark: src/turtle.c:102:5: 'move' not inlined into 'Turtle_Goto' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]
-remark: src/interpreter.c:516:33: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=465, threshold=250) [-Rpass-missed=inline]
-remark: src/interpreter.c:538:48: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=475, threshold=250) [-Rpass-missed=inline]
-remark: src/turtle.c:74:5: 'move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
-remark: src/turtle.c:102:5: 'move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=880, threshold=250) [-Rpass-missed=inline]
-remark: src/main.c:64:5: 'Interpreter_Interpret' not inlined into 'main' because too costly to inline (cost=28280, threshold=250) [-Rpass-missed=inline]
-remark: src/turtle.c:109:5: 'move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=890, threshold=250) [-Rpass-missed=inline]
+src/turtle.c:130:16: remark: 'Turtle_fwrapZeroMin' inlined into 'Turtle_SetColor' with (cost=40, threshold=250) at callsite Turtle_SetColor:1:16; [-Rpass=inline]
+    t->Color = Turtle_fwrapZeroMin(*color, 256.0f);
+               ^
+remark: src/turtle.c:79:5: 'move' not inlined into 'Turtle_Forward' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:107:5: 'move' not inlined into 'Turtle_Goto' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:118:9: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:12:9; [-Rpass=inline]
+remark: src/interpreter.c:119:9: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:13:9; [-Rpass=inline]
+remark: src/interpreter.c:127:9: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:21:9; [-Rpass=inline]
+remark: src/interpreter.c:135:25: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:29:25; [-Rpass=inline]
+remark: src/interpreter.c:180:5: 'Palette_Default' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:74:5; [-Rpass=inline]
+remark: src/interpreter.c:195:5: 'Turtle_Initialize' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:89:5; [-Rpass=inline]
+remark: src/interpreter.c:344:39: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:238:39; [-Rpass=inline]
+remark: src/interpreter.c:352:34: 'Seek_ToNewLine' inlined into 'Interpreter_Interpret' with (cost=25, threshold=525) at callsite Interpreter_Interpret:246:34; [-Rpass=inline]
+remark: src/interpreter.c:471:17: 'Turtle_SetColor' inlined into 'Interpreter_Interpret' with (cost=45, threshold=250) at callsite Interpreter_Interpret:365:17; [-Rpass=inline]
+remark: src/interpreter.c:474:17: 'Turtle_SetPen' inlined into 'Interpreter_Interpret' with (cost=-35, threshold=375) at callsite Interpreter_Interpret:368:17; [-Rpass=inline]
+remark: src/interpreter.c:477:17: 'Turtle_SetWrap' inlined into 'Interpreter_Interpret' with (cost=-35, threshold=375) at callsite Interpreter_Interpret:371:17; [-Rpass=inline]
+remark: src/interpreter.c:481:21: 'Turtle_Forward' inlined into 'Interpreter_Interpret' with (cost=200, threshold=375) at callsite Interpreter_Interpret:375:21; [-Rpass=inline]
+remark: src/interpreter.c:485:21: 'Turtle_Goto' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:379:21; [-Rpass=inline]
+remark: src/interpreter.c:489:17: 'Turtle_Left' inlined into 'Interpreter_Interpret' with (cost=80, threshold=250) at callsite Interpreter_Interpret:383:17; [-Rpass=inline]
+remark: src/interpreter.c:492:17: 'Turtle_Right' inlined into 'Interpreter_Interpret' with (cost=80, threshold=250) at callsite Interpreter_Interpret:386:17; [-Rpass=inline]
+remark: src/interpreter.c:500:17: 'Turtle_Goto' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:394:17; [-Rpass=inline]
+remark: src/interpreter.c:503:17: 'Turtle_SetAngle' inlined into 'Interpreter_Interpret' with (cost=45, threshold=250) at callsite Interpreter_Interpret:397:17; [-Rpass=inline]
+remark: src/interpreter.c:576:33: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=490, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:598:48: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=500, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:771:21: 'Turtle_Initialize' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:665:21; [-Rpass=inline]
+remark: src/interpreter.c:781:17: 'Palette_FadeOut' inlined into 'Interpreter_Interpret' with (cost=55, threshold=250) at callsite Interpreter_Interpret:675:17; [-Rpass=inline]
+remark: src/interpreter.c:784:17: 'Palette_FadeIn' inlined into 'Interpreter_Interpret' with (cost=55, threshold=250) at callsite Interpreter_Interpret:678:17; [-Rpass=inline]
+remark: src/interpreter.c:789:25: 'Palette_Default' inlined into 'Interpreter_Interpret' with (cost=25, threshold=250) at callsite Interpreter_Interpret:683:25; [-Rpass=inline]
+remark: src/interpreter.c:792:25: 'Palette_Rainbow' inlined into 'Interpreter_Interpret' with (cost=185, threshold=250) at callsite Interpreter_Interpret:686:25; [-Rpass=inline]
+remark: src/interpreter.c:795:25: 'Palette_Gray' inlined into 'Interpreter_Interpret' with (cost=15, threshold=250) at callsite Interpreter_Interpret:689:25; [-Rpass=inline]
+remark: src/interpreter.c:804:17: 'Palette_Shift' inlined into 'Interpreter_Interpret' with (cost=-20, threshold=375) at callsite Interpreter_Interpret:698:17; [-Rpass=inline]
+remark: src/interpreter.c:826:17: 'Turtle_Initialize' inlined into 'Interpreter_Interpret' with (cost=0, threshold=375) at callsite Interpreter_Interpret:720:17; [-Rpass=inline]
+remark: src/interpreter.c:850:30: 'KeyHelper_IsDown' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:744:30; [-Rpass=inline]
+remark: src/interpreter.c:858:22: 'KeyHelper_IsDown' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:752:22; [-Rpass=inline]
+remark: src/interpreter.c:863:30: 'KeyHelper_IsUp' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:757:30; [-Rpass=inline]
+remark: src/interpreter.c:871:22: 'KeyHelper_IsUp' inlined into 'Interpreter_Interpret' with (cost=30, threshold=250) at callsite Interpreter_Interpret:765:22; [-Rpass=inline]
+remark: src/interpreter.c:952:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=250) at callsite Interpreter_Interpret:846:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/interpreter.c:1064:17: 'Turtle_Draw' inlined into 'Interpreter_Interpret' with (cost=240, threshold=525) at callsite Interpreter_Interpret:958:17; [-Rpass=inline]
+remark: src/turtle.c:79:5: 'move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:107:5: 'move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:107:5: 'move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/shell.c:66:5: 'Palette_FadeOut' inlined into 'Shell_SelectVariable' with (cost=45, threshold=250) at callsite Shell_SelectVariable:5:5; [-Rpass=inline]
+remark: src/shell.c:92:5: 'Palette_FadeIn' inlined into 'Shell_SelectVariable' with (cost=45, threshold=250) at callsite Shell_SelectVariable:31:5; [-Rpass=inline]
+remark: src/main.c:17:5: 'Const_Initialize' inlined into 'main' with (cost=70, threshold=375) at callsite main:2:5; [-Rpass=inline]
+remark: src/main.c:27:37: 'Shell_GetNameFromAns' inlined into 'main' with (cost=100, threshold=250) at callsite main:12:37; [-Rpass=inline]
+remark: src/main.c:29:26: 'Shell_LoadVariable' not inlined into 'main' because too costly to inline (cost=275, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:34:5: 'Palette_Default' inlined into 'main' with (cost=25, threshold=250) at callsite main:19:5; [-Rpass=inline]
+remark: src/main.c:46:13: 'Palette_FadeOut' inlined into 'main' with (cost=45, threshold=250) at callsite main:31:13; [-Rpass=inline]
+remark: src/main.c:48:13: 'Palette_Default' inlined into 'main' with (cost=25, threshold=250) at callsite main:33:13; [-Rpass=inline]
+remark: src/main.c:50:13: 'Interpreter_Interpret' not inlined into 'main' because too costly to inline (cost=29085, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:39:30: 'Shell_SelectVariable' not inlined into 'main' because too costly to inline (cost=4060, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:41:34: 'Shell_LoadVariable' not inlined into 'main' because too costly to inline (cost=285, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:46:13: 'Palette_FadeOut' inlined into 'main' with (cost=45, threshold=250) at callsite main:31:13; [-Rpass=inline]
+remark: src/main.c:48:13: 'Palette_Default' inlined into 'main' with (cost=25, threshold=250) at callsite main:33:13; [-Rpass=inline]
+remark: src/main.c:50:13: 'Interpreter_Interpret' not inlined into 'main' because too costly to inline (cost=29085, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:57:5: 'Palette_FadeOut' inlined into 'main' with (cost=45, threshold=250) at callsite main:42:5; [-Rpass=inline]
+remark: src/main.c:59:5: 'Palette_Default' inlined into 'main' with (cost=25, threshold=250) at callsite main:44:5; [-Rpass=inline]
+remark: src/main.c:70:5: 'Palette_FadeIn' inlined into 'main' with (cost=45, threshold=250) at callsite main:55:5; [-Rpass=inline]
+remark: src/turtle.c:114:5: 'move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]

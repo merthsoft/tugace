@@ -32,7 +32,7 @@ ShellErrorCode Shell_SelectVariable(
     uint8_t varNameBufferSize, 
     char varNameBuffer[varNameBufferSize], 
     uint8_t* varType, 
-    uint8_t* selectedItemNumber);
+    int8_t* selectedItemNumber);
 
 #ifdef __cplusplus
 }

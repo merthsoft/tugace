@@ -1,7 +1,6 @@
-TUGA:"SQUARES":prgmTUGA:Return
-"Squares
+0TUGA:"SQUARES":prgmTUGA:Return
+"Recrangle fractal, poorly named
 FADEOUT 2
-INIT
 PEN 0
 COLOR 0
 CLEAR 0
@@ -15,7 +14,7 @@ GOSUB 0
 }W
 }Y
 }X
-?H<=15
+?H≤6
 RET
 COLOR randInt(1,255
 MOVE {X,Y

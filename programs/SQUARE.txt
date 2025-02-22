@@ -1,4 +1,4 @@
-prgmTURTLE:Return
+0TUGA:"SQUARE":Asm(prgmTUGA:Return
 "Draws a square
 FORWARD 25
 RIGHT 90

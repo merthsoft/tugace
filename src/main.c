@@ -22,7 +22,7 @@ int main(void) {
     uint8_t ansStringLength = 0;
     bool showShell = true;
     void* vatPointer = NULL;
-    uint8_t selectedItemNumber = 0;
+    int8_t selectedItemNumber = 0;
 
     ShellErrorCode shellErrorCode = Shell_GetNameFromAns(varNameBufferSize, varNameBuffer, &ansStringLength);
     if (shellErrorCode == sec_Success) {

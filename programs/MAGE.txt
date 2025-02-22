@@ -1,4 +1,4 @@
-TUGA:"MAGE":Asm(prgmTUGA:Return
+0TUGA:"MAGE":Asm(prgmTUGA:Return
 :
 "Mage demo
 FADEOUT 2

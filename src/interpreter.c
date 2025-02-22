@@ -19,7 +19,7 @@
 
 #include <debug.h>
 #ifdef DEBUG
-//#define DEBUG_PROCESSOR
+#define DEBUG_PROCESSOR
 
 void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
     uint8_t tokenLength = 0;
@@ -29,22 +29,25 @@ void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength)
         *stringLength = 0;
         
     void** readPointer = (void**)&buffer;
-    while(i < length) {
-        dbg_printf("%s", ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength));
-        i += tokenLength;
+    char printBuffer[50];
+    while(i < length && i < 50) {
+        char* retStr = ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength);
+        while(tokenLength-- >= 0) {
+            printBuffer[i++] = *retStr;
+            retStr++;
+            i++;
+        }
         if (stringLength)
             *stringLength = i;
     }
+    dbg_printf("%.*s", 50, printBuffer);
+    if (i < length)
+        dbg_printf("...");
 }
 #endif
 
 __attribute__((hot))
 static inline void Interpreter_printString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
-    #ifdef DEBUG_PROCESSOR
-    dbg_printf(" Ans text (%d): ", length);
-    debug_print_tokens(buffer, length, NULL);
-    dbg_printf(" ");
-    #endif
     gfx_SetTextFGColor(turtle->Color);
     gfx_SetTextXY(turtle->X, turtle->Y);
     uint8_t tokenLength = 0;
@@ -112,19 +115,18 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
         return;
     
     ProgramCounter programCounter = 0;
-    // Header
-    if (program[0] == OS_TOK_COLON) {
-        // We've detected the DCS header
-        Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
-        Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);    
-    }
-
-    if (program[programCounter]       == OS_TOK_T
-        && program[programCounter+1]  == OS_TOK_U
-        && program[programCounter+2]  == OS_TOK_G
-        && program[programCounter+3]  == OS_TOK_A) {
+    
+    if (program[programCounter]       == OS_TOK_0
+        && program[programCounter+1]  == OS_TOK_T
+        && program[programCounter+2]  == OS_TOK_U
+        && program[programCounter+3]  == OS_TOK_G
+        && program[programCounter+4]  == OS_TOK_A) {
 
         Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+    
+        // The `0TUGA` header signals we could have an icon on the second line
+        if (program[programCounter] == Token_Header_SpritePrefix)
+            Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
     }
 
     ProgramToken* comment = NULL;

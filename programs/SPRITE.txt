@@ -1,5 +1,5 @@
-TUGA:"SPRITE":Asm(prgmTUGA:Return
-"Sprite text
+0TUGA:"SPRITE":Asm(prgmTUGA:Return
+"Sprite test
 FADEOUT 2
 CLEAR 0
 ONERROR 1

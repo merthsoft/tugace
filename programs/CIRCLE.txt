@@ -1,5 +1,6 @@
-TUGA:"CIRCLE":Asm(prgmCIRCLE:Return
+0TUGA:"CIRCLE":Asm(prgmTUGA:Return
 "Draws some circles, by Shaun McFall
+"CIRCLE→Str1:{1→ʟTUR:prgmTURTLE:Return
 LABEL 1
 PEN 1
 COLOR randInt(0,255

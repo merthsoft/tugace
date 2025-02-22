@@ -1,4 +1,4 @@
-TUGA:"EVAL":Asm(prgmTUGA:Return
+0TUGA:"EVAL":Asm(prgmTUGA:Return
 "Eval test
 CLEAR 0
 INIT 0
@@ -6,6 +6,6 @@ TEXT "Ans=
 PEN 0
 ANGLE 90
 FORWARD 35
-EVAL inString("SHAUN","A→A
-TEXT {UNKNOWN TOKEN [239]}FnOff Ans→A
+EVAL inString("SHAUN","A
+TEXT toString(Ans
 MOVE
