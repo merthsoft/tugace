@@ -1,0 +1,9 @@
+0TUGA:"LABEL":Asm(prgmTUGA:Return
+"Named label test
+:0
+GOSUB "Five
+.0
+Lbl "Five
+FORWARD 1
+RIGHT 1
+RET

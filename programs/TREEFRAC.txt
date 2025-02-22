@@ -1,4 +1,4 @@
-TUGA:"TREEFRAC":Asm(prgmTUGA:Return
+0TUGA:"TREEFRAC":Asm(prgmTUGA:Return
 "Draws a tree fractal, by Shaun McFall
 FADEOUT 2
 COLOR 0

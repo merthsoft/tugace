@@ -1,4 +1,4 @@
-TURTLE
+0TUGA:"CIRCLE":Asm(prgmTUGA:Return
 "Draws some circles, by Shaun McFall
 "CIRCLE→Str1:{1→ʟTUR:prgmTURTLE:Return
 LABEL 1

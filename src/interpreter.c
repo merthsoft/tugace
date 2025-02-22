@@ -5,6 +5,7 @@
 
 #include <sys/rtc.h>
 
+#include <ti/error.h>
 #include <ti/real.h>
 #include <ti/vars.h>
 
@@ -21,30 +22,33 @@
 #ifdef DEBUG
 //#define DEBUG_PROCESSOR
 
-void debug_print_tokens(const void* buffer, size_t length, size_t* stringLength) {
+void debug_print_tokens(const void* buffer, size_t bufferLength, size_t* stringLength) {
+    size_t runningStringLength = 0;
+    if (stringLength == NULL)
+        stringLength = &runningStringLength;
     uint8_t tokenLength = 0;
-    size_t tokenStringLength = 0;
+    size_t returnedStringLength = 0;
     size_t i = 0;
     if (stringLength)
         *stringLength = 0;
         
     void** readPointer = (void**)&buffer;
-    while(i < length) {
-        dbg_printf("%s", ti_GetTokenString(readPointer, &tokenLength, &tokenStringLength));
+    char printBuffer[51];
+    while(i < bufferLength && *stringLength < 50) {
+        char* retStr = ti_GetTokenString(readPointer, &tokenLength, &returnedStringLength);
+        strncpy(&printBuffer[*stringLength], retStr, returnedStringLength);
         i += tokenLength;
-        if (stringLength)
-            *stringLength = i;
+        *stringLength += returnedStringLength;
     }
+    printBuffer[*stringLength] = 0;
+    dbg_printf("%.*s", *stringLength, printBuffer);
+    if (i < bufferLength)
+        dbg_printf("...");
 }
 #endif
 
 __attribute__((hot))
 static inline void Interpreter_printString(size_t length, const uint8_t buffer[length], const Turtle* turtle) {
-    #ifdef DEBUG_PROCESSOR
-    dbg_printf(" Ans text (%d): ", length);
-    debug_print_tokens(buffer, length, NULL);
-    dbg_printf(" ");
-    #endif
     gfx_SetTextFGColor(turtle->Color);
     gfx_SetTextXY(turtle->X, turtle->Y);
     uint8_t tokenLength = 0;
@@ -58,13 +62,10 @@ static inline void Interpreter_printString(size_t length, const uint8_t buffer[l
     }
 }
 
-#define hexCharToVal(c) ((c >= '0' && c <= '9') ? (c - '0') : (c - 'A' + 10))
-#define convert(buffer, i) ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
-
 __attribute__((hot))
 void Interpreter_copySprite(size_t dataLength, const unsigned char data[dataLength], gfx_sprite_t* sprite) {
     for (size_t i = 0; i < dataLength; i+=2) {
-        sprite->data[i/2] = convert(data, i);
+        sprite->data[i/2] = convertHexPairToByte(data, i);
     }
 }
 
@@ -78,7 +79,7 @@ static inline void Interpreter_execAsmString(size_t dataLength, const uint8_t da
     // TODO: Fill in function header and offset
     size_t i;
     for (i = 0; i < dataLength && i < Interpreter_asmProgramBufferSize*2; i+=2) {
-        Interpreter_asmProgramBuffer[i/2] = convert(data, i);
+        Interpreter_asmProgramBuffer[i/2] = convertHexPairToByte(data, i);
     }
     if (i >= Interpreter_asmProgramBufferSize*2) {
         return;
@@ -100,7 +101,6 @@ static StackPointer Interpreter_stackPointers[NumStackPages];
 static StackPointer Interpreter_systemStackPointer;
 static float Interpreter_stacks[NumStackPages][MaxStackDepth];
 static float Interpreter_systemStack[SystemStackDepth];
-static uint16_t Interpreter_paletteBuffer[256];
 static gfx_sprite_t* Interpreter_spriteDictionary[NumSprites];
 
 static char errorMessage[256];
@@ -109,23 +109,25 @@ static char errorMessage[256];
 __attribute__((hot))
 void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], size_t programSize) {
     #ifdef DEBUG
-    dbg_printf("Interpreter_Interpret: %p, %d\n", program, programSize);
+    dbg_printf("Interpreter_Interpret: program[%d]: %p.\n", programSize, program);
     #endif
+
+    if (programSize == 0)
+        return;
     
     ProgramCounter programCounter = 0;
-    // Header
-    if (program[0] == OS_TOK_COLON) {
-        // We've detected the DCS header
-        Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
-        Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);    
-    }
-
-    if (program[programCounter]       == OS_TOK_T
-        && program[programCounter+1]  == OS_TOK_U
-        && program[programCounter+2]  == OS_TOK_G
-        && program[programCounter+3]  == OS_TOK_A) {
+    
+    if (program[programCounter]       == OS_TOK_0
+        && program[programCounter+1]  == OS_TOK_T
+        && program[programCounter+2]  == OS_TOK_U
+        && program[programCounter+3]  == OS_TOK_G
+        && program[programCounter+4]  == OS_TOK_A) {
 
         Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+    
+        // The `0TUGA` header signals we could have an icon on the second line
+        if (program[programCounter] == Token_Header_SpritePrefix)
+            Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
     }
 
     ProgramToken* comment = NULL;
@@ -133,7 +135,9 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     // Header comments can be skipped entirely
     while (program[programCounter] == Token_Comment) {
         comment = &program[programCounter];
-        commentLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+        size_t lineLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
+        if (commentLength == 0)
+            commentLength = lineLength;
     }
 
     if (programCounter >= programSize) {
@@ -152,13 +156,14 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     dbg_printf("stacks:         0x%.6X\n", (uint24_t)Interpreter_stacks);
     dbg_printf("sp:             0x%.6X\n", (uint24_t)Interpreter_stackPointers);
     dbg_printf("labels:         0x%.6X\n", (uint24_t)Interpreter_labels);
-    dbg_printf("palette:        0x%.6X\n", (uint24_t)Interpreter_paletteBuffer);
+    dbg_printf("palette:        0x%.6X\n", (uint24_t)Palette_PaletteBuffer);
     dbg_printf("\n");
     if (commentLength != 0) {
         debug_print_tokens(comment, commentLength, NULL);
         dbg_printf("\n");
     }
 
+    #ifdef DEBUG_PROCESSOR
     ProgramCounter dbgPc = programCounter;
     while (dbgPc < programSize) {
         dbg_printf("%.8d: ", dbgPc);
@@ -168,8 +173,8 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
         dbg_printf("\n");
     }
     #endif
+    #endif
 
-    gfx_Begin();
     srand(rtc_Time());
     clock_t time = clock();
     uint24_t framecount = 0;
@@ -177,14 +182,10 @@ void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], 
     char buffer[4] = "XXX";
 
     memset(Interpreter_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
-    
-    Palette_Default(Interpreter_paletteBuffer); 
-    #ifdef DEBUG
-    Interpreter_paletteBuffer[1] = gfx_RGBTo1555(0, 125, 0);
-    #endif  
-
+        
 program_start:
-    gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+    Palette_Default(Palette_PaletteBuffer);
+    gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
     gfx_SetTextConfig(gfx_text_clip);
     
     gfx_SetDrawScreen();
@@ -240,6 +241,7 @@ program_start:
     TugaOpCode opCode;
     size_t paramsStringLength;
     ProgramToken shortHand;
+    uint24_t errNo;
 
     #ifdef DEBUG
     dbg_printf("Starting program exection.\n");
@@ -404,8 +406,8 @@ program_start:
         ansString = NULL;
 
         if (paramsStringLength > 0 && params[0] != OS_TOK_DOUBLE_QUOTE) {
-            if (os_Eval(params, paramsStringLength)) {
-                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d.", paramsStringLength, (const char*)params, paramsStringLength);
+            if ((errNo = os_Eval(params, paramsStringLength))) {
+                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d error: %d.", paramsStringLength, (const char*)params, paramsStringLength, errNo & OS_E_MASK);
                 goto syntax_error;
             }
 
@@ -468,7 +470,6 @@ program_start:
         #define getListElementIntOrDefault(i,d) (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToInt24(&paramsListCplx->items[i].real) : os_RealToInt24(&paramsList->items[i]))
 
         gfx_SetColor(currentTurtle->Color);
-        int errNo;
         switch (opCode) {
             case toc_NOP:
             case toc_EVAL:
@@ -784,31 +785,31 @@ program_start:
                 currentStackIndex = intEval;
                 break;
             case toc_FADEOUT:
-                Palette_FadeOut(Interpreter_paletteBuffer, 0, 255, intEval);
+                Palette_FadeOut(Palette_PaletteBuffer, 0, 255, intEval);
                 break;
             case toc_FADEIN:
-                Pallete_FadeIn(Interpreter_paletteBuffer, 0, 255, intEval);
+                Palette_FadeIn(Palette_PaletteBuffer, 0, 255, intEval);
                 break;
             case toc_PALETTE:
                 switch (intEval) {
                     case 0:
-                        Palette_Default(Interpreter_paletteBuffer);
+                        Palette_Default(Palette_PaletteBuffer);
                         break;
                     case 1:
-                        Palette_Rainbow(Interpreter_paletteBuffer);
+                        Palette_Rainbow(Palette_PaletteBuffer);
                         break;
                     case 2:
-                        Palette_Gray(Interpreter_paletteBuffer, intEval);
+                        Palette_Gray(Palette_PaletteBuffer, intEval);
                         break;
                     default:
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid palette %d.", intEval);
                         goto syntax_error;
                 }
-                gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+                gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
                 break;
             case toc_PALSHIFT:
-                Palette_Shift(Interpreter_paletteBuffer);
-                gfx_SetPalette(Interpreter_paletteBuffer, 512, 0);
+                Palette_Shift(Palette_PaletteBuffer);
+                gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
                 break;
             case toc_FILL:
                 gfx_FloodFill(currentTurtle->X, currentTurtle->Y, currentTurtle->Color);
@@ -896,6 +897,10 @@ program_start:
                 Interpreter_spriteDictionary[currentSpriteIndex] = gfx_MallocSprite(
                                                                         os_RealToInt24(&paramsList->items[1]), 
                                                                         os_RealToInt24(&paramsList->items[2]));
+                if (Interpreter_spriteDictionary[currentSpriteIndex] == NULL) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Could not allocate memory for sprite %d.", currentSpriteIndex);
+                    goto syntax_error;
+                }
                 #ifdef DEBUG_PROCESSOR
                 dbg_printf(" sprite: %p ", Interpreter_spriteDictionary[currentSpriteIndex]);
                 #endif
@@ -1125,6 +1130,4 @@ end_eval:
             Interpreter_spriteDictionary[i] = NULL;
         }
     }
-
-    gfx_End();
 }

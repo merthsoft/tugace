@@ -12,9 +12,12 @@
 extern "C" {
 #endif
 
-#define clear_key_buffer() while(kb_AnyKey())
-#define null_coalesce(this, orThat) (this ? this : orThat)
-#define if_null_then_a_else_b(x, a, b) (!x ? a : b)
+#define clear_key_buffer()                  while(kb_AnyKey())
+#define null_coalesce(this, orThat)         (this ? this : orThat)
+#define if_null_then_a_else_b(x, a, b)      (!x ? a : b)
+
+#define hexCharToVal(c)                     ((c >= '0' && c <= '9') ? (c - '0') : (c - 'A' + 10))
+#define convertHexPairToByte(buffer, i)     ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
 
 typedef uint24_t    LabelIndex;
 typedef uint8_t     SpriteIndex;
@@ -24,16 +27,19 @@ typedef uint8_t     StackIndex;
 typedef uint8_t     StackPointer;
 typedef size_t      ProgramCounter;
 
-#define NumTurtles       50
+#define NumTurtles       10
 #define NumDataFields    3
-#define NumStackPages    8
+#define NumStackPages    10
 #define MaxStackDepth    256
 #define NumLabels        1024
-#define SystemStackDepth 256
-#define NumSprites       50
+#define SystemStackDepth MaxStackDepth
+#define NumSprites       64
 
 #define Token_NoEvalParams    OS_TOK_DOUBLE_QUOTE
 #define Token_EvalParams      OS_TOK_ADD
+
+#define Token_Header_SpritePrefix OS_TOK_COLON
+#define Token_Header_DescPrefix   OS_TOK_DOUBLE_QUOTE
 
 #define Token_NewLine    OS_TOK_NEWLINE
 #define Token_Space      OS_TOK_SPACE

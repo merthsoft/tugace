@@ -11,10 +11,25 @@
 #define angle_to_rads(a) (a * 0.017453292519943295f)
 
 __attribute__((hot))
-float fwrap(float x, float min, float max) {
-    if (min > max)
-        return fwrap(x, max, min);
-    return (x >= 0 ? min : max) + fmod(x, max - min);
+float Turtle_fwrapZeroMin(float x, float max) {
+    if (x >= 0 && x < max)
+        return x;
+    return (x >= 0 ? 0 : max) + fmod(x, max);
+}
+
+__attribute__((hot))
+static inline void drawWrappedLine(Turtle* t, float oldX, float oldY, float newX, float newY) {
+    if (t->X < newX)
+        oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) - GFX_LCD_WIDTH;
+    else if (t->X > newX)
+        oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) + GFX_LCD_WIDTH;
+    
+    if (t->Y < newY)
+        oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) - GFX_LCD_HEIGHT;
+    else if (t->Y > newY)
+        oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) + GFX_LCD_HEIGHT;
+
+    gfx_Line(oldX, oldY, t->X, t->Y);
 }
 
 __attribute__((hot))
@@ -34,21 +49,11 @@ void move(Turtle* t, const float* newXptr, const float* newYptr, bool autoDraw) 
     }
 
     if (t->Wrap > 0) {
-        t->X = fwrap(newX, 0, GFX_LCD_WIDTH);
-        t->Y = fwrap(newY, 0, GFX_LCD_HEIGHT);
+        t->X = Turtle_fwrapZeroMin(newX, GFX_LCD_WIDTH);
+        t->Y = Turtle_fwrapZeroMin(newY, GFX_LCD_HEIGHT);
 
         if (t->Pen > 0 && autoDraw) {
-            if (t->X < newX)
-                oldX = fwrap(oldX, 0, GFX_LCD_WIDTH) - GFX_LCD_WIDTH;
-            else if (t->X > newX)
-                oldX = fwrap(oldX, 0, GFX_LCD_WIDTH) + GFX_LCD_WIDTH;
-            
-            if (t->Y < newY)
-                oldY = fwrap(oldY, 0, GFX_LCD_HEIGHT) - GFX_LCD_HEIGHT;
-            else if (t->Y > newY)
-                oldY = fwrap(oldY, 0, GFX_LCD_HEIGHT) + GFX_LCD_HEIGHT;
-
-            gfx_Line(oldX, oldY, t->X, t->Y);
+            drawWrappedLine(t, oldX, oldY, newX, newY);
         }
     }
 }
@@ -76,7 +81,7 @@ void Turtle_Forward(Turtle *t, const float* amount, bool autoDraw) {
 
 __attribute__((hot))
 static inline void clip_angle(Turtle* t) {
-    t->Angle = fwrap(t->Angle, 0, 360);
+    t->Angle = Turtle_fwrapZeroMin(t->Angle, 360);
 }
 
 __attribute__((hot))
@@ -122,7 +127,7 @@ void Turtle_SetSpriteNumber(Turtle *t, uint8_t spriteNumber) {
 
 __attribute__((hot))
 void Turtle_SetColor(Turtle* t, const float* color) {
-    t->Color = fwrap(*color, 0, 256.0f);
+    t->Color = Turtle_fwrapZeroMin(*color, 256.0f);
 }
 
 __attribute__((hot))

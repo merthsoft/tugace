@@ -1,9 +1,5 @@
 0TUGA:"TEXT":Asm(prgmTUGA:Return
 "Text test
-PALETTE 1
 PEN 0
 CLEAR 0
 TEXT "Hello, world
-:5
-PALSHIFT
-.5

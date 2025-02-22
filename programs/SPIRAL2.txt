@@ -1,4 +1,4 @@
-TURT:Return
+0TUGA:"SPIRAL\₂":Asm(prgmTUGA:Return
 "DRAWS A SPIRAL
 CLEAR 0
 PEN 1

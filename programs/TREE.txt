@@ -1,5 +1,5 @@
-TURT:Return
-"Draws a simple tree, by Shaun McFall
+0TUGA:"TREE":Asm(prgmTUGA:Return
+"Draws a simple tree
 COLOR 15
 PEN 0
 MOVE {0,120
@@ -18,8 +18,8 @@ RIGHT 45
 FORWARD H
 POPVEC
 DEC {H,3
-IF H>=0
+IF H≥0
 GOTO 1
-ANGLE ~90
+ANGLE ⁻90
 COLOR 15
 FORWARD 3
