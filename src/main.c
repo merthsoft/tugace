@@ -9,12 +9,24 @@
 #include "shell.h"
 #include "static.h"
 
-#define main_programBufferSize (65536/2)
-
+#define main_programBufferSize (65532)
 #define varNameBufferSize 10
+#define TempVarName "TugaTemp"
+
 int main(void) {
-    ProgramToken main_programBuffer[main_programBufferSize];
     Const_Initialize();
+
+    uint8_t tempHandle = ti_Open(TempVarName, "r");
+    if (tempHandle) {
+        ti_Close(tempHandle);
+        ti_Delete(TempVarName);
+    }
+
+    ProgramToken* main_programBuffer = (ProgramToken*)os_CreateAppVar(TempVarName, main_programBufferSize);
+    if (main_programBuffer == NULL) {
+        dbg_printf("Failed to allocate program buffer.\n");
+        return 1;
+    }
 
     char varNameBuffer[varNameBufferSize];
     uint8_t varType = OS_TYPE_PRGM;
@@ -54,7 +66,6 @@ int main(void) {
             showShell = false;
         }
     } while (showShell);
-        
 
     Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
     gfx_SetDrawScreen();
@@ -69,6 +80,8 @@ int main(void) {
         os_CreateString(OS_VAR_ANS, backupString);
         free(backupString);
     }
+
+    ti_Delete(TempVarName);
     Palette_FadeIn(Palette_PaletteBuffer, 0, 255, 5);
 
     gfx_End();
