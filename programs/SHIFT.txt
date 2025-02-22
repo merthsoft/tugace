@@ -1,0 +1,7 @@
+0TUGA:"SHIFT":Asm(prgmTUGA:Return
+"Palette shift test
+PALETTE 1
+CLEAR 1
+:1
+PALSHIFT
+.1

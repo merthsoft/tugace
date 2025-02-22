@@ -1,0 +1,5 @@
+0TUGA:"TEXT":Asm(prgmTUGA:Return
+"Text test
+PEN 0
+CLEAR 0
+TEXT "Hello, world
