@@ -5,6 +5,7 @@
 
 #include <sys/rtc.h>
 
+#include <ti/error.h>
 #include <ti/real.h>
 #include <ti/vars.h>
 
@@ -406,7 +407,7 @@ program_start:
 
         if (paramsStringLength > 0 && params[0] != OS_TOK_DOUBLE_QUOTE) {
             if ((errNo = os_Eval(params, paramsStringLength))) {
-                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d error: %d.", paramsStringLength, (const char*)params, paramsStringLength, errNo);
+                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d error: %d.", paramsStringLength, (const char*)params, paramsStringLength, errNo & OS_E_MASK);
                 goto syntax_error;
             }
 

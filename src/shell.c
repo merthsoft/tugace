@@ -188,9 +188,9 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
                                         ti_Read(&c[1], 1, 1, handle);
                                     void* ptr = &c;
                                     
-                                    if (c[0] == Token_NewLine)
+                                    if (c[0] == Token_NewLine) {
                                         lineFlag = true;
-                                    else if (gfx_GetTextY() >= GFX_LCD_WIDTH - 8)
+                                    if (gfx_GetTextY() >= GFX_LCD_WIDTH - 8)
                                         lineFlag = true;
                                     else
                                         gfx_PrintString(ti_GetTokenString(&ptr, NULL, NULL));

@@ -27,13 +27,13 @@ typedef uint8_t     StackIndex;
 typedef uint8_t     StackPointer;
 typedef size_t      ProgramCounter;
 
-#define NumTurtles       50
+#define NumTurtles       10
 #define NumDataFields    3
-#define NumStackPages    8
+#define NumStackPages    10
 #define MaxStackDepth    256
 #define NumLabels        1024
-#define SystemStackDepth 256
-#define NumSprites       50
+#define SystemStackDepth MaxStackDepth
+#define NumSprites       64
 
 #define Token_NoEvalParams    OS_TOK_DOUBLE_QUOTE
 #define Token_EvalParams      OS_TOK_ADD

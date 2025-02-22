@@ -1,3 +1,19 @@
+/* Merthsoft Creations 2025
+   _____                                                      _____ 
+  ( ___ )                                                    ( ___ )
+   |   |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|   | 
+   |   | _███████████_█████__█████___█████████____█████████__ |   | 
+   |   | ░█░░░███░░░█░░███__░░███___███░░░░░███__███░░░░░███_ |   | 
+   |   | ░___░███__░__░███___░███__███_____░░░__░███____░███_ |   | 
+   |   | ____░███_____░███___░███_░███__________░███████████_ |   | 
+   |   | ____░███_____░███___░███_░███____█████_░███░░░░░███_ |   | 
+   |   | ____░███_____░███___░███_░░███__░░███__░███____░███_ |   | 
+   |   | ____█████____░░████████___░░█████████__█████___█████ |   | 
+   |   | ___░░░░░______░░░░░░░░_____░░░░░░░░░__░░░░░___░░░░░_ |   | 
+   |___|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|___| 
+  (_____)                                                    (_____) 
+*/
+
 #include <debug.h>
 #include <fileioc.h>
 #include <graphx.h>
@@ -9,36 +25,14 @@
 #include "shell.h"
 #include "static.h"
 
-#define programBufferSize (65532)
+#define programBufferSize (65536/2)
+static ProgramToken main_programBuffer[programBufferSize];
 #define varNameBufferSize 10
-#define tempVarName "TugaTemp"
 
 int main(void) {
-    size_t freeRam = os_MemChk(NULL);
     #ifdef DEBUG
     dbg_printf("\nTUGA\n");
-    dbg_printf("Free user RAM before allocating program buffer: %d.\n", os_MemChk(NULL));
-    #endif
-
-    uint8_t tempHandle = ti_Open(tempVarName, "r");
-    if (tempHandle) {
-        ti_Close(tempHandle);
-        ti_Delete(tempVarName);
-    }
-
-    if (freeRam < programBufferSize) {
-        dbg_printf("Not enough free RAM to allocate program buffer. Archive some things. You have %d bytes but need %d bytes.\n", freeRam, programBufferSize);
-        return 1;
-    }
-
-    ProgramToken* main_programBuffer = (ProgramToken*)os_CreateAppVar(tempVarName, programBufferSize);
-    if (main_programBuffer == NULL) {
-        dbg_printf("Failed to allocate program buffer.\n");
-        return 1;
-    }
-
-    #ifdef DEBUG
-    dbg_printf("Free user RAM after allocating program buffer: %d.\n", os_MemChk(NULL));
+    dbg_printf("Free user RAM at start: %d.\\n", os_MemChk(NULL));
     #endif
 
     char varNameBuffer[varNameBufferSize];
@@ -95,7 +89,6 @@ int main(void) {
         free(backupString);
     }
 
-    ti_Delete(tempVarName);
     Palette_FadeIn(Palette_PaletteBuffer, 0, 255, 5);
 
     gfx_End();
