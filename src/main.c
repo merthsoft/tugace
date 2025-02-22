@@ -14,7 +14,11 @@
 #define tempVarName "TugaTemp"
 
 int main(void) {
-    Const_Initialize();
+    size_t freeRam = os_MemChk(NULL);
+    #ifdef DEBUG
+    dbg_printf("\nTUGA\n");
+    dbg_printf("Free user RAM before allocating program buffer: %d.\n", os_MemChk(NULL));
+    #endif
 
     uint8_t tempHandle = ti_Open(tempVarName, "r");
     if (tempHandle) {
@@ -22,11 +26,20 @@ int main(void) {
         ti_Delete(tempVarName);
     }
 
+    if (freeRam < programBufferSize) {
+        dbg_printf("Not enough free RAM to allocate program buffer. Archive some things. You have %d bytes but need %d bytes.\n", freeRam, programBufferSize);
+        return 1;
+    }
+
     ProgramToken* main_programBuffer = (ProgramToken*)os_CreateAppVar(tempVarName, programBufferSize);
     if (main_programBuffer == NULL) {
         dbg_printf("Failed to allocate program buffer.\n");
         return 1;
     }
+
+    #ifdef DEBUG
+    dbg_printf("Free user RAM after allocating program buffer: %d.\n", os_MemChk(NULL));
+    #endif
 
     char varNameBuffer[varNameBufferSize];
     uint8_t varType = OS_TYPE_PRGM;
@@ -46,6 +59,7 @@ int main(void) {
         ansStringLength = 0;
     
     gfx_Begin();
+    Const_Initialize();
 
     do {
         if (showShell) {

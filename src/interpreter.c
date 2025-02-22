@@ -108,7 +108,7 @@ static char errorMessage[256];
 __attribute__((hot))
 void Interpreter_Interpret(size_t bufferSize, ProgramToken program[bufferSize], size_t programSize) {
     #ifdef DEBUG
-    dbg_printf("Interpreter_Interpret: program[%d]: %p - free bytes %d.\n", programSize, program, os_MemChk(NULL));
+    dbg_printf("Interpreter_Interpret: program[%d]: %p.\n", programSize, program);
     #endif
 
     if (programSize == 0)
@@ -240,6 +240,7 @@ program_start:
     TugaOpCode opCode;
     size_t paramsStringLength;
     ProgramToken shortHand;
+    uint24_t errNo;
 
     #ifdef DEBUG
     dbg_printf("Starting program exection.\n");
@@ -404,8 +405,8 @@ program_start:
         ansString = NULL;
 
         if (paramsStringLength > 0 && params[0] != OS_TOK_DOUBLE_QUOTE) {
-            if (os_Eval(params, paramsStringLength)) {
-                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d.", paramsStringLength, (const char*)params, paramsStringLength);
+            if ((errNo = os_Eval(params, paramsStringLength))) {
+                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d error: %d.", paramsStringLength, (const char*)params, paramsStringLength, errNo);
                 goto syntax_error;
             }
 
@@ -468,7 +469,6 @@ program_start:
         #define getListElementIntOrDefault(i,d) (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToInt24(&paramsListCplx->items[i].real) : os_RealToInt24(&paramsList->items[i]))
 
         gfx_SetColor(currentTurtle->Color);
-        int errNo;
         switch (opCode) {
             case toc_NOP:
             case toc_EVAL:

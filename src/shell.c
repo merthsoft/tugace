@@ -67,11 +67,16 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
     Palette_Default(Palette_PaletteBuffer);
     gfx_SetDrawBuffer();
 
-    gfx_FillScreen(2);
+    #define ShellBackgroundColor 0
+    #define ShellLogoColor 254
+    #define ShellTextColor 0xDF
+    #define ShellHighlightColor 0x2B
+
     gfx_SetTextScale(3, 3);
-    gfx_SetTextTransparentColor(255);
-    gfx_SetTextBGColor(255);
-    gfx_SetTextFGColor(23);
+    gfx_FillScreen(ShellBackgroundColor);
+    gfx_SetTextTransparentColor(ShellBackgroundColor);
+    gfx_SetTextBGColor(ShellBackgroundColor);
+    gfx_SetTextFGColor(ShellLogoColor);
     gfx_PrintStringXY("TUGA CE v0.2a", 2, 2);
 
     #define ShellIconSize 79
@@ -88,7 +93,7 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
     #define ShellDescriptionStartX 1
     #define ShellDescriptionStartY (ShellRectStartY + ShellRectHeight + 1)
 
-    gfx_SetColor(0);
+    gfx_SetColor(ShellLogoColor);
     gfx_Rectangle(ShellRectStartX, ShellRectStartY, ShellRectWidth, ShellRectHeight);
     gfx_SwapDraw();
     
@@ -130,16 +135,16 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
             *selectedItemNumber = *selectedItemNumber % maxItems;
         
         gfx_BlitScreen();
-        gfx_SetColor(2);
+        gfx_SetColor(ShellBackgroundColor);
         gfx_FillRectangle_NoClip(ShellRectStartX + 1, ShellRectStartY + 1, ShellRectWidth - 2, ShellRectHeight - 2);
-        gfx_SetColor(170);
+        gfx_SetColor(ShellHighlightColor);
         gfx_FillRectangle_NoClip(ShellDescriptionStartX, ShellDescriptionStartY, GFX_LCD_WIDTH, GFX_LCD_HEIGHT - ShellDescriptionStartY);
 
         uint24_t textX = ShellIconStartX;
         uint24_t textY = ShellIconStartY;
-        gfx_SetTextFGColor(0);
+        gfx_SetTextFGColor(ShellTextColor);
         gfx_SetTextScale(1, 2);
-        gfx_SetColor(170);
+        gfx_SetColor(ShellHighlightColor);
 
         void* trackingPointer = varVatPointer;
         uint8_t keyIndex = 1;
