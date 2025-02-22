@@ -896,6 +896,10 @@ program_start:
                 Interpreter_spriteDictionary[currentSpriteIndex] = gfx_MallocSprite(
                                                                         os_RealToInt24(&paramsList->items[1]), 
                                                                         os_RealToInt24(&paramsList->items[2]));
+                if (Interpreter_spriteDictionary[currentSpriteIndex] == NULL) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Could not allocate memory for sprite %d.", currentSpriteIndex);
+                    goto syntax_error;
+                }
                 #ifdef DEBUG_PROCESSOR
                 dbg_printf(" sprite: %p ", Interpreter_spriteDictionary[currentSpriteIndex]);
                 #endif
