@@ -9,7 +9,7 @@
 #include "shell.h"
 #include "static.h"
 
-#define main_programBufferSize (65536)
+#define main_programBufferSize (65536/4)
 
 #define varNameBufferSize 10
 int main(void) {
