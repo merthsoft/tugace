@@ -78,7 +78,7 @@ int main(void) {
         showShell = true;
     }
 
-    while (true) {
+    do {
         clear_key_buffer();
 
         if (showShell) {
@@ -122,7 +122,7 @@ int main(void) {
         
         // Delete the header from the appvar so it doesn't show up in the shell
         programBuffer[0] = 0;        
-    }
+    } while (showShell);
 
     Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
     gfx_SetDrawScreen();

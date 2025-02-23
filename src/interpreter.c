@@ -252,7 +252,7 @@ program_start:
     size_t paramsStringLength;
     ProgramToken shortHand;
     uint24_t errNo;
-
+    
     #ifdef DEBUG
     dbg_printf("Starting program exection.\n");
     #endif
@@ -1086,7 +1086,9 @@ syntax_error:
 
         gfx_BlitScreen();
         gfx_SetTextFGColor(124);
-        gfx_PrintStringXY("ERROR - Check console.", 4, 4);
+        gfx_PrintStringXY("ERROR at ", 4, 4);
+        gfx_PrintUInt(lineStartPc, 0);
+        gfx_PrintString("- Check console.");
         
         #if 0
         const char* messageBuffer = errorMessage;
