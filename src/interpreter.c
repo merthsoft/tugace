@@ -128,19 +128,18 @@ void Interpreter_Interpret(size_t programBufferSize, ProgramToken program[progra
         && program[programCounter+4]  == OS_TOK_A) {
 
         Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
-    
-        // The `0TUGA` header signals we could have an icon on the second line
-        if (program[programCounter] == Token_Header_SpritePrefix)
-            Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
     }
 
     ProgramToken* comment = NULL;
     size_t commentLength = 0;
     // Header comments can be skipped entirely
     while (program[programCounter] == Token_Comment) {
-        comment = &program[programCounter];
+        if (comment == NULL)
+            comment = &program[programCounter];
         size_t lineLength = Seek_ToNewLine(program, programSize, Token_NewLine, &programCounter);
-        if (commentLength == 0)
+        if (lineLength > 100) {
+            comment = NULL;
+        } else if (commentLength == 0)
             commentLength = lineLength;
     }
 
@@ -152,7 +151,9 @@ void Interpreter_Interpret(size_t programBufferSize, ProgramToken program[progra
     
     #ifdef DEBUG
     dbg_printf("\nsizeof(Turtle): %d\n", sizeof(Turtle));
+    dbg_printf("sizeof(NamedLabel): %d\n", sizeof(NamedLabel));
     dbg_printf("\n");
+    dbg_printf("palette:        0x%.6X\n", (uint24_t)Palette_PaletteBuffer);
     dbg_printf("pc:             0x%.6X\n", (uint24_t)&programCounter);
     dbg_printf("turtles:        0x%.6X\n", (uint24_t)Interpreter_turtles);
     dbg_printf("system stack:   0x%.6X\n", (uint24_t)Interpreter_systemStack);
@@ -160,14 +161,14 @@ void Interpreter_Interpret(size_t programBufferSize, ProgramToken program[progra
     dbg_printf("stacks:         0x%.6X\n", (uint24_t)Interpreter_stacks);
     dbg_printf("sp:             0x%.6X\n", (uint24_t)Interpreter_stackPointers);
     dbg_printf("labels:         0x%.6X\n", (uint24_t)Interpreter_labels);
-    dbg_printf("palette:        0x%.6X\n", (uint24_t)Palette_PaletteBuffer);
+    dbg_printf("last label:     0x%.6X\n", (uint24_t)&Interpreter_labels[NumLabels-1]);
     dbg_printf("sprite dict:    0x%.6X\n", (uint24_t)Interpreter_spriteDictionary);
     dbg_printf("\n");
     if (commentLength != 0) {
         debug_print_tokens(comment, commentLength, NULL);
         dbg_printf("\n");
     }
-
+    
     #ifdef DEBUG_PROCESSOR
     ProgramCounter dbgPc = programCounter;
     while (dbgPc < programSize) {
@@ -188,6 +189,7 @@ void Interpreter_Interpret(size_t programBufferSize, ProgramToken program[progra
     
 program_start:
     memset(Interpreter_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
+    
     Palette_Default(Palette_PaletteBuffer);
     gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
     gfx_SetTextConfig(gfx_text_clip);
@@ -236,6 +238,10 @@ program_start:
     cplx_list_t* paramsListCplx;
     ProgramToken* params;
     float retList[MaxStackDepth];
+
+    #define getListElementPointerOrDefaultPointer(i,d)  (paramsList == NULL ? paramsListCplx == NULL ? &d : &paramsListCplx->items[i].real : &paramsList->items[i])
+    #define getListElementFloatOrDefault(i,d)           (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToFloat(&paramsListCplx->items[i].real) : os_RealToFloat(&paramsList->items[i]))
+    #define getListElementIntOrDefault(i,d)             (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToInt24(&paramsListCplx->items[i].real) : os_RealToInt24(&paramsList->items[i]))
 
     ProgramCounter lineStartPc;
     ProgramToken* command;
@@ -369,7 +375,7 @@ program_start:
         size_t outputTokenStringLength;
         debug_print_tokens(command, commandStringLength, &outputTokenStringLength);
         
-        while (outputTokenStringLength < 10) {
+        while (outputTokenStringLength < 12) {
             dbg_printf(" ");
             outputTokenStringLength++;
         }
@@ -423,7 +429,10 @@ program_start:
             goto skip_eval;
         }
 
-        if (params[0] != Token_Flag_EvalParams && toc_SkipEval(opCode)) {
+        if (params[0] == Token_Flag_EvalParams) {
+            params++;
+            paramsStringLength--;
+        } else if (toc_SkipEval(opCode)) {
             #ifdef DEUBG_PROCESSOR
             dbg_printf("skipping eval because %d is skippable opCode", opCode);
             #endif
@@ -484,20 +493,35 @@ program_start:
             eval = os_RealToFloat(paramReal);
             intEval = os_RealToInt24(paramReal);
             #ifdef DEBUG_PROCESSOR
-            dbg_printf(" param1: %f ", eval);
+            if (paramsListLength == 1) {
+                dbg_printf(" param: %f ", eval);
+            } else {
+                dbg_printf(" params: ");
+                for (retListPointer = 0; retListPointer < paramsListLength; retListPointer++) {
+                    dbg_printf("%.2f ", getListElementFloatOrDefault(retListPointer, 0));
+                }
+                retListPointer = 0;
+            }
             #endif
         }
-        
-        #define getListElementPointerOrDefaultPointer(i,d) (paramsList == NULL ? paramsListCplx == NULL ? &d : &paramsListCplx->items[i].real : &paramsList->items[i])
-        #define getListElementFloatOrDefault(i,d) (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToFloat(&paramsListCplx->items[i].real) : os_RealToFloat(&paramsList->items[i]))
-        #define getListElementIntOrDefault(i,d) (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToInt24(&paramsListCplx->items[i].real) : os_RealToInt24(&paramsList->items[i]))
+        #ifdef DEBUG_PROCESSOR
+        else if (ansString != NULL) {
+            dbg_printf(" param: ");
+            debug_print_tokens(ansString->data, ansString->len, NULL);
+            dbg_printf(" ");
+        }
+        #endif
 
 skip_eval:
         if (currentTurtle == NULL) {
             snprintf(errorMessage, errorMessageLength, "UNEXPECTED ERROR: Current turtle pointer is somehow null.");
             goto syntax_error;
         }
-        gfx_SetColor(currentTurtle->Color);
+        
+        #ifdef DEBUG_PROCESSOR
+        dbg_printf("* ");
+        #endif
+        
         switch (opCode) {
             case toc_NOP:
             case toc_EVAL:
@@ -512,6 +536,7 @@ skip_eval:
                 Turtle_SetWrap(currentTurtle, &eval);
                 break;
             case toc_FORWARD:
+                gfx_SetColor(currentTurtle->Color);
                 if (paramsListLength == 1) {
                     Turtle_Forward(currentTurtle, &eval, autoDraw);
                 } else if (paramsListLength == 2) {
@@ -527,6 +552,7 @@ skip_eval:
                 Turtle_Right(currentTurtle, &eval);
                 break;
             case toc_MOVE:
+                gfx_SetColor(currentTurtle->Color);
                 if (paramsListLength < 2) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Missing parameters. Needed 2, found %d.", paramsListLength);
                     goto syntax_error;
@@ -538,6 +564,7 @@ skip_eval:
                 Turtle_SetAngle(currentTurtle, &eval);
                 break;
             case toc_CIRCLE:
+                gfx_SetColor(currentTurtle->Color);
                 intEval = if_null_then_a_else_b(paramReal, 1, intEval);
                 if (currentTurtle->Pen)
                     gfx_FillCircle(currentTurtle->X, currentTurtle->Y, intEval);
@@ -545,6 +572,7 @@ skip_eval:
                     gfx_Circle(currentTurtle->X, currentTurtle->Y, intEval);
                 break;
             case toc_ELLIPSE:{
+                gfx_SetColor(currentTurtle->Color);
                 uint24_t w = getListElementIntOrDefault(0, 1);
                 uint24_t h = getListElementIntOrDefault(1, 1);
                 if (currentTurtle->Pen)
@@ -553,6 +581,7 @@ skip_eval:
                     gfx_Ellipse(currentTurtle->X, currentTurtle->Y, w, h);
                 break;}
             case toc_RECT: {
+                gfx_SetColor(currentTurtle->Color);
                 uint24_t w = getListElementIntOrDefault(0, 1);
                 uint24_t h = getListElementIntOrDefault(1, 1);
                 if (currentTurtle->Pen)
@@ -577,31 +606,27 @@ skip_eval:
                        Interpreter_labels[intEval].ProgramCounter = programCounter;
                 } else {
                     commandHash = Hash_InLine(params, paramsStringLength);
-                    LabelIndex lastEmpty = NumLabels;
                     for (intEval = NumLabels - 1; intEval <= 0; intEval--) {
                         if (Interpreter_labels[intEval].Hash == commandHash) {
-                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label hash conflict %X: %.*s. This error won't always exist.", commandHash, paramsStringLength, params);
+                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label hash conflict %X: %.*s.", commandHash, paramsStringLength, params);
                             goto syntax_error;
                         }
                         if (Interpreter_labels[intEval].ProgramCounter == 0) {
-                            lastEmpty = intEval;
+                            break;
                         }
                     }
-                    if (lastEmpty == 0) {
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ran out of labels.");
+                    if (intEval < 0 || intEval >= NumLabels) {
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ran out of labels %d.", intEval);
                         goto syntax_error;
                     }
-                    Interpreter_labels[lastEmpty].Hash = commandHash;
-                    Interpreter_labels[lastEmpty].ProgramCounter = programCounter;
+                    dbg_printf("Settings label %d which is at %p.", intEval, &Interpreter_labels[intEval]);
+                    Interpreter_labels[intEval].Hash = commandHash;
+                    Interpreter_labels[intEval].ProgramCounter = programCounter;
                 }
                 break;
             case toc_GOSUB:
             case toc_GOTO:
-                if (params[0] == Token_Flag_EvalParams) {
-                    if (paramReal == NULL) {
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
-                        goto syntax_error;
-                    }
+                if (paramReal != NULL) {
                     if (intEval >= NumLabels || intEval < 0) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid label: %d.", intEval);
                         goto syntax_error;
@@ -619,13 +644,14 @@ skip_eval:
                 } else {
                     commandHash = Hash_InLine(params, paramsStringLength);
                     LabelIndex lastEmpty = NumLabels;
-                    for (intEval = 0; intEval < NumLabels; intEval++) {
+                    for (intEval = NumLabels - 1; intEval >= 0; intEval--) {
                         if (Interpreter_labels[intEval].Hash == commandHash) {
                             programCounter = Interpreter_labels[intEval].ProgramCounter;
                             break;
                         }
-                        if (Interpreter_labels[intEval].ProgramCounter == 0) {
+                        if (Interpreter_labels[intEval].Hash == 0) {
                             lastEmpty = intEval;
+                            break;
                         }
                     }
 
@@ -861,7 +887,7 @@ skip_eval:
                 Turtle_Initialize(currentTurtle);
                 break;
             case toc_GETKEY:
-                intEval = KeyHelper_GetKey();
+                intEval = KeyHelper_GetKey_Inline();
                 if (paramReal == NULL) {
                     retList[0] = (float)intEval;
                     retListPointer = 1;
@@ -910,7 +936,7 @@ skip_eval:
             case toc_KEYSCAN:
                 kb_Scan();
                 break;
-            case toc_SIZESPRITE:
+            case toc_SIZESPRITE: {
                 if (paramsListLength != 3) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Incorrect number of parameters. Expected 3, got %d.", paramsListLength);
                     goto syntax_error;
@@ -920,20 +946,27 @@ skip_eval:
                     goto syntax_error;
                 }
                 currentSpriteIndex = intEval;
-                if (Interpreter_spriteDictionary[currentSpriteIndex] != NULL)
+                if (Interpreter_spriteDictionary[currentSpriteIndex] != NULL) {
+                    #ifdef DEBUG_PROCESSOR
+                    dbg_printf("freeing existing sprite [%d]:%p ", intEval, Interpreter_spriteDictionary[currentSpriteIndex]);
+                    #endif
                     free(Interpreter_spriteDictionary[currentSpriteIndex]);
+                }
                 
-                Interpreter_spriteDictionary[currentSpriteIndex] = gfx_MallocSprite(
-                                                                        os_RealToInt24(&paramsList->items[1]), 
-                                                                        os_RealToInt24(&paramsList->items[2]));
+                uint8_t w = max(255, os_RealToInt24(&paramsList->items[1]));
+                uint8_t h = max(255, os_RealToInt24(&paramsList->items[2]));
+                #ifdef DEBUG_PROCESSOR
+                dbg_printf("allocating %dx%d sprite", w, h);
+                #endif
+                Interpreter_spriteDictionary[currentSpriteIndex] = gfx_MallocSprite(w, h);
                 if (Interpreter_spriteDictionary[currentSpriteIndex] == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Could not allocate memory for sprite %d.", currentSpriteIndex);
                     goto syntax_error;
                 }
                 #ifdef DEBUG_PROCESSOR
-                dbg_printf(" sprite: %p ", Interpreter_spriteDictionary[currentSpriteIndex]);
+                dbg_printf(": %p ", Interpreter_spriteDictionary[currentSpriteIndex]);
                 #endif
-                break;
+                break;}
             case toc_DEFSPRITE:
                 if (intEval < 0 || intEval > NumSprites) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
@@ -988,6 +1021,7 @@ skip_eval:
                 #endif
                 break;
             case toc_DRAW:
+                gfx_SetColor(currentTurtle->Color);
                 Turtle_Draw(currentTurtle, Interpreter_spriteDictionary);
                 break;
             case toc_UNKNOWN:
@@ -1040,15 +1074,9 @@ syntax_error:
         #ifdef DEBUG
         #ifndef DEBUG_PROCESSOR
         dbg_printf("%.8d: ", lineStartPc);
-        size_t outputTokenStringLength;
-        debug_print_tokens(command, commandStringLength, &outputTokenStringLength);
-        
-        while (outputTokenStringLength < 10) {
-            dbg_printf(" ");
-            outputTokenStringLength++;
-        }
-        
-        debug_print_tokens(params, paramsStringLength, &outputTokenStringLength);
+        debug_print_tokens(command, commandStringLength, NULL);
+        dbg_printf(" ");
+        debug_print_tokens(params, paramsStringLength, NULL);
         #endif
         dbg_printf("\n\t");
         dbg_printf("%.*s\n", errorMessageLength, errorMessage);
@@ -1143,7 +1171,7 @@ end_eval:
     }
 
     dbg_printf("Done. PC: %.8d\n", programCounter);
-    gfx_BlitScreen();
+    gfx_SetDrawScreen();
     gfx_SetTextFGColor(124);
     gfx_SetColor(0);
     gfx_FillRectangle(0, 0, 84, 12);
@@ -1160,11 +1188,19 @@ end_eval:
         gfx_BlitBuffer();
         goto program_start;
     }
+    
+    #ifdef DEBUG
+    dbg_printf("Cleanup.\n");
+    #endif
 
-    for (SpriteIndex i = 0; i < NumSprites; i++) {
+    for (uint16_t i = 0; i < NumSprites; i++) {
         if (Interpreter_spriteDictionary[i]) {
             free(Interpreter_spriteDictionary[i]);
             Interpreter_spriteDictionary[i] = NULL;
         }
     }
+
+    #ifdef DEBUG
+    dbg_printf("Interpreter_Interpret: return\n");
+    #endif
 }

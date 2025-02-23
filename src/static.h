@@ -15,23 +15,24 @@ extern "C" {
 #define clear_key_buffer()                  while(kb_AnyKey())
 #define null_coalesce(this, orThat)         (this ? this : orThat)
 #define if_null_then_a_else_b(x, a, b)      (!x ? a : b)
+#define max(a, b)                           (a > b ? b : a)
 
 #define hexCharToVal(c)                     ((c >= '0' && c <= '9') ? (c - '0') : (c - 'A' + 10))
 #define convertHexPairToByte(buffer, i)     ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
 
-typedef uint24_t    LabelIndex;
-typedef uint16_t    SpriteIndex;
+typedef uint16_t    LabelIndex;
+typedef uint8_t     SpriteIndex;
 typedef uint8_t     TurtleIndex;
 typedef uint8_t     ProgramToken;
 typedef uint8_t     StackIndex;
-typedef uint16_t    StackPointer;
+typedef uint8_t     StackPointer;
 typedef size_t      ProgramCounter;
 
 #define NumTurtles       16
 // TODO: Can I make this 7 and it'll capture the sprite ints? Might be weird for the end-user
 #define NumDataFields    6
 #define NumStackPages    16
-#define MaxStackDepth    512
+#define MaxStackDepth    256
 #define NumLabels        1024
 #define SystemStackDepth MaxStackDepth
 #define NumSprites       256

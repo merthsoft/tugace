@@ -1,6 +1,5 @@
 #include "keyhelper.h"
 
-#include <debug.h>
 #include <keypadc.h>
 
 const uint8_t keyhelper_scanCodeToGetKeyLut[keyhelper_scanCodeToGetKeyLutSize] = {
