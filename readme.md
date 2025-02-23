@@ -1,10 +1,16 @@
 # Tuga
 
-2025, Merthsoft Creations - https://github.com/merthsoft/tugace/
+2025, Merthsoft Creations
 
 Tuga is a turtle programming language designed around the TI-84+CE graphing calculator. It's meant to be simple to learn and read while still providing enough power to make cool fractals and learn about programming. The specification itself is "missing" many things that would otherwise be necessary--this is intentional, this language is designed around existing functionailty on the TI-84+CE, and will reuse what's possible.
 
 TUGA is the accompanying interpreter. It uses the built-in program format as its container, and reuses the operating system variables and math evaluation. It aims to provide a turtle language that can be programmed on the calculator easily, and integrates with the OS as seamlessly as possible.
+
+## Links
+
+Github: https://github.com/merthsoft/tugace/
+
+Alpha: https://merthsoft.com/tuga/Tuga.zip
 
 ## IN CONSTANT FLUX
 
