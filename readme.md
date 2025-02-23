@@ -10,6 +10,22 @@ TUGA is the accompanying interpreter. It uses the built-in program format as its
 
 The only constant is change. But right now, especially, things can change very quickly. This document may be out of date with the code base, but I'll do my best.
 
+## Pre-requisites
+
+You'll need a TI-84+CE that's had artifice run on it, as well as ASMHOOK.
+
+## Using TUGA
+
+Send TUGA and the sample programs to your calculator. Run TUGA. You should see a shell showing you the available programs. Use the arrow keys to select a program and press enter to run it. Alternatively, most programs have self-launching, so you can run the program from the homescreen.
+
+### Program Execution
+
+Once the program has finished, it will be in the "DONE" state. Alternatively, while TUGA is running, you can press "MODE", "DEL", or "CLEAR" to be put in the done state. This is the same as a program running the "STOP" command.
+
+Once in the done state, press "MODE", "DEL", or "CLEAR" to quit, or "ENTER" to restart the program.
+
+While the program is running, press "ENTER" to pause execution.
+
 ## Header
 
 ### Minimal
