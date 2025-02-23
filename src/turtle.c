@@ -68,6 +68,9 @@ void Turtle_Initialize(Turtle *t) {
     t->Color = 255;
     t->Pen = 1;
     t->Wrap = 1;
+    t->SpriteNumber = 0;
+    t->SpriteScaleX = 0;
+    t->SpriteScaleY = 0;
 }
 
 __attribute__((hot))
@@ -121,8 +124,8 @@ void Turtle_SetPen(Turtle* t, const float* pen) {
 }
 
 __attribute__((hot))
-void Turtle_SetSpriteNumber(Turtle *t, uint8_t spriteNumber) {
-    t->SpriteNumber = spriteNumber;
+void Turtle_SetSpriteNumber(Turtle *t, SpriteIndex spriteNumber) {
+    t->SpriteNumber = spriteNumber % NumSprites;
 }
 
 __attribute__((hot))

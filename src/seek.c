@@ -71,7 +71,7 @@ ProgramCounter Seek_ToLabel(size_t dataLength, const ProgramToken data[dataLengt
             continue;
         }
         
-        if (params[0] != OS_TOK_EVAL && !(params[0] >= OS_TOK_0 && params[0] <= OS_TOK_9)) {
+        if (labelHash && params[0] != Token_EvalParams) {
             uint24_t hash = Hash_InLine(params, paramsLength);
             if (hash == labelHash)
                 return index;

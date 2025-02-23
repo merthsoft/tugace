@@ -65,6 +65,10 @@ static inline void Interpreter_printString(size_t length, const uint8_t buffer[l
 __attribute__((hot))
 void Interpreter_copySprite(size_t dataLength, const unsigned char data[dataLength], gfx_sprite_t* sprite) {
     for (size_t i = 0; i < dataLength; i+=2) {
+        if (i/2 >= sprite->height * sprite->width) {
+            dbg_printf("ERROR: Sprite data exceeded size.");
+        }
+        
         sprite->data[i/2] = convertHexPairToByte(data, i);
     }
 }
@@ -157,6 +161,7 @@ void Interpreter_Interpret(size_t programBufferSize, ProgramToken program[progra
     dbg_printf("sp:             0x%.6X\n", (uint24_t)Interpreter_stackPointers);
     dbg_printf("labels:         0x%.6X\n", (uint24_t)Interpreter_labels);
     dbg_printf("palette:        0x%.6X\n", (uint24_t)Palette_PaletteBuffer);
+    dbg_printf("sprite dict:    0x%.6X\n", (uint24_t)Interpreter_spriteDictionary);
     dbg_printf("\n");
     if (commentLength != 0) {
         debug_print_tokens(comment, commentLength, NULL);
@@ -291,13 +296,13 @@ program_start:
                 switch (shortHand) {
                     case Token_NewLine:
                         #ifdef DEBUG_PROCESSOR
-                        dbg_printf("Skipping empty line.");
+                        dbg_printf("Empty line");
                         #endif
                         opCode = toc_NOP;
                         break;
                     case Token_Comment:
                         #ifdef DEBUG_PROCESSOR
-                            dbg_printf("Skipping comment.");
+                            dbg_printf("Comment");
                         #endif
                         opCode = toc_NOP;
                         break;
@@ -405,70 +410,94 @@ program_start:
         ans = NULL;
         ansString = NULL;
 
-        if (paramsStringLength > 0 && params[0] != OS_TOK_DOUBLE_QUOTE) {
-            if ((errNo = os_Eval(params, paramsStringLength))) {
-                snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d error: %d.", paramsStringLength, (const char*)params, paramsStringLength, errNo & OS_E_MASK);
-                goto syntax_error;
-            }
+        if (paramsStringLength == 0) {
+            #ifdef DEUBG_PROCESSOR
+            dbg_printf("no params", opCode);
+            #endif
+            goto skip_eval;
+        }
 
-            if (opCode == toc_EVAL) {
-                #ifdef DEBUG_PROCESSOR
-                dbg_printf("Eval'd.");
-                #endif
-                goto end_eval;
-            }
+        if (params[0] == Token_NoEvalParams) {
+            #ifdef DEUBG_PROCESSOR
+            dbg_printf("skipping eval because line starts with NoEvalParams", opCode);
+            #endif
+            goto skip_eval;
+        }
 
-            ans = os_GetAnsData(&type);
+        if (params[0] != Token_EvalParams && toc_SkipEval(opCode)) {
+            #ifdef DEUBG_PROCESSOR
+            dbg_printf("skipping eval because %d is skippable opCode", opCode);
+            #endif
+            goto skip_eval;
+        }
 
-            if (ans) {
-                switch (type) {
-                    case OS_TYPE_REAL:
-                        paramsListLength = 1;
-                        paramReal = ans;
-                        break;
-                    case OS_TYPE_CPLX:
-                        paramsListLength = 1;
-                        paramReal = ans;
-                        break;
-                    case OS_TYPE_REAL_LIST:
-                        paramVar[0] = (char)*(params + 1);
-                        paramsList = (list_t*)ans;
-                        paramsListLength = paramsList->dim;
-                        if (paramsList->dim >= 1)
-                            paramReal = &paramsList->items[0];
-                        break;
-                    case OS_TYPE_CPLX_LIST:
-                        paramVar[0] = (char)*(params + 1);
-                        paramsListCplx = (cplx_list_t*)ans;
-                        paramsListLength = paramsListCplx->dim;
-                        if (paramsListCplx->dim >= 1)
-                            paramReal = &paramsListCplx->items[0].real;
-                        break;
-                    case OS_TYPE_STR:
-                        ansString = ans;
-                        break;
-                    default:
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Unsupported ans type: %d.\n", type);
-                        goto syntax_error;
-                }
-            } else {
-                snprintf(errorMessage, errorMessageLength, "\nUNKNOWN ERROR: Failed to resolve ans.\n");
-                goto syntax_error;
+        if ((errNo = os_Eval(params, paramsStringLength))) {
+            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d error: %d.", paramsStringLength, (const char*)params, paramsStringLength, errNo & OS_E_MASK);
+            goto syntax_error;
+        }
+
+        if (opCode == toc_EVAL) {
+            #ifdef DEBUG_PROCESSOR
+            dbg_printf("Eval'd.");
+            #endif
+            goto end_eval;
+        }
+
+        ans = os_GetAnsData(&type);
+
+        if (ans) {
+            switch (type) {
+                case OS_TYPE_REAL:
+                    paramsListLength = 1;
+                    paramReal = ans;
+                    break;
+                case OS_TYPE_CPLX:
+                    paramsListLength = 1;
+                    paramReal = ans;
+                    break;
+                case OS_TYPE_REAL_LIST:
+                    paramVar[0] = (char)*(params + 1);
+                    paramsList = (list_t*)ans;
+                    paramsListLength = paramsList->dim;
+                    if (paramsList->dim >= 1)
+                        paramReal = &paramsList->items[0];
+                    break;
+                case OS_TYPE_CPLX_LIST:
+                    paramVar[0] = (char)*(params + 1);
+                    paramsListCplx = (cplx_list_t*)ans;
+                    paramsListLength = paramsListCplx->dim;
+                    if (paramsListCplx->dim >= 1)
+                        paramReal = &paramsListCplx->items[0].real;
+                    break;
+                case OS_TYPE_STR:
+                    ansString = ans;
+                    break;
+                default:
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Unsupported ans type: %d.\n", type);
+                    goto syntax_error;
             }
-            
-            if (paramReal != NULL) {
-                eval = os_RealToFloat(paramReal);
-                intEval = os_RealToInt24(paramReal);
-                #ifdef DEBUG_PROCESSOR
-                dbg_printf(" param1: %f ", eval);
-                #endif
-            }
+        } else {
+            snprintf(errorMessage, errorMessageLength, "UNKNOWN ERROR: Failed to resolve ans.");
+            goto syntax_error;
+        }
+        
+        if (paramReal != NULL) {
+            eval = os_RealToFloat(paramReal);
+            intEval = os_RealToInt24(paramReal);
+            #ifdef DEBUG_PROCESSOR
+            dbg_printf(" param1: %f ", eval);
+            #endif
         }
         
         #define getListElementPointerOrDefaultPointer(i,d) (paramsList == NULL ? paramsListCplx == NULL ? &d : &paramsListCplx->items[i].real : &paramsList->items[i])
         #define getListElementFloatOrDefault(i,d) (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToFloat(&paramsListCplx->items[i].real) : os_RealToFloat(&paramsList->items[i]))
         #define getListElementIntOrDefault(i,d) (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToInt24(&paramsListCplx->items[i].real) : os_RealToInt24(&paramsList->items[i]))
 
+skip_eval:
+        if (currentTurtle == NULL) {
+            snprintf(errorMessage, errorMessageLength, "UNEXPECTED ERROR: Current turtle pointer is somehow null.");
+            goto syntax_error;
+        }
         gfx_SetColor(currentTurtle->Color);
         switch (opCode) {
             case toc_NOP:
@@ -540,7 +569,7 @@ program_start:
                 gfx_FillScreen(intEval % 256);
                 break;
             case toc_LABEL:
-                if (params[0] == Token_EvalParams || (params[0] >= OS_TOK_0 || params[0] <= OS_TOK_9) ) {
+                if (params[0] == Token_EvalParams) {
                     if (paramReal == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
@@ -550,7 +579,7 @@ program_start:
                 } else {
                     commandHash = Hash_InLine(params, paramsStringLength);
                     LabelIndex lastEmpty = NumLabels;
-                    for (intEval = 0; intEval > NumLabels; intEval++) {
+                    for (intEval = NumLabels - 1; intEval <= 0; intEval--) {
                         if (Interpreter_labels[intEval].Hash == commandHash) {
                             snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label hash conflict %X: %.*s. This error won't always exist.", commandHash, paramsStringLength, params);
                             goto syntax_error;
@@ -559,7 +588,7 @@ program_start:
                             lastEmpty = intEval;
                         }
                     }
-                    if (lastEmpty == NumLabels) {
+                    if (lastEmpty == 0) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ran out of labels.");
                         goto syntax_error;
                     }
@@ -569,7 +598,7 @@ program_start:
                 break;
             case toc_GOSUB:
             case toc_GOTO:
-                if (params[0] == Token_EvalParams || (params[0] >= OS_TOK_0 && params[0] <= OS_TOK_9) ) {
+                if (params[0] == Token_EvalParams) {
                     if (paramReal == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
@@ -907,8 +936,7 @@ program_start:
                 #endif
                 break;
             case toc_DEFSPRITE:
-                if (intEval < 0 || intEval > NumSprites)
-                {
+                if (intEval < 0 || intEval > NumSprites) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Out of range of sprites %d.", intEval);
                     goto syntax_error;
                 }
@@ -955,7 +983,7 @@ program_start:
                 #endif
                 break;
             case toc_SPRITE:
-                currentTurtle->SpriteNumber = intEval;
+                Turtle_SetSpriteNumber(currentTurtle, intEval);
                 #ifdef DEBUG_PROCESSOR
                 dbg_printf("Setting sprite number to %d.", intEval);
                 #endif
@@ -1011,10 +1039,19 @@ program_start:
         goto end_eval;
 syntax_error:
         #ifdef DEBUG
-        #ifdef DEBUG_PROCESSOR
-        dbg_printf("\n\t");
-        #endif
+        #ifndef DEBUG_PROCESSOR
         dbg_printf("%.8d: ", lineStartPc);
+        size_t outputTokenStringLength;
+        debug_print_tokens(command, commandStringLength, &outputTokenStringLength);
+        
+        while (outputTokenStringLength < 10) {
+            dbg_printf(" ");
+            outputTokenStringLength++;
+        }
+        
+        debug_print_tokens(params, paramsStringLength, &outputTokenStringLength);
+        #endif
+        dbg_printf("\n\t");
         dbg_printf("%.*s\n", errorMessageLength, errorMessage);
         #endif
 

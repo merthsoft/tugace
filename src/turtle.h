@@ -31,7 +31,7 @@ void Turtle_SetAngle(Turtle* t, const float* angle);
 void Turtle_Goto(Turtle* t, const float* x, const float* y, bool autoDraw);
 void Turtle_Teleport(Turtle* t, const float* x, const float* y, bool autoDraw);
 void Turtle_SetPen(Turtle* t, const float* pen);
-void Turtle_SetSpriteNumber(Turtle* t, uint8_t spriteNumber);
+void Turtle_SetSpriteNumber(Turtle* t, SpriteIndex spriteNumber);
 void Turtle_SetColor(Turtle* t, const float* color);
 void Turtle_SetWrap(Turtle* t, const float* wrap);
 

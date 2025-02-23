@@ -74,6 +74,7 @@ typedef size_t      ProgramCounter;
 #define Token_Turtle   OS_TOK_X
 
 #define Token_Sto      OS_TOK_STO
+#define Token_Eval     OS_TOK_EVAL
 
 #define Hash_COLOR      0xE809A4
 #define Hash_PEN        0x881068
@@ -209,6 +210,8 @@ typedef enum TugaOpCode {
     toc_PALSHIFT,
     toc_ASM,
 } TugaOpCode;
+
+#define toc_SkipEval(toc) (toc == toc_GOTO || toc == toc_LABEL || toc == toc_GOSUB || toc == toc_DEFSPRITE)
 
 #ifdef __cplusplus
 }

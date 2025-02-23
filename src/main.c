@@ -83,6 +83,9 @@ int main(void) {
 
         if (showShell) {
             shellErrorCode = Shell_SelectVariable(vatPointer, varNameBufferSize, varNameBuffer, &varType, &selectedItemNumber);
+            if (shellErrorCode == sec_Quit)
+                break;
+            
             if (shellErrorCode != sec_Success) {
                 dbg_printf("Error selecting variable from shell: %d.", shellErrorCode);
                 break;
