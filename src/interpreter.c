@@ -597,13 +597,13 @@ skip_eval:
                 gfx_FillScreen(intEval % 256);
                 break;
             case toc_LABEL:
-                if (params[0] == Token_Flag_EvalParams) {
-                    if (paramReal == NULL) {
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
-                        goto syntax_error;
+                if (paramReal != NULL) {
+                    if (intEval >= 0 && intEval < NumLabels) {
+                        #ifdef DEBUG_PROCESSOR
+                        dbg_printf("Setting label %d which is at %p to %d.", intEval, &Interpreter_labels[intEval], programCounter);
+                        #endif
+                        Interpreter_labels[intEval].ProgramCounter = programCounter;
                     }
-                    if (intEval >= 0 && intEval < NumLabels)
-                       Interpreter_labels[intEval].ProgramCounter = programCounter;
                 } else {
                     commandHash = Hash_InLine(params, paramsStringLength);
                     for (intEval = NumLabels - 1; intEval <= 0; intEval--) {
@@ -619,7 +619,9 @@ skip_eval:
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ran out of labels %d.", intEval);
                         goto syntax_error;
                     }
-                    dbg_printf("Settings label %d which is at %p.", intEval, &Interpreter_labels[intEval]);
+                    #ifdef DEBUG_PROCESSOR
+                    dbg_printf("Setting label %d which is at %p to %d.", intEval, &Interpreter_labels[intEval], programCounter);
+                    #endif
                     Interpreter_labels[intEval].Hash = commandHash;
                     Interpreter_labels[intEval].ProgramCounter = programCounter;
                 }
