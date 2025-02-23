@@ -20,18 +20,18 @@ extern "C" {
 #define convertHexPairToByte(buffer, i)     ((hexCharToVal(buffer[i]) << 4) | hexCharToVal(buffer[i+1]))
 
 typedef uint24_t    LabelIndex;
-typedef uint8_t     SpriteIndex;
+typedef uint16_t    SpriteIndex;
 typedef uint8_t     TurtleIndex;
 typedef uint8_t     ProgramToken;
 typedef uint8_t     StackIndex;
-typedef uint8_t     StackPointer;
+typedef uint16_t    StackPointer;
 typedef size_t      ProgramCounter;
 
-#define NumTurtles       10
+#define NumTurtles       16
 // TODO: Can I make this 7 and it'll capture the sprite ints? Might be weird for the end-user
 #define NumDataFields    6
-#define NumStackPages    10
-#define MaxStackDepth    256
+#define NumStackPages    16
+#define MaxStackDepth    512
 #define NumLabels        1024
 #define SystemStackDepth MaxStackDepth
 #define NumSprites       256
