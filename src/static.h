@@ -36,45 +36,45 @@ typedef size_t      ProgramCounter;
 #define SystemStackDepth MaxStackDepth
 #define NumSprites       256
 
-#define Token_NoEvalParams    OS_TOK_DOUBLE_QUOTE
-#define Token_EvalParams      OS_TOK_ADD
+#define Token_Flag_NoEvalParams    OS_TOK_DOUBLE_QUOTE
+#define Token_Flag_EvalParams      OS_TOK_ADD
 
-#define Token_Header_SpritePrefix OS_TOK_COLON
+#define Token_Header_SpritePrefix OS_TOK_DOUBLE_QUOTE
 #define Token_Header_DescPrefix   OS_TOK_DOUBLE_QUOTE
 
-#define Token_NewLine    OS_TOK_NEWLINE
-#define Token_Space      OS_TOK_SPACE
-#define Token_Comment    OS_TOK_DOUBLE_QUOTE
-#define Token_Indent     OS_TOK_SPACE
+#define Token_NewLine       OS_TOK_NEWLINE
+#define Token_Space         OS_TOK_SPACE
+#define Token_Comment       OS_TOK_DOUBLE_QUOTE
+#define Token_Indent        OS_TOK_SPACE
 
-#define Token_Label      OS_TOK_COLON
-#define Token_Goto       OS_TOK_DECIMAL_POINT
-#define Token_LabelOs    OS_TOK_LBL
-#define Token_GotoOs     OS_TOK_GOTO
+#define Shorthand_Label         OS_TOK_COLON
+#define Shorthand_Goto          OS_TOK_DECIMAL_POINT
+#define Shorthand_LabelOs       OS_TOK_LBL
+#define Shorthand_GotoOs        OS_TOK_GOTO
 
-#define Token_If        OS_TOK_IF
-#define Token_IfOs      OS_TOK_QUESTION
+#define Shorthand_If            OS_TOK_IF
+#define Shorthand_IfOs          OS_TOK_QUESTION
 
-#define Token_StopOs    OS_TOK_STOP
+#define Shorthand_StopOs        OS_TOK_STOP
 
-#define Token_GoSub     OS_TOK_MULTIPLY
-#define Token_Ret       OS_TOK_DIVIDE
+#define Shorthand_GoSub         OS_TOK_MULTIPLY
+#define Shorthand_Ret           OS_TOK_DIVIDE
 
-#define Token_Inc       OS_TOK_ADD
-#define Token_Dec       OS_TOK_SUB
+#define Shorthand_Inc           OS_TOK_ADD
+#define Shorthand_Dec           OS_TOK_SUB
 
-#define Token_Forward  OS_TOK_POWER
-#define Token_Left     OS_TOK_LEFT_PAREN
-#define Token_LeftOs   OS_TOK_LEFT
-#define Token_Right    OS_TOK_RIGHT_PAREN
+#define Shorthand_Forward       OS_TOK_POWER
+#define Shorthand_Left          OS_TOK_LEFT_PAREN
+#define Shorthand_LeftOs        OS_TOK_LEFT
+#define Shorthand_Right         OS_TOK_RIGHT_PAREN
 
-#define Token_Push     OS_TOK_LEFT_BRACE
-#define Token_Pop      OS_TOK_RIGHT_BRACE
+#define Shorthand_Push          OS_TOK_LEFT_BRACE
+#define Shorthand_Pop           OS_TOK_RIGHT_BRACE
 
-#define Token_Turtle   OS_TOK_X
+#define Shorthand_Turtle        OS_TOK_X
 
-#define Token_Sto      OS_TOK_STO
-#define Token_Eval     OS_TOK_EVAL
+#define Shorthand_Sto           OS_TOK_STO
+#define Shorthand_Eval          OS_TOK_EVAL
 
 #define Hash_COLOR      0xE809A4
 #define Hash_PEN        0x881068
@@ -149,6 +149,11 @@ typedef size_t      ProgramCounter;
 
 typedef enum TugaOpCode {
     toc_UNKNOWN,
+    toc_ASM,
+    toc_DEFSPRITE,
+    toc_LABEL,
+    toc_GOTO,
+    toc_GOSUB,
     toc_NOP,
     toc_COLOR,
     toc_PEN,
@@ -160,8 +165,6 @@ typedef enum TugaOpCode {
     toc_ANGLE,
     toc_CIRCLE,
     toc_CLEAR,
-    toc_LABEL,
-    toc_GOTO,
     toc_EVAL,
     toc_PUSH,
     toc_POP,
@@ -176,7 +179,6 @@ typedef enum TugaOpCode {
     toc_DEC,
     toc_ZERO,
     toc_STO,
-    toc_GOSUB,
     toc_RET,
     toc_STACK,
     toc_FADEOUT,
@@ -204,14 +206,12 @@ typedef enum TugaOpCode {
     toc_BLITBUFFER,
     toc_ELLIPSE,
     toc_SIZESPRITE,
-    toc_DEFSPRITE,
     toc_SPRITE,
     toc_SCALE,
     toc_PALSHIFT,
-    toc_ASM,
 } TugaOpCode;
 
-#define toc_SkipEval(toc) (toc == toc_GOTO || toc == toc_LABEL || toc == toc_GOSUB || toc == toc_DEFSPRITE)
+#define toc_SkipEval(toc) (toc < toc_NOP    )
 
 #ifdef __cplusplus
 }

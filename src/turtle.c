@@ -18,22 +18,7 @@ float Turtle_fwrapZeroMin(float x, float max) {
 }
 
 __attribute__((hot))
-static inline void drawWrappedLine(Turtle* t, float oldX, float oldY, float newX, float newY) {
-    if (t->X < newX)
-        oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) - GFX_LCD_WIDTH;
-    else if (t->X > newX)
-        oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) + GFX_LCD_WIDTH;
-    
-    if (t->Y < newY)
-        oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) - GFX_LCD_HEIGHT;
-    else if (t->Y > newY)
-        oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) + GFX_LCD_HEIGHT;
-
-    gfx_Line(oldX, oldY, t->X, t->Y);
-}
-
-__attribute__((hot))
-void move(Turtle* t, const float* newXptr, const float* newYptr, bool autoDraw) {
+void Turtle_move(Turtle* t, const float* newXptr, const float* newYptr, bool autoDraw) {
     float newX = *newXptr;
     float newY = *newYptr;
 
@@ -53,7 +38,17 @@ void move(Turtle* t, const float* newXptr, const float* newYptr, bool autoDraw) 
         t->Y = Turtle_fwrapZeroMin(newY, GFX_LCD_HEIGHT);
 
         if (t->Pen > 0 && autoDraw) {
-            drawWrappedLine(t, oldX, oldY, newX, newY);
+            if (t->X < newX)
+                oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) - GFX_LCD_WIDTH;
+            else if (t->X > newX)
+                oldX = Turtle_fwrapZeroMin(oldX, GFX_LCD_WIDTH) + GFX_LCD_WIDTH;
+            
+            if (t->Y < newY)
+                oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) - GFX_LCD_HEIGHT;
+            else if (t->Y > newY)
+                oldY = Turtle_fwrapZeroMin(oldY, GFX_LCD_HEIGHT) + GFX_LCD_HEIGHT;
+
+            gfx_Line(oldX, oldY, t->X, t->Y);
         }
     }
 }
@@ -79,7 +74,7 @@ void Turtle_Forward(Turtle *t, const float* amount, bool autoDraw) {
     float newX = t->X + *amount * sinf(rads);
     float newY = t->Y - *amount * cosf(rads);
     
-    move(t, &newX, &newY, autoDraw);
+    Turtle_move(t, &newX, &newY, autoDraw);
 }
 
 __attribute__((hot))
@@ -107,14 +102,14 @@ void Turtle_SetAngle(Turtle* t, const  float* angle) {
 
 __attribute__((hot))
 void Turtle_Goto(Turtle* t, const float* x, const float* y, bool autoDraw) {
-    move(t, x, y, autoDraw);
+    Turtle_move(t, x, y, autoDraw);
 }
 
 __attribute__((hot))
 void Turtle_Teleport(Turtle* t, const float* x, const float* y, bool autoDraw) {
     float pen = t->Pen;
     t->Pen = 0;
-    move(t, x, y, autoDraw);
+    Turtle_move(t, x, y, autoDraw);
     t->Pen = pen;
 }
 

@@ -1,0 +1,28 @@
+src/interpreter.c:137:19: warning: variable 'comment' set but not used [-Wunused-but-set-variable]
+    ProgramToken* comment = NULL;
+                  ^
+src/interpreter.c:240:20: warning: variable 'lineStartPc' set but not used [-Wunused-but-set-variable]
+    ProgramCounter lineStartPc;
+                   ^
+2 warnings generated.
+src/turtle.c:77:5: remark: 'Turtle_move' not inlined into 'Turtle_Forward' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+    Turtle_move(t, &newX, &newY, autoDraw);
+    ^
+src/turtle.c:105:5: remark: 'Turtle_move' not inlined into 'Turtle_Goto' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]
+    Turtle_move(t, x, y, autoDraw);
+    ^
+src/turtle.c:112:5: remark: 'Turtle_move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]
+    Turtle_move(t, x, y, autoDraw);
+    ^
+remark: src/turtle.c:77:5: 'Turtle_move' not inlined into 'Turtle_Forward' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:105:5: 'Turtle_move' not inlined into 'Turtle_Goto' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:611:33: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=415, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:633:48: 'Seek_ToLabel' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=485, threshold=250) [-Rpass-missed=inline]
+remark: src/interpreter.c:991:17: 'Turtle_Draw' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=345, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:77:5: 'Turtle_move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:105:5: 'Turtle_move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:105:5: 'Turtle_move' not inlined into 'Interpreter_Interpret' because too costly to inline (cost=1060, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:85:30: 'Shell_SelectVariable' not inlined into 'main' because too costly to inline (cost=4305, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:96:26: 'Shell_LoadVariable' not inlined into 'main' because too costly to inline (cost=285, threshold=250) [-Rpass-missed=inline]
+remark: src/main.c:115:9: 'Interpreter_Interpret' not inlined into 'main' because too costly to inline (cost=21100, threshold=250) [-Rpass-missed=inline]
+remark: src/turtle.c:112:5: 'Turtle_move' not inlined into 'Turtle_Teleport' because too costly to inline (cost=1070, threshold=250) [-Rpass-missed=inline]

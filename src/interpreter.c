@@ -185,10 +185,9 @@ void Interpreter_Interpret(size_t programBufferSize, ProgramToken program[progra
     uint24_t framecount = 0;
     float fps = 0.0f;
     char buffer[4] = "XXX";
-
-    memset(Interpreter_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
-        
+    
 program_start:
+    memset(Interpreter_spriteDictionary, 0, sizeof(gfx_sprite_t*)*NumSprites);
     Palette_Default(Palette_PaletteBuffer);
     gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
     gfx_SetTextConfig(gfx_text_clip);
@@ -274,23 +273,23 @@ program_start:
         shortHand = program[programCounter];
         
         switch (shortHand) {
-            case Token_Label:
-            case Token_Goto:
-            case Token_LabelOs:
-            case Token_GotoOs:
-            case Token_If:
-            case Token_IfOs:
-            case Token_Ret:
-            case Token_GoSub:
-            case Token_StopOs:
-            case Token_Push:
-            case Token_Pop:
-            case Token_Turtle:
-            case Token_Sto:
-            case Token_Left:
-            case Token_LeftOs:
-            case Token_Right:
-            case Token_Forward:
+            case Shorthand_Label:
+            case Shorthand_Goto:
+            case Shorthand_LabelOs:
+            case Shorthand_GotoOs:
+            case Shorthand_If:
+            case Shorthand_IfOs:
+            case Shorthand_Ret:
+            case Shorthand_GoSub:
+            case Shorthand_StopOs:
+            case Shorthand_Push:
+            case Shorthand_Pop:
+            case Shorthand_Turtle:
+            case Shorthand_Sto:
+            case Shorthand_Left:
+            case Shorthand_LeftOs:
+            case Shorthand_Right:
+            case Shorthand_Forward:
             case Token_NewLine:
             case Token_Comment:
                 switch (shortHand) {
@@ -306,47 +305,47 @@ program_start:
                         #endif
                         opCode = toc_NOP;
                         break;
-                    case Token_Forward:
+                    case Shorthand_Forward:
                         opCode = toc_FORWARD;
                         break;
-                    case Token_Right:
+                    case Shorthand_Right:
                         opCode = toc_RIGHT;
                         break;
-                    case Token_Left:
-                    case Token_LeftOs:
+                    case Shorthand_Left:
+                    case Shorthand_LeftOs:
                         opCode = toc_LEFT;
                         break;
-                    case Token_Sto:
+                    case Shorthand_Sto:
                         opCode = toc_STO;
                         break;
-                    case Token_Turtle:
+                    case Shorthand_Turtle:
                         opCode = toc_TURTLE;
                         break;
-                    case Token_Push:
+                    case Shorthand_Push:
                         opCode = toc_PUSH;
                         break;
-                    case Token_Pop:
+                    case Shorthand_Pop:
                         opCode = toc_POP;
                         break;
-                    case Token_StopOs:
+                    case Shorthand_StopOs:
                         opCode = toc_STOP;
                         break;
-                    case Token_Ret:
+                    case Shorthand_Ret:
                         opCode = toc_RET;
                         break;
-                    case Token_GoSub:
+                    case Shorthand_GoSub:
                         opCode = toc_GOSUB;
                         break;
-                    case Token_Label:
-                    case Token_LabelOs:
+                    case Shorthand_Label:
+                    case Shorthand_LabelOs:
                         opCode = toc_LABEL;
                         break;
-                    case Token_Goto:
-                    case Token_GotoOs:
+                    case Shorthand_Goto:
+                    case Shorthand_GotoOs:
                         opCode = toc_GOTO;
                         break;
-                    case Token_If:
-                    case Token_IfOs:
+                    case Shorthand_If:
+                    case Shorthand_IfOs:
                         opCode = toc_IF;
                         break;
                 }
@@ -417,14 +416,14 @@ program_start:
             goto skip_eval;
         }
 
-        if (params[0] == Token_NoEvalParams) {
+        if (params[0] == Token_Flag_NoEvalParams) {
             #ifdef DEUBG_PROCESSOR
             dbg_printf("skipping eval because line starts with NoEvalParams", opCode);
             #endif
             goto skip_eval;
         }
 
-        if (params[0] != Token_EvalParams && toc_SkipEval(opCode)) {
+        if (params[0] != Token_Flag_EvalParams && toc_SkipEval(opCode)) {
             #ifdef DEUBG_PROCESSOR
             dbg_printf("skipping eval because %d is skippable opCode", opCode);
             #endif
@@ -569,7 +568,7 @@ skip_eval:
                 gfx_FillScreen(intEval % 256);
                 break;
             case toc_LABEL:
-                if (params[0] == Token_EvalParams) {
+                if (params[0] == Token_Flag_EvalParams) {
                     if (paramReal == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
@@ -598,7 +597,7 @@ skip_eval:
                 break;
             case toc_GOSUB:
             case toc_GOTO:
-                if (params[0] == Token_EvalParams) {
+                if (params[0] == Token_Flag_EvalParams) {
                     if (paramReal == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No label.");
                         goto syntax_error;
@@ -944,7 +943,7 @@ skip_eval:
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Sprite %d undefined. You must call SIZESPRITE first.", intEval);
                     goto syntax_error;
                 }
-                if (params[0] == Token_NoEvalParams) {
+                if (params[0] == Token_Flag_NoEvalParams) {
                     Interpreter_copySprite(paramsStringLength - 1, &params[1], Interpreter_spriteDictionary[currentSpriteIndex]);
                 } else {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Only quoted strings are current supported.");
@@ -952,7 +951,7 @@ skip_eval:
                 }
                 break;
             case toc_ASM:
-                if (params[0] != Token_NoEvalParams) {
+                if (params[0] != Token_Flag_NoEvalParams) {
                     if (ansString == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ans wasn't a string. Type: %d.", type);
                         goto syntax_error;
@@ -963,7 +962,7 @@ skip_eval:
                 }
                 break;
             case toc_TEXT:
-                if (params[0] != Token_NoEvalParams) {
+                if (params[0] != Token_Flag_NoEvalParams) {
                     if (ansString == NULL) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ans wasn't a string. Type: %d.", type);
                         goto syntax_error;

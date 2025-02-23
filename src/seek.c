@@ -42,7 +42,7 @@ ProgramCounter Seek_ToLabel(size_t dataLength, const ProgramToken data[dataLengt
                 c = data[++index];
             }
 
-            if (c == Token_Label || c == Token_LabelOs) {
+            if (c == Shorthand_Label || c == Shorthand_LabelOs) {
                 index++;
                 break;
             }
@@ -71,7 +71,7 @@ ProgramCounter Seek_ToLabel(size_t dataLength, const ProgramToken data[dataLengt
             continue;
         }
         
-        if (labelHash && params[0] != Token_EvalParams) {
+        if (labelHash && params[0] != Token_Flag_EvalParams) {
             uint24_t hash = Hash_InLine(params, paramsLength);
             if (hash == labelHash)
                 return index;
