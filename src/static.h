@@ -28,7 +28,8 @@ typedef uint8_t     StackPointer;
 typedef size_t      ProgramCounter;
 
 #define NumTurtles       10
-#define NumDataFields    3
+// TODO: Can I make this 7 and it'll capture the sprite ints? Might be weird for the end-user
+#define NumDataFields    6
 #define NumStackPages    10
 #define MaxStackDepth    256
 #define NumLabels        1024
@@ -126,9 +127,11 @@ typedef size_t      ProgramCounter;
 #define Hash_SWAPDRAW   0x839D0E
 #define Hash_DRAW       0x83BED3
 
+#define Hash_SCALE      0x000C00 
+
+
 #define Hash_VGF2P8AFFINEINVQB 0x888888
 
-#define Hash_SCALE      0x000C00 
 #define Hash_PEER       0x111111
 
 #define Hash_IFKEYUP    0x000009
@@ -199,11 +202,12 @@ typedef enum TugaOpCode {
     toc_BLITSCREEN,
     toc_BLITBUFFER,
     toc_ELLIPSE,
-    toc_SPRITE,
-    toc_DEFSPRITE,
     toc_SIZESPRITE,
+    toc_DEFSPRITE,
+    toc_SPRITE,
+    toc_SCALE,
     toc_PALSHIFT,
-    toc_ASM
+    toc_ASM,
 } TugaOpCode;
 
 #ifdef __cplusplus

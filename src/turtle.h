@@ -19,6 +19,8 @@ typedef struct __attribute__((packed)) Turtle {
     float Pen;
     float Wrap;
     SpriteIndex SpriteNumber;
+    uint8_t SpriteScaleX;
+    uint8_t SpriteScaleY;
 } Turtle;
 
 void Turtle_Initialize(Turtle* t);

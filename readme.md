@@ -45,11 +45,6 @@ Icon is a 16x16 BASIC palette sprite (similar to DCS header).
 
 For sub-programs, just leave out "0TUGA", and make the first line just "Return" (so it doesn't work as a BASIC program).
 
-
-### Current implementation
-
-As of right now, the code does not verify the header, and it takes for granted there will be a description comment. Also, the program name is hardcoded rather than coming from ans.
-
 ## Commands
 
 Commands are typed in all caps and parameters are evaluated using the OS evaluation. Commands with `{` are expecting a list. Commands that don't accept lists can take a list, and only the first element will be used.
@@ -92,8 +87,12 @@ Comments start with `"` and are skipped entirely.
 | DRAWSCREEN | Draws to the screen |
 | DRAWBUFFER | Draws to the buffer |
 | SWAPDRAW   | Swaps the screen and buffer |
-| SIZESPRITE {[num],[width],[height] | Sets the size of a sprite in the sprite dictionary. This should be called first as it initializes the sprite. |
-| DEFSPRITE "HEX SPRITE DATA" | Defines the most-recently-sized sprite in the sprite dictionary with the hex sprite string |
+
+#### Sprites and Tilemaps
+
+| Command | Description |
+| - | - |
+| DEFSPRITE "[index],[w],HEX SPRITE DATA" | Defines a sprite, allocating it as needed, adding at [index] in the sprite dictionary. Height is assumed by length. |
 | SPRITE [num] | Sets the turtle to be sprite [num] in the sprite dictionary |
 
 #### Palettes
@@ -214,19 +213,13 @@ Label names should be all-caps.
 | BLITSCREEN | Blits the screen to the buffer |
 | BLITBUFFER | Blits the buffer to the screen |
 
-#### Sprites
+#### Sprites and Tilemaps (proposed)
 
 | Command | Description |
 | - | - |
-| LOADSPRITES "APPVAR | Loads a sprite dictionary from APPVAR |
+| LOADSPRITES "[APPVAR] | Loads a sprite dictionary from [APPVAR] |
 | SPRITE {[num],[x],[y] | Draws sprite [num] at [x],[y] |
-
-#### Tilemaps
-
-| Command | Description |
-| - | - |
-| SIZETILEMAP {[width],[height] | Sets the size of the tilemap to [width]x[height] |
-| DEFTILEMAP "HEX TILEMAP DATA" | Defines the hex tilemap data |
+| DEFTILEMAP "[w],HEX TILEMAP DATA" | Defines the hex tilemap data |
 | TILEMAP {[x],[y],[map_x],[map_y],[view_width],[view_height] | Draws a tilemap at [x],[y] on the screen, offset at [map_x],[map_y] of [view_width]x[view_height] tiles |
 
 #### Palettes (proposed)
@@ -275,11 +268,14 @@ Label names should be all-caps.
 | imaginary i | COLOR |
 | angle | ANGLE |
 | single-quote | SPEED |
+| ^r | SPRITE |
 | X | TURTLE |
 | 0 | ZERO |
 | theta | STACK |
 | < | FADEOUT |
 | > | FADEIN |
+| = | DEFSPRITE |
+| != | DEFTILEMAP |
 
 #### Unassigned (Main keys)
 
@@ -304,11 +300,8 @@ Label names should be all-caps.
 
 | Symbol | Command |
 | - | - |
-| = | |
-| != | |
 | <= | |
 | >= | |
-
 
 #### OS
 
@@ -323,6 +316,19 @@ Some additional conveniences from programming commands, space built in to token:
 | getkey | GETKEY |
 | LEFT | LEFT |
 | PO[PV]EC | POPVEC |
+
+## Sprite and Tilemap Data Formats
+
+Hex strings are strings of characters, 0-9 and A-F. Every two characters is one byte.
+
+### Sprite Data Format
+
+Sprites are stored as a byte per pixel, from left to right, top to bottom (column major). In a sprite dictionary AppVar, for each sprite, there's a byte for width, a byte for height, and then the sprite data in column-major format.
+
+### Tilemap Data Format
+
+
+
 
 ## Invocation of additional Tuga programs
 

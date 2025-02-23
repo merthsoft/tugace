@@ -139,12 +139,16 @@ __attribute__((hot))
 void Turtle_Draw(Turtle* t, gfx_sprite_t** spriteDictionary) {
     if (!t->Initialized || !t->Pen)
         return;
-
+        
     uint24_t x = (uint24_t)t->X;
     uint24_t y = (uint24_t)t->Y;
     
     if (t->Pen < 0) {
-        gfx_Sprite(spriteDictionary[t->SpriteNumber], x, y);
+        if (t->SpriteScaleX == 0 || t->SpriteScaleY == 0) {
+            gfx_Sprite(spriteDictionary[t->SpriteNumber], x, y);
+        } else {
+            gfx_ScaledSprite_NoClip(spriteDictionary[t->SpriteNumber], x, y, t->SpriteScaleX, t->SpriteScaleY);
+        }
     } else {
         if (x >= 0 && x < GFX_LCD_WIDTH
             && y >= 0 && y < GFX_LCD_HEIGHT) {

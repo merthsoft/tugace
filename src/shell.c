@@ -9,6 +9,7 @@
 #include "shell.h"
 
 ShellErrorCode Shell_GetNameFromAns(uint8_t varNameBufferSize, char varNameBuffer[varNameBufferSize], uint8_t* ansStringLength) {
+    *ansStringLength = 0;
     uint8_t ansType;
     string_t* ans = os_GetAnsData(&ansType);
     if (ans == NULL || ansType != OS_TYPE_STR) {
@@ -188,9 +189,9 @@ ShellErrorCode Shell_SelectVariable(void *varVatPointer, uint8_t varNameBufferSi
                                         ti_Read(&c[1], 1, 1, handle);
                                     void* ptr = &c;
                                     
-                                    if (c[0] == Token_NewLine) {
+                                    if (c[0] == Token_NewLine)
                                         lineFlag = true;
-                                    if (gfx_GetTextY() >= GFX_LCD_WIDTH - 8)
+                                    else if (gfx_GetTextY() >= GFX_LCD_WIDTH - 8)
                                         lineFlag = true;
                                     else
                                         gfx_PrintString(ti_GetTokenString(&ptr, NULL, NULL));

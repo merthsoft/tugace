@@ -25,14 +25,34 @@
 #include "shell.h"
 #include "static.h"
 
-#define programBufferSize (65536/2)
-static ProgramToken main_programBuffer[programBufferSize];
+#define programBufferSize (OS_VAR_MAX_SIZE-5)
 #define varNameBufferSize 10
+#define tempVarName "TugaTemp"
+
+uint8_t main_getTempAppVar() {
+    if (os_ChkFindSym(OS_TYPE_APPVAR, tempVarName, NULL, NULL)) {
+        ti_Delete(tempVarName);
+    }
+
+    if (!os_CreateAppVar(tempVarName, programBufferSize)) {
+        return 0;
+    }
+    return ti_Open(tempVarName, "r+");
+}
+
+ProgramToken* main_lockVar(bool archiveStatus, uint8_t handle) {
+    if (!ti_SetArchiveStatus(archiveStatus, handle)) {
+        return NULL;
+    }
+    ti_Close(handle);
+    ti_Open(tempVarName, archiveStatus ? "r" : "r+");
+    return ti_GetDataPtr(handle);
+}
 
 int main(void) {
     #ifdef DEBUG
-    dbg_printf("\nTUGA\n");
-    dbg_printf("Free user RAM at start: %d.\\n", os_MemChk(NULL));
+    dbg_printf("\nTUGA START\n");
+    dbg_printf("Free user RAM: %d.\n", os_MemChk(NULL));
     #endif
 
     char varNameBuffer[varNameBufferSize];
@@ -42,38 +62,64 @@ int main(void) {
     bool showShell = true;
     void* vatPointer = NULL;
     int8_t selectedItemNumber = 0;
-
-    ShellErrorCode shellErrorCode = Shell_GetNameFromAns(varNameBufferSize, varNameBuffer, &ansStringLength);
-    if (shellErrorCode == sec_Success) {
-        shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, programBufferSize, main_programBuffer, &programSize);
-        showShell = shellErrorCode != sec_Success;
+    
+    ProgramToken* programBuffer = NULL;
+    uint8_t programBufferHandle = main_getTempAppVar();
+    if (programBufferHandle == 0) {
+        dbg_printf("Couldn't open appvar.\n");
+        return 1;
     }
-
-    if (!showShell)
-        ansStringLength = 0;
     
     gfx_Begin();
     Const_Initialize();
+    
+    ShellErrorCode shellErrorCode = Shell_GetNameFromAns(varNameBufferSize, varNameBuffer, &ansStringLength);
+    if (shellErrorCode != sec_Success) {
+        showShell = true;
+    }
 
-    do {
+    while (true) {
+        clear_key_buffer();
+
         if (showShell) {
-            clear_key_buffer();
             shellErrorCode = Shell_SelectVariable(vatPointer, varNameBufferSize, varNameBuffer, &varType, &selectedItemNumber);
-            if (shellErrorCode == sec_Success) {
-                shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, programBufferSize, main_programBuffer, &programSize);
+            if (shellErrorCode != sec_Success) {
+                dbg_printf("Error selecting variable from shell: %d.", shellErrorCode);
+                break;
             }
         }
+        
+        programBuffer = ti_GetDataPtr(programBufferHandle);
+        shellErrorCode = Shell_LoadVariable(varNameBufferSize, varNameBuffer, varType, programBufferSize, programBuffer, &programSize);
 
-        if (shellErrorCode == sec_Success) {
-            Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
-            gfx_SetDrawScreen();
-            Palette_Default(Palette_PaletteBuffer);
-            gfx_FillScreen(0);
-            Interpreter_Interpret(programBufferSize, main_programBuffer, programSize);
-        } else {
-            showShell = false;
+        if (shellErrorCode != sec_Success) {
+            dbg_printf("Error loading variable from shell: %d.", shellErrorCode);
+            break;
         }
-    } while (showShell);
+        Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
+        gfx_SetDrawScreen();
+        Palette_Default(Palette_PaletteBuffer);
+        gfx_FillScreen(0);
+        Palette_FadeIn(Palette_PaletteBuffer, 0, 255, 20);
+        clear_key_buffer();
+
+        programBuffer = main_lockVar(true, programBufferHandle);
+        if (programBuffer == NULL) {
+            dbg_printf("Couldn't lock appvar.\n");
+            break;
+        }
+        
+        Interpreter_Interpret(programBufferSize, programBuffer, programSize);
+        programBuffer = main_lockVar(false, programBufferHandle);
+        
+        if (programBuffer == NULL) {
+            dbg_printf("Couldn't get appvar data pointer.\n");
+            break;
+        }
+        
+        // Delete the header from the appvar so it doesn't show up in the shell
+        programBuffer[0] = 0;        
+    }
 
     Palette_FadeOut(Palette_PaletteBuffer, 0, 255, 20);
     gfx_SetDrawScreen();
@@ -82,15 +128,23 @@ int main(void) {
     
     if (ansStringLength > 0) {
         // TODO: Do this without malloc
-        string_t* backupString = malloc(sizeof(string_t) + 10);
-        backupString->len = ansStringLength;
+        string_t* backupString = ti_MallocString(ansStringLength);
         strncpy(backupString->data, varNameBuffer, ansStringLength);
         os_CreateString(OS_VAR_ANS, backupString);
         free(backupString);
     }
 
+    ti_Close(programBufferHandle);
+    ti_Delete(tempVarName);
+
     Palette_FadeIn(Palette_PaletteBuffer, 0, 255, 5);
 
     gfx_End();
+
+    #ifdef DEBUG
+    dbg_printf("\nFree user RAM: %d.", os_MemChk(NULL));
+    dbg_printf("\nTUGA END\n");
+    #endif
+
     return 0;
 }
