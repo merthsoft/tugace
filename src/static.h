@@ -34,7 +34,7 @@ typedef size_t      ProgramCounter;
 #define MaxStackDepth    256
 #define NumLabels        1024
 #define SystemStackDepth MaxStackDepth
-#define NumSprites       64
+#define NumSprites       256
 
 #define Token_NoEvalParams    OS_TOK_DOUBLE_QUOTE
 #define Token_EvalParams      OS_TOK_ADD
