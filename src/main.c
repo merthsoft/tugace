@@ -59,7 +59,7 @@ int main(void) {
     uint8_t varType = OS_TYPE_PRGM;
     size_t programSize = 0;
     uint8_t ansStringLength = 0;
-    bool showShell = true;
+    bool showShell = false;
     void* vatPointer = NULL;
     int8_t selectedItemNumber = 0;
     
