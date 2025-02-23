@@ -67,11 +67,15 @@ Icon is a 16x16 BASIC palette sprite (similar to DCS header).
 
 For sub-programs, just leave out "0TUGA", and make the first line just "Return" (so it doesn't work as a BASIC program).
 
+## OS Variables
+
+You have access to the variables A-Z and Theta for storing. Additionally, the variables are the system variables. If you do `1->A` before running your program, and your program is `INC A`, then on the homescreen of TI-OS you check the value of `A`, it will be `2`. Lists can be used for parameters, but can't currently be directly written to. Eventually, `STO` will work on Real, List, Matrix, and String types.
+
 ## Commands
 
 Commands are typed in all caps and parameters are evaluated using the OS evaluation. Commands with `{` are expecting a list. Commands that don't accept lists can take a list, and only the first element will be used.
 
-Because TUGA uses the OS evaluation, your parameters can be formulas--and they can even be complex (imaginary value is truncated before passed on to the turtle itself). This means you can do `COLOR randInt(0, 255` to set the turtle to a random color. Additionally, the variables are the system variables. If you do `1->A` before running your program, and your program is `INC A`, then on the homescreen of TI-OS you check the value of `A`, it will be `2`.
+Because TUGA uses the OS evaluation, your parameters can be formulas--and they can even be complex (imaginary value is truncated before passed on to the turtle itself). This means you can do `COLOR randInt(0, 255` to set the turtle to a random color.
 
 Comments start with `"` and are skipped entirely.
 
@@ -187,15 +191,24 @@ Label names should be all-caps.
 
 ### Proposed
 
+#### Turtle (proposed)
+
+| Command | Description |
+| - | - |
+| SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
+| SCALE {[x],[y] | Sets the turtles sprite scale |
+| TRANS | Flags the sprite as to be draws as transparent |
+| PEN {[fg],[bg] | Can set the background color of text |
+
 #### Misc
 
 | Command | Description |
 | - | - |
 | STO [var] | Stores Ans to [var] |
 | EVAL [code] | Evaluates arbitrary BASIC code in [code] |
-| SPEED [val] | Sets the turtle's auto-movement speed. Effective call FORWARD [val] each frame, evaluated when set |
 | ASM [code] | Runs ASM [code] |
 | FORWARD {[X],[Y] | Disregards angle, and just moves to {x + [X], y + [Y]} |
+| KEYS [val] | Allows users to disable quit and pause keys |
 
 #### Control flow (propsed)
 
@@ -220,27 +233,27 @@ Label names should be all-caps.
 | PEER {[index],[count] | Returns the value in [index] through [index]+[count] |
 | PROD {[index],[val0],[val1]... | Writes [valx] to stack at [index + x] |
 
-#### Drawing commands
+#### Graphics (proposed)
 
 | Command | Description |
 | - | - |
 | LINE {[x1],[y1],[x2],[y2] | Draws a line from (x1, y1) to (x2, y2) |
 | RECT {[x1],[y1],[w],[h] | Draws a rectangle at (x1, y1) that's w by h |
-| FPS [val] | Turns off the FPS counter if [val] is 0 |
-
-#### Screen commands
-
-| Command | Description |
-| - | - |
+| PERF [val] | Turns off the performance counter if [val] is 0 |
 | BLITSCREEN | Blits the screen to the buffer |
 | BLITBUFFER | Blits the buffer to the screen |
+| TRANSINDEX [val] | Sets the transparent index |
+| TEXTTRANSINDEX [val] | Sets the transparent index for text |
 
 #### Sprites and Tilemaps (proposed)
 
 | Command | Description |
 | - | - |
 | LOADSPRITES "[APPVAR] | Loads a sprite dictionary from [APPVAR] |
-| SPRITE {[num],[x],[y] | Draws sprite [num] at [x],[y] |
+| SPRITE {[num],[x],[y],[xScale],[yScale] | Draws sprite [num] at [x],[y] [xScale],[yScale] |
+| ROTSPRITE {[num],[x],[y],[rotation],[scale] | Draws sprite [num] at [x],[y], rotated, with optional [scale] |
+| TRANSSPRITE {[num],[x],[y],[xScale],[yScale] | Draws sprite [num] at [x],[y] [xScale],[yScale] |
+| TRANSROTSPRITE {[num],[x],[y],[rotation],[scale] | Draws sprite [num] at [x],[y], rotated, with optional [scale] |
 | DEFTILEMAP "[w],HEX TILEMAP DATA" | Defines the hex tilemap data |
 | TILEMAP {[x],[y],[map_x],[map_y],[view_width],[view_height] | Draws a tilemap at [x],[y] on the screen, offset at [map_x],[map_y] of [view_width]x[view_height] tiles |
 
@@ -249,6 +262,7 @@ Label names should be all-caps.
 | Command | Description |
 | - | - |
 | DEFPAL [list] | Sets the palette to [list] |
+| DEFPAL [hex] | Sets the palette to data in [hex] string |
 | PALSHIFT {[start], [amount], [length] | Shifts the palette starting at [start] ending at [start] + [length] by [amount], [amount] and [length] are optional and default to 1 and the full palette length |
 
 ##### Additional palettes
