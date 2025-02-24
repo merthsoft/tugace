@@ -8,9 +8,9 @@ TUGA is the accompanying interpreter. It uses the built-in program format as its
 
 ## Links
 
-Github: https://github.com/merthsoft/tugace/
+Github: <https://github.com/merthsoft/tugace/>
 
-Alpha: https://merthsoft.com/tuga/Tuga.zip
+Alpha: <https://merthsoft.com/tuga/Tuga.zip>
 
 ## IN CONSTANT FLUX
 
@@ -35,9 +35,11 @@ While the program is running, press "ENTER" to pause execution.
 ## Header
 
 ### Minimal
+
 Programs should start with `0TUGA` to be recognized by the shell. It's recommended that you at the very least include `:Return` after `0TUGA`, so it doesn't function as a TI-BASIC program. Additionally, it supports self-launching, so you can still do:
 
 ### Self-launching
+
 ```TUGA
 0TUGA:"PROGNAME":Asm(prgmPROGNAME:Return
 ```
@@ -353,20 +355,72 @@ Some additional conveniences from programming commands, space built in to token:
 | LEFT | LEFT |
 | PO[PV]EC | POPVEC |
 
-## Sprite and Tilemap Data Formats
+## Subroutines
+
+Subroutines are defined as labels, contain code, and end with `RET`:
+
+```TUGA
+LABEL SUBROUTINE
+    " CODE
+RET
+```
+
+And invoked with `GOSUB`: `GOSUB SUBROUTINE`. When you do this, the line after the GOSUB is pushed onto the system stack, and the program flow goes to the label. When it encounters `RET`, the address is popped off the stack, and program flow returns to that address. This lets you jump to a block of code and return where execution was. All variables are shared, so it's up to you manage all that.
+
+### Function Definitions (proposal)
+
+Functions are defined with `FUNC`, a name, and a list of parameters, and end with `RET`:
+
+```TUGA
+FUNC FUNCTION(A,B,C
+    " CODE
+RET
+```
+
+And invoked with `CALL`: `CALL FUNCTION(X,Y,Z`. The function is re-writte as
+
+``` TUGA
+LABEL FUNCTION
+    " `SYSPUSH` pushes onto the system stack
+    SYSPUSH {A,B,C 
+    " This is on the selected stack
+    PEEK {A,B,C
+    " CODE
+
+" `SYSPOP` pops off the system stack
+SYSPOP {A,B,C
+RET
+```
+
+```TUGA
+PUSH {X,Y,Z
+GOSUB FUNCTION
+POP {X,Y,Z
+```
+
+Alternatively, *all* push and pop commands could happen on the system stack.
+
+## Stack Default (proposal)
+
+Parameterless commands should operate on the stack, or there should be a way to say so. e.g. `FOWARD` should pop a value off the stack and move forward that amount. `STO K` should pop off the stack and store to K. Etc.
+
+## Data Formats
 
 Hex strings are strings of characters, 0-9 and A-F. Every two characters is one byte.
 
 ### Sprite Data Format
 
-Sprites are stored as a byte per pixel, from left to right, top to bottom (column major). In a sprite dictionary AppVar, for each sprite, there's a byte for width, a byte for height, and then the sprite data in column-major format.
+Sprites are stored as a byte per pixel, from left to right, top to bottom (column major). 
 
-### Tilemap Data Format
+#### Sprite AppVar (proprosal)
 
+In a sprite dictionary AppVar, for each sprite, there's a byte for width, a byte for height, and then the sprite data in column-major format.
 
+### Tilemap Data Format (proprosal)
 
+This will loosely match the toolchain tilemap format.
 
-## Invocation of additional Tuga programs
+## Invocation of additional Tuga programs (proposal)
 
 Still needs a lot of design work. Probably when a program gets invoked, it gets loaded and copied after the executing program.
 
