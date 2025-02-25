@@ -21,6 +21,7 @@
 #include <debug.h>
 #ifdef DEBUG
 //#define DEBUG_PROCESSOR
+#define DEBUG_OUTPUT_PROGRAM
 
 void debug_print_tokens(const void* buffer, size_t bufferLength, size_t* stringLength) {
     size_t runningStringLength = 0;
@@ -169,7 +170,7 @@ void Interpreter_Interpret(size_t programBufferSize, ProgramToken program[progra
         dbg_printf("\n");
     }
     
-    #ifdef DEBUG_PROCESSOR
+    #ifdef DEBUG_OUTPUT_PROGRAM
     ProgramCounter dbgPc = programCounter;
     while (dbgPc < programSize) {
         dbg_printf("%.8d: ", dbgPc);
@@ -254,7 +255,7 @@ program_start:
     uint24_t errNo;
     
     #ifdef DEBUG
-    dbg_printf("Starting program exection.\n");
+    dbg_printf("\nStarting program exection.\n");
     #endif
     while (!exit) {
         if (!running)
@@ -627,56 +628,63 @@ skip_eval:
                 }
                 break;
             case toc_GOSUB:
-            case toc_GOTO:
+            case toc_GOTO: {
+                ProgramCounter newPc = 0;
                 if (paramReal != NULL) {
                     if (intEval >= NumLabels || intEval < 0) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid label: %d.", intEval);
                         goto syntax_error;
                     }
-                    ProgramCounter newPc = Interpreter_labels[intEval].ProgramCounter;
+                    newPc = Interpreter_labels[intEval].ProgramCounter;
                     if (newPc <= programStart || newPc >= programSize) {
                         newPc = Seek_ToLabel(programSize, program, programStart, 0, intEval);
                         if (newPc <= programStart || newPc >= programSize) {
                             snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %d - %d.", intEval, newPc);
                             goto syntax_error;
                         }
+                        #ifdef DEBUG_PROCESSOR
+                        dbg_printf("Setting label %d which is at %p to %d.", intEval, &Interpreter_labels[intEval], programCounter);
+                        #endif
                         Interpreter_labels[intEval].ProgramCounter = newPc;
                     }
-                    programCounter = newPc;
                 } else {
                     commandHash = Hash_InLine(params, paramsStringLength);
-                    LabelIndex lastEmpty = NumLabels;
                     for (intEval = NumLabels - 1; intEval >= 0; intEval--) {
-                        if (Interpreter_labels[intEval].Hash == commandHash) {
-                            programCounter = Interpreter_labels[intEval].ProgramCounter;
-                            break;
-                        }
-                        if (Interpreter_labels[intEval].Hash == 0) {
-                            lastEmpty = intEval;
+                        if (Interpreter_labels[intEval].Hash == 0
+                            || Interpreter_labels[intEval].Hash == commandHash) {
                             break;
                         }
                     }
 
-                    if (intEval == NumLabels) {
-                        ProgramCounter newPc = Seek_ToLabel(programSize, program, programStart, commandHash, 0);
+                    if (Interpreter_labels[intEval].Hash == 0) {
+                        newPc = Seek_ToLabel(programSize, program, programStart, commandHash, 0);
                         if (newPc <= programStart || newPc >= programSize) {
                             snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %d - %d.", newPc, newPc);
                             goto syntax_error;
                         }
-                        Interpreter_labels[lastEmpty].ProgramCounter = newPc;
-                        Interpreter_labels[lastEmpty].Hash = commandHash;
-                        programCounter = newPc;
+                        #ifdef DEBUG_PROCESSOR
+                        dbg_printf("Setting label %d which is at %p to %d.", intEval, &Interpreter_labels[intEval], programCounter);
+                        #endif
+                        Interpreter_labels[intEval].ProgramCounter = newPc;
+                        Interpreter_labels[intEval].Hash = commandHash;
                     }
+
+                    newPc = Interpreter_labels[intEval].ProgramCounter;
                 }
+                
+                #ifdef DEBUG_PROCESSOR
+                dbg_printf("Jumping to %.8d ", newPc);
+                #endif
+                programCounter = newPc;                        
 
                 if (opCode == toc_GOSUB) {
                     float pc = (float)lineEndPc;
                     Push_InLine(Interpreter_systemStack, &Interpreter_systemStackPointer, &pc);
                     #ifdef DEBUG_PROCESSOR
-                        dbg_printf("pushing PC onto stack %f", pc);
+                    dbg_printf("pushing PC onto stack %d", (int24_t)pc);
                     #endif
                 }
-                break;
+                break;}
             case toc_PUSH:
                 if (paramsList == NULL) {
                     if (Interpreter_stackPointers[currentStackIndex] == MaxStackDepth-1) {

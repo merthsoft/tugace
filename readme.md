@@ -201,12 +201,12 @@ Label names should be all-caps.
 | SCALE {[x],[y] | Sets the turtles sprite scale |
 | TRANS | Flags the sprite as to be draws as transparent |
 | PEN {[fg],[bg] | Can set the background color of text |
+| ROT [angle] | Sets the turtle's sprite's rotation |
 
 #### Misc
 
 | Command | Description |
 | - | - |
-| STO [var] | Stores Ans to [var] |
 | EVAL [code] | Evaluates arbitrary BASIC code in [code] |
 | ASM [code] | Runs ASM [code] |
 | FORWARD {[X],[Y] | Disregards angle, and just moves to {x + [X], y + [Y]} |
@@ -251,7 +251,7 @@ Label names should be all-caps.
 
 | Command | Description |
 | - | - |
-| LOADSPRITES "[APPVAR] | Loads a sprite dictionary from [APPVAR] |
+| LOADSPRITES "[index],[APPVAR] | Loads a sprite dictionary from [APPVAR] into [index], which can be left out and defaults to 0 |
 | SPRITE {[num],[x],[y],[xScale],[yScale] | Draws sprite [num] at [x],[y] [xScale],[yScale] |
 | ROTSPRITE {[num],[x],[y],[rotation],[scale] | Draws sprite [num] at [x],[y], rotated, with optional [scale] |
 | TRANSSPRITE {[num],[x],[y],[xScale],[yScale] | Draws sprite [num] at [x],[y] [xScale],[yScale] |
@@ -282,6 +282,11 @@ Label names should be all-caps.
 
 | Symbol | Command |
 | - | - |
+| ^ | FORWARD |
+| ( | LEFT |
+| ) | RIGHT |
+| pi | MOVE |
+| ? | IF |
 | + | INC |
 | - | DEC |
 | { | PUSH |
@@ -289,20 +294,15 @@ Label names should be all-caps.
 | small E | PEEK |
 | [u] | PEER |
 | [v] | PROD |
+| [ | PUSHVEC |
+| ] | POPVEC |
+| [w] | PEEKVEC |
 | e | EVAL |
 | -> | STO |
 | : | LABEL |
 | . | GOTO |
 | * | GOSUB |
 | / | RET |
-| ^ | FORWARD |
-| pi | MOVE |
-| ( | LEFT |
-| ) | RIGHT |
-| [ | PUSHVEC |
-| ] | POPVEC |
-| = | PEEKVEC |
-| ? | IF |
 | imaginary i | COLOR |
 | angle | ANGLE |
 | single-quote | SPEED |
@@ -331,7 +331,6 @@ Label names should be all-caps.
 | tan^-1( | |
 | sqrt( | |
 | 10^x | |
-| [w] | |
 | e^( | |
 
 #### Unassigned (Test)

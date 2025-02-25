@@ -212,7 +212,7 @@ typedef enum TugaOpCode {
     toc_PALSHIFT,
 } TugaOpCode;
 
-#define toc_SkipEval(toc) (toc < toc_NOP    )
+#define toc_SkipEval(toc) (toc <= toc_NOP)
 
 #ifdef __cplusplus
 }

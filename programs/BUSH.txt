@@ -10,59 +10,49 @@ RIGHT 90
 CLEAR 0
 PEN 1
 FADEIN 10
-{8
-*0
+
+→{W,8
+GOSUB branch
+
 PEN 0
-:1
-PALSHIFT
-.1
-:0
-}W
-?W≤5
-RET
-COLOR randInt(1,255
-^W
-{{W,W-1
-*0
-}W
-^W
-{{W,W-1
-*0
-}W
-)randInt(20,25
-PUSHVEC
-)randInt(20,25
-^W
-{{W,W-1
-*0
-}W
-(randInt(20,25
-^W
-{{W,W-1
-*0
-}W
-(randInt(20,25
-^W
-{{W,W-1
-*0
-}W
-POPVEC
-(randInt(20,25
-PUSHVEC
-(randInt(20,25
-^W
-{{W,W-1
-*0
-}W
-)randInt(20,25
-^W
-{{W,W-1
-*0
-}W
-)randInt(20,25
-^W
-{{W,W-1
-*0
-}W
-POPVEC
+Lbl palshift
+  PALSHIFT
+  Goto palshift
+
+Lbl branch
+  PUSH {W
+  ?W≤5
+    Goto end_branch
+  →{W,W-1
+  COLOR randInt(1,255
+  ^W
+  GOSUB branch
+  ^W
+  GOSUB branch
+  RIGHT randInt(20,25
+  PUSHVEC
+  RIGHT randInt(20,25
+  ^W
+  GOSUB branch
+  LEFT randInt(20,25
+  ^W
+  GOSUB branch
+  LEFT randInt(20,25
+  ^W
+  GOSUB branch
+  POPVEC
+  LEFT randInt(20,25
+  PUSHVEC
+  LEFT randInt(20,25
+  ^W
+  GOSUB branch
+  RIGHT randInt(20,25
+  ^W
+  GOSUB branch
+  RIGHT randInt(20,25
+  ^W
+  GOSUB branch
+  POPVEC
+Lbl end_branch
+  POP W
 RET
