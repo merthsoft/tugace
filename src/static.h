@@ -128,13 +128,14 @@ typedef size_t      ProgramCounter;
 #define Hash_DRAWBUFFER 0x3882ED
 #define Hash_SWAPDRAW   0x839D0E
 #define Hash_DRAW       0x83BED3
+#define Hash_PEER       0x8A1C91
+#define Hash_ANSLIST    0x444BA3
 
 #define Hash_SCALE      0x000C00 
 
 
 #define Hash_VGF2P8AFFINEINVQB 0x888888
 
-#define Hash_PEER       0x111111
 
 #define Hash_IFKEYUP    0x000009
 #define Hash_KEYUP      0x000032
@@ -155,6 +156,7 @@ typedef enum TugaOpCode {
     toc_LABEL,
     toc_GOTO,
     toc_GOSUB,
+    toc_ANSLIST,
     toc_NOP,
     toc_COLOR,
     toc_PEN,

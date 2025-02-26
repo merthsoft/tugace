@@ -69,6 +69,11 @@ int main(void) {
         dbg_printf("Couldn't open appvar.\n");
         return 1;
     }
+
+    // TODO: Hook into garbage collect hooks.
+    // If we're going to trigger a garbage collect, try to froce it now
+    main_lockVar(true, programBufferHandle);
+    main_lockVar(false, programBufferHandle);
     
     gfx_Begin();
     Const_Initialize();

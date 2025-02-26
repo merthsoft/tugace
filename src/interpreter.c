@@ -239,8 +239,9 @@ program_start:
     cplx_list_t* paramsListCplx;
     ProgramToken* params;
     float retList[MaxStackDepth];
-
-    #define getListElementPointerOrDefaultPointer(i,d)  (paramsList == NULL ? paramsListCplx == NULL ? &d : &paramsListCplx->items[i].real : &paramsList->items[i])
+    
+    #define getListElementPointerOrNull(i)              (paramsList == NULL ? paramsListCplx == NULL ? NULL : &(paramsListCplx->items[i].real) : &paramsList->items[i])
+    #define getListElementPointerOrDefaultPointer(i,d)  (paramsList == NULL ? paramsListCplx == NULL ? &d : &(paramsListCplx->items[i].real) : &paramsList->items[i])
     #define getListElementFloatOrDefault(i,d)           (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToFloat(&paramsListCplx->items[i].real) : os_RealToFloat(&paramsList->items[i]))
     #define getListElementIntOrDefault(i,d)             (paramsList == NULL ? paramsListCplx == NULL ? d : os_RealToInt24(&paramsListCplx->items[i].real) : os_RealToInt24(&paramsList->items[i]))
 
@@ -407,14 +408,24 @@ program_start:
         eval = 0.0f;
         intEval = 0;
         
-        paramVar[0] = params[0];
-        // TODO: Get multi-token variables
-        paramReal = NULL;
-        paramsList = NULL;
-        paramsListCplx = NULL;
-        retListPointer = 0;
-        ans = NULL;
-        ansString = NULL;
+        memset(paramVar, 0, 4);
+        type = paramVar[0] = params[0];
+        if (type == OS_TOK_LIST   ||
+            type == OS_TOK_STR    ||
+            type == OS_TOK_MATRIX ||
+            type == OS_TOK_STAT   ||
+            type == OS_TOK_SYS    ||
+            type == OS_TOK_EQU    ||
+            type == OS_TOK_GRAPH) 
+        { paramVar[1] = params[1]; }
+        else if (type == OS_TOK_LIST_L) {
+            paramVar[1] = params[1];
+            paramVar[2] = params[2];
+            // TODO: Support longer lists
+            if (paramsStringLength > 2) {
+                paramVar[3] = params[3];
+            }
+        }
 
         if (paramsStringLength == 0) {
             #ifdef DEUBG_PROCESSOR
@@ -439,6 +450,13 @@ program_start:
             #endif
             goto skip_eval;
         }
+
+        paramReal = NULL;
+        paramsList = NULL;
+        paramsListCplx = NULL;
+        retListPointer = 0;
+        ans = NULL;
+        ansString = NULL;
 
         if ((errNo = os_Eval(params, paramsStringLength))) {
             snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Failed to eval \"%.*s\" length: %d error: %d.", paramsStringLength, (const char*)params, paramsStringLength, errNo & OS_E_MASK);
@@ -744,6 +762,47 @@ skip_eval:
                     os_SetRealVar(paramVar, paramReal);
                 }
                 break;
+            case toc_PEER:
+                if (paramsListLength == 0) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameters supplied. Expected 1.");
+                    goto syntax_error;
+                }
+                if (intEval < 0) {
+                    intEval += Interpreter_stackPointers[currentStackIndex];
+                }
+                eval = getListElementIntOrDefault(1, 1);
+                for (retListPointer = 0; retListPointer < eval; retListPointer++) {
+                    retList[retListPointer] = Interpreter_stacks[currentStackIndex][retListPointer];
+                }
+                break;
+            case toc_ANSLIST:
+                if (paramsList == NULL) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Ans must be real list.");
+                    goto syntax_error;
+                }
+                if (paramVar[0] != (char)OS_TOK_LIST && paramVar[0] != (char)OS_TOK_LIST_L) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Parameter should be a list variable.");
+                    goto syntax_error;
+                }
+                errNo = os_SetListDim(paramVar, paramsListLength);
+                if (errNo) {
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to set list element dim to %d: %d", paramsListLength, errNo & OS_E_MASK);   
+                    goto syntax_error;
+                }
+                for (intEval = 0; intEval < paramsListLength; intEval++) {
+                    paramReal = getListElementPointerOrNull(intEval);
+                    if (paramReal != NULL) {
+                        errNo = os_SetRealListElement(paramVar, intEval + 1, paramReal);
+                        if (errNo) {
+                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to set list element %d: %d", intEval, errNo & OS_E_MASK);   
+                            goto syntax_error;
+                        }
+                    } else {
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Error getting list element from ans.");
+                        goto syntax_error;
+                    }
+                }
+                break;
             case toc_PUSHVEC:
                 if (Interpreter_stackPointers[currentStackIndex] + 6 >= MaxStackDepth) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Max stack depth violated for stack number %d: %d.", currentStackIndex, Interpreter_stackPointers[currentStackIndex]);
@@ -785,7 +844,7 @@ skip_eval:
                 }
                 errNo = os_SetRealVar(paramVar, &Const_Real0);
                 if (errNo) {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to zero out %c: %d.", paramVar[0], errNo);   
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to zero out %c: %d.", paramVar[0], errNo & OS_E_MASK);   
                     goto syntax_error; 
                 }
                 break;
@@ -799,7 +858,7 @@ skip_eval:
                     *paramReal = os_RealAdd(paramReal, getListElementPointerOrDefaultPointer(1, Const_Real1));
                     os_SetRealVar(paramVar, paramReal);
                 } else {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo);
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo & OS_E_MASK);
                     goto syntax_error;  
                 }
                 break;
@@ -813,7 +872,7 @@ skip_eval:
                     *paramReal = os_RealSub(paramReal, getListElementPointerOrDefaultPointer(1, Const_Real1));
                     os_SetRealVar(paramVar, paramReal);
                 } else {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo);
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo & OS_E_MASK);
                     goto syntax_error;
                 }
                 break;
@@ -827,7 +886,7 @@ skip_eval:
                     *paramReal = os_RealCopy(getListElementPointerOrDefaultPointer(1, Const_Real1));
                     os_SetRealVar(paramVar, paramReal);
                 } else {
-                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo);
+                    snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to read %c: %d.", paramVar[0], errNo & OS_E_MASK);
                     goto syntax_error;
                 }
                 break;
@@ -908,7 +967,7 @@ skip_eval:
                     dbg_printf(" Wrote %d to %c ", intEval, paramVar[0]);
                     #endif
                     if (errNo) {
-                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to write %c: %d.", paramVar[0], errNo);
+                        snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Got error trying to write %c: %d.", paramVar[0], errNo & OS_E_MASK);
                         goto syntax_error;
                     }
                 }

@@ -47,7 +47,7 @@ static inline float Pop_InLine(float* stack, StackPointer* stackPointer) {
 }
 
 __attribute__((hot))
-static inline float Peek_InLine(float* stack, StackPointer* stackPointer) {
+static inline float Peek_InLine(const float* stack, const StackPointer* stackPointer) {
     return stack[*stackPointer - 1];
 }
 
@@ -100,6 +100,8 @@ static inline TugaOpCode GetOpCodeFromHash_Inline(uint24_t hash)
             return toc_POP;
         case Hash_PEEK:
             return toc_PEEK;
+        case Hash_PEER:
+            return toc_PEER;
         case Hash_PUSHVEC:
             return toc_PUSHVEC;
         case Hash_POPVEC:
@@ -185,6 +187,8 @@ static inline TugaOpCode GetOpCodeFromHash_Inline(uint24_t hash)
             return toc_ONERROR;
         case Hash_ASM:
             return toc_ASM;
+        case Hash_ANSLIST:
+            return toc_ANSLIST;
         default:
             return toc_UNKNOWN;
     }
