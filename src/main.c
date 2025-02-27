@@ -25,7 +25,7 @@
 #include "shell.h"
 #include "static.h"
 
-#define programBufferSize (OS_VAR_MAX_SIZE-5)
+#define programBufferSize (OS_VAR_MAX_SIZE/2-5)
 #define varNameBufferSize 10
 #define tempVarName "TugaTemp"
 

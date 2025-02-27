@@ -91,8 +91,7 @@ void Palette_Rainbow(uint16_t* palette) {
 void Palette_Value(uint16_t* palette, uint8_t color, uint8_t direction) {
     int index = direction ? 255 : 1;
     int delta = direction ? -1 : 1;
-    for (uint8_t i = 1; i <= 255; i++)
-    {
+    for (uint16_t i = 1; i <= 255; i++) {
         palette[index] = Palette_HsvToRgb(color, 255, i - 1);
         index += delta;
     }
@@ -101,8 +100,7 @@ void Palette_Value(uint16_t* palette, uint8_t color, uint8_t direction) {
 void Palette_Saturation(uint16_t* palette, uint8_t color, uint8_t direction) {
     int index = direction ? 255 : 1;
     int delta = direction ? -1 : 1;
-    for (uint8_t i = 1; i <= 255; i++)
-    {
+    for (uint16_t i = 1; i <= 255; i++) {
         palette[index] = Palette_HsvToRgb(color, i - 1, 255);
         index += delta;
     }
@@ -111,8 +109,7 @@ void Palette_Saturation(uint16_t* palette, uint8_t color, uint8_t direction) {
 void Palette_Gray(uint16_t* palette, uint8_t direction) {
     int index = direction ? 255 : 1;
     int delta = direction ? -1 : 1;
-    for (int i = 1; i <= 255; i++)
-    {
+    for (int i = 1; i <= 255; i++) {
         palette[index] = gfx_RGBTo1555(i, i, i);
         index += delta;
     }
@@ -124,14 +121,13 @@ void Palette_Random(uint16_t* palette) {
 }
 
 void Palette_Spectrum(uint16_t* palette, uint8_t color, int hueSkip) {
-    uint8_t i = 1;
+    uint16_t i = 1;
     int hue = color;
     int val = 128;
     while (i <= 255) {
         palette[i++] = Palette_HsvToRgb(hue, 255, val);
         val+=4;
-        if (val >= 256)
-        {
+        if (val >= 256) {
             val = 128;
             hue = (hue + 4 * hueSkip) % 256;
         }

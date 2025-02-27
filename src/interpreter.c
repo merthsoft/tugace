@@ -228,6 +228,7 @@ program_start:
     bool pauseOnError = true;
     bool autoDraw = true;
     bool skipFlag = false;
+    bool evalSkipedFlag = false;
     
     SpriteIndex currentSpriteIndex = 0;
     Turtle* currentTurtle = &Interpreter_turtles[0];
@@ -407,6 +408,7 @@ program_start:
         
         eval = 0.0f;
         intEval = 0;
+        evalSkipedFlag = false;
         
         memset(paramVar, 0, 4);
         type = paramVar[0] = params[0];
@@ -431,6 +433,7 @@ program_start:
             #ifdef DEUBG_PROCESSOR
             dbg_printf("no params", opCode);
             #endif
+            evalSkipedFlag = true;
             goto skip_eval;
         }
 
@@ -438,6 +441,7 @@ program_start:
             #ifdef DEUBG_PROCESSOR
             dbg_printf("skipping eval because line starts with NoEvalParams", opCode);
             #endif
+            evalSkipedFlag = true;
             goto skip_eval;
         }
 
@@ -448,6 +452,7 @@ program_start:
             #ifdef DEUBG_PROCESSOR
             dbg_printf("skipping eval because %d is skippable opCode", opCode);
             #endif
+            evalSkipedFlag = true;
             goto skip_eval;
         }
 
@@ -616,7 +621,7 @@ skip_eval:
                 gfx_FillScreen(intEval % 256);
                 break;
             case toc_LABEL:
-                if (paramReal != NULL) {
+                if (evalSkipedFlag) {
                     if (intEval >= 0 && intEval < NumLabels) {
                         #ifdef DEBUG_PROCESSOR
                         dbg_printf("Setting label %d which is at %p to %d.", intEval, &Interpreter_labels[intEval], programCounter);
@@ -648,7 +653,7 @@ skip_eval:
             case toc_GOSUB:
             case toc_GOTO: {
                 ProgramCounter newPc = 0;
-                if (paramReal != NULL) {
+                if (!evalSkipedFlag) {
                     if (intEval >= NumLabels || intEval < 0) {
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid label: %d.", intEval);
                         goto syntax_error;
@@ -677,7 +682,7 @@ skip_eval:
                     if (Interpreter_labels[intEval].Hash == 0) {
                         newPc = Seek_ToLabel(programSize, program, programStart, commandHash, 0);
                         if (newPc <= programStart || newPc >= programSize) {
-                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %d - %d.", newPc, newPc);
+                            snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Label not found: %.*s - %d.",paramsStringLength, params, newPc);
                             goto syntax_error;
                         }
                         #ifdef DEBUG_PROCESSOR
@@ -913,8 +918,13 @@ skip_eval:
             case toc_FADEIN:
                 Palette_FadeIn(Palette_PaletteBuffer, 0, 255, intEval);
                 break;
-            case toc_PALETTE:
+            case toc_PALETTE: {
+                uint8_t param2 = getListElementIntOrDefault(1, 1);
+                uint8_t param3 = getListElementIntOrDefault(2, 1);
                 switch (intEval) {
+                    case -1:
+                        Palette_Random(Palette_PaletteBuffer);
+                        break;
                     case 0:
                         Palette_Default(Palette_PaletteBuffer);
                         break;
@@ -922,14 +932,23 @@ skip_eval:
                         Palette_Rainbow(Palette_PaletteBuffer);
                         break;
                     case 2:
-                        Palette_Gray(Palette_PaletteBuffer, intEval);
+                        Palette_Gray(Palette_PaletteBuffer, param2);
+                        break;
+                    case 3:
+                        Palette_Spectrum(Palette_PaletteBuffer, param2, param3);
+                        break;
+                    case 4:
+                        Palette_Value(Palette_PaletteBuffer, param2, param3);
+                        break;
+                    case 5:
+                        Palette_Saturation(Palette_PaletteBuffer, param2, param3);
                         break;
                     default:
                         snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: Invalid palette %d.", intEval);
                         goto syntax_error;
                 }
                 gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
-                break;
+                break;}
             case toc_PALSHIFT:
                 Palette_Shift(Palette_PaletteBuffer);
                 gfx_SetPalette(Palette_PaletteBuffer, 512, 0);
