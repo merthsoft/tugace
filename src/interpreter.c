@@ -759,7 +759,7 @@ skip_eval:
                         dbg_printf(" sp: %d", Interpreter_stackPointers[currentStackIndex]);
                     #endif
                 }
-                if (paramReal == NULL) {
+                if (evalSkipedFlag) {
                     retList[0] = eval;
                     retListPointer++;
                 } else {
@@ -834,7 +834,7 @@ skip_eval:
                 #endif
                 break;                
             case toc_IF:
-                if (paramReal == NULL) {
+                if (evalSkipedFlag || paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No predicate.");
                     goto syntax_error;
                 }
@@ -843,7 +843,7 @@ skip_eval:
                 }
                 break;
             case toc_ZERO:
-                if (paramReal == NULL) {
+                if (evalSkipedFlag || paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
                     goto syntax_error;
                 }
@@ -854,7 +854,7 @@ skip_eval:
                 }
                 break;
             case toc_INC:
-                if (paramReal == NULL) {
+                if (evalSkipedFlag || paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
                     goto syntax_error;
                 }
@@ -868,7 +868,7 @@ skip_eval:
                 }
                 break;
             case toc_DEC:
-                if (paramReal == NULL) {
+                if (evalSkipedFlag || paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
                     goto syntax_error;
                 }
@@ -882,7 +882,7 @@ skip_eval:
                 }
                 break;
             case toc_STO:
-                if (paramReal == NULL) {
+                if (evalSkipedFlag || paramReal == NULL) {
                     snprintf(errorMessage, errorMessageLength, "SYNTAX ERROR: No parameter to set.");
                     goto syntax_error;
                 }
